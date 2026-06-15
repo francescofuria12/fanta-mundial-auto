@@ -1886,6 +1886,8 @@ function applyCloud(d){_suppress=true;try{
 function refreshView(){const login=document.getElementById("login");
  if(login&&login.style.display!=="none")return;
  if(curView==="voti"||curView==="formazione")return;
+ if(curView==="cruciverba"&&cwState&&!cwState.won&&!cwState.locked){cwRenderLb();return;}
+ if(curView==="impiccato"&&hmState&&!hmState.over&&!hmState.locked){hmRenderLb();return;}
  if(user)go(curView||"home")}
 (function initCloud(){try{
    if(typeof firebase==="undefined"||!FB_CONFIG.projectId)return;
