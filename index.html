@@ -581,7 +581,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .hm-lives{font-size:20px;font-weight:800;color:#ff6b6b}.hm-lives small{color:#7d8aa8;font-weight:600}
 .hm-hint{border:1px solid #6b4d1a;background:#2a2008;color:#ffd97a;font-weight:700;font-size:13px;padding:9px 12px;border-radius:11px;cursor:pointer}
 .hm-hint:disabled{opacity:.45;cursor:default}
-.hm-flag{font-size:24px}.hm-flag b{font-size:14px;vertical-align:middle;color:#cfe0ff;font-weight:700}
+.hm-flag{display:flex;align-items:center;gap:8px;min-height:24px}.hm-flagimg{width:30px;height:22px;border-radius:3px;object-fit:cover;box-shadow:0 0 0 1px #2c3f6e}.hm-flag b{font-size:14px;color:#cfe0ff;font-weight:700}
 .hm-word{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:18px 0}
 .hm-ch{min-width:24px;height:34px;border-bottom:3px solid #4a5f93;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;padding:0 2px}
 .hm-fix{border-bottom:none;color:#9fb0d4}.hm-sp{width:14px}
@@ -1169,7 +1169,7 @@ function hmPaint(){const s=hmState;
   const g=document.getElementById("hmGallows");if(g)g.innerHTML=hmGallows(Math.min(s.wrong,s.max));
   const w=document.getElementById("hmWord");if(w)w.innerHTML=hmWordHTML();
   const lv=document.getElementById("hmLives");if(lv)lv.innerHTML=`❤ ${Math.max(0,s.max-s.wrong)} <small>/ ${s.max}</small>`;
-  const fl=document.getElementById("hmFlag");if(fl)fl.innerHTML=s.hinted?`${flag(s.nat)} <b>${s.nat}</b>`:"";
+  const fl=document.getElementById("hmFlag");if(fl)fl.innerHTML=s.hinted?`<img class="hm-flagimg" src="${flag(s.nat)}" alt=""> <b>${s.nat}</b>`:"";
   const hb=document.getElementById("hmHint");if(hb)hb.disabled=s.over||s.locked||s.hinted;
   document.querySelectorAll(".hm-key").forEach(b=>{const L=b.dataset.l;if(s.guessed.has(L)){b.disabled=true;b.classList.add(hmHas(L)?"ok":"no");}if(s.over||s.locked)b.disabled=true;});
   const m=document.getElementById("hmMsg");
