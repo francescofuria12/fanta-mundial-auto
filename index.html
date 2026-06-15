@@ -526,6 +526,38 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .evpt{font-weight:900;font-size:12px;width:32px;text-align:right;flex-shrink:0}
 .evpt.pos{color:var(--green)}
 .evpt.neg{color:var(--red)}
+
+/* cruciverba */
+.cwcard h3{margin-bottom:6px}
+.cw-theme{font-size:13px;color:#9fb0d8;margin-bottom:8px}
+.cw-theme b,.cw-done b{color:#fff}
+.cw-sub{font-size:12px;color:#8a99bf;margin-bottom:10px}
+.cw-done{font-size:14px;color:var(--green,#16A24A);margin-bottom:10px;font-weight:600}
+.cw-play,.cw-check{width:100%;padding:11px;border:none;border-radius:12px;background:var(--yellow,#FFC21E);color:#11214a;font-weight:800;font-size:15px;cursor:pointer}
+.cw-check{margin-top:12px}
+.cw-gridwrap{overflow-x:auto;padding:6px 0;-webkit-overflow-scrolling:touch}
+.cw-grid{display:grid;gap:2px;width:max-content;margin:0 auto}
+.cw-cell{position:relative;width:22px;height:22px}
+.cw-blank{background:transparent}
+.cw-in{width:22px;height:22px;border:1px solid #2c3f6e;border-radius:3px;background:#0f1c3d;color:#fff;text-align:center;font-size:13px;font-weight:700;text-transform:uppercase;padding:0;caret-color:var(--yellow,#FFC21E)}
+.cw-in:focus{outline:none;border-color:var(--yellow,#FFC21E);background:#16264f}
+.cw-in.cw-bad{border-color:var(--red,#E5322B);background:#3a1414}
+.cw-in:disabled{background:#13346b;color:#bfe;opacity:1}
+.cw-n{position:absolute;top:-1px;left:1px;font-size:7px;color:#9fb0d8;z-index:2;pointer-events:none}
+.cw-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 8px}
+.cw-timer{font-size:22px;font-weight:800;color:var(--yellow,#FFC21E);font-variant-numeric:tabular-nums}
+.cw-msg{font-size:13px;color:#9fb0d8;text-align:right}
+.cw-clues{list-style:none;padding:0;margin:0 0 6px}
+.cw-clues li{font-size:13px;color:#cfd8ee;padding:4px 0;border-bottom:1px solid #1b2c52;line-height:1.35}
+.cw-clues b{color:var(--yellow,#FFC21E);margin-right:4px}
+.cw-lb{list-style:none;padding:0;margin:0}
+.cw-lb li{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:8px;font-size:14px}
+.cw-lb li.me{background:#16264f}
+.cw-rk{width:22px;height:22px;border-radius:50%;background:#1b2c52;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px}
+.cw-lb li:first-child .cw-rk{background:var(--yellow,#FFC21E);color:#11214a}
+.cw-tm{flex:1 1 auto;font-weight:600}
+.cw-tt{font-variant-numeric:tabular-nums;font-weight:700;color:var(--green,#16A24A)}
+.cw-empty{font-size:13px;color:#8a99bf}
 </style>
 </head>
 <body>
@@ -843,7 +875,7 @@ function logout(){const A=fbAuth();if(A){A.signOut().catch(()=>{})}else{user=nul
 const view=document.getElementById("view");
 function setNav(v){document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===v))}
 function go(v){curView=v;if(cdTimer){clearInterval(cdTimer);cdTimer=null}setNav(["home","squadre","calendario","votigiornata","classifica"].includes(v)?v:"home");view.scrollTop=0;document.getElementById("nav").style.display="flex";document.getElementById("fmActions").style.display="none";var _vf=document.getElementById("vgFoot");if(_vf&&v!=="votigiornata")_vf.style.display="none";
- if(v==="home")renderHome();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
+ if(v==="home")renderHome();else if(v==="cruciverba")renderCruciverba();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
  else if(v==="classifica")renderClassifica();else if(v==="formazione")renderFormazione();
  else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
@@ -875,6 +907,173 @@ function homeLineupPreviewHTML(){
  const pitch=played?pitchVotiHTML(saved.lineup,map,getVoti(cg.id)):pitchView(saved.lineup,map);
  return `<div class="dash fade hlprev" id="hlPrev"><h3>Formazione · turno corrente <span class="hl-go">apri ›</span></h3>${head}${pitch}</div>`;
 }
+const CWDATA={
+"Algeria":["ALGERI|La capitale dell'Algeria","MAHREZ|Ala algerina, campione con il Manchester City","SAHARA|Il grande deserto che copre gran parte del Paese","CUSCUS|Semola di grano, piatto base nordafricano","FENNEC|La volpe del deserto, simbolo nazionale","ZIDANE|Campione francese di origini algerine"],
+"Argentina":["MESSI|Capitano e fuoriclasse dell'Albiceleste","TANGO|Ballo nato a Buenos Aires","PAMPA|La grande pianura argentina","ASADO|La tipica grigliata di carne","MATE|Infuso amaro bevuto con la bombilla","ANDE|La catena montuosa a ovest del Paese"],
+"Australia":["SYDNEY|Città dell'Opera House","CANGURO|Marsupiale simbolo del Paese","KOALA|Mammifero che vive sugli eucalipti","OUTBACK|L'entroterra desertico australiano","CANBERRA|La capitale (non Sydney)","RUGBY|Sport molto popolare, palla ovale"],
+"Austria":["VIENNA|La capitale, città della musica","MOZART|Compositore nato a Salisburgo","STRUDEL|Dolce di mele in pasta sottile","ALPI|Le montagne che dominano il Paese","SISSI|La celebre imperatrice Elisabetta","VALZER|Ballo viennese in tre quarti"],
+"Belgium":["HAZARD|Stella belga degli anni 2010","BRUGES|Città dei canali, la 'Venezia del Nord'","TINTIN|Reporter dei fumetti creato da Hergé","ANVERSA|Città dei diamanti e grande porto","BIRRA|Bevanda di cui il Belgio è celebre","GOFRE|Il dolce waffle belga"],
+"Bosnia and Herzegovina":["SARAJEVO|La capitale, sede delle Olimpiadi 1984","DZEKO|Attaccante simbolo della nazionale","MOSTAR|Città del celebre ponte ottomano","BALCANI|La penisola in cui si trova il Paese","CEVAPI|Polpettine di carne alla griglia","DRINA|Fiume al confine con la Serbia"],
+"Brazil":["PELE|O Rei, tre volte campione del mondo","SAMBA|Danza e musica simbolo del Brasile","NEYMAR|Stella della Seleção","FEIJOADA|Stufato di fagioli neri e carne","AMAZONIA|La più grande foresta pluviale","RIO|___ de Janeiro, città del Cristo"],
+"Canada":["OTTAWA|La capitale del Canada","ACERO|L'albero la cui foglia è sulla bandiera","DAVIES|Velocissimo terzino del Bayern","TORONTO|La città più popolosa del Paese","NIAGARA|Le celebri cascate al confine con gli USA","HOCKEY|Sport nazionale sul ghiaccio"],
+"Cape Verde":["PRAIA|La capitale dell'arcipelago","MORNA|Genere musicale malinconico","CESARIA|Évora, la 'diva a piedi nudi'","OCEANO|L'Atlantico che circonda le isole","VULCANO|Il Pico do Fogo ne è uno attivo","TONNO|Pesce molto pescato nell'arcipelago"],
+"Colombia":["BOGOTA|La capitale colombiana","CAFFE|Prodotto d'esportazione celebre","SHAKIRA|Cantante nata a Barranquilla","JAMES|Rodríguez, fantasista della nazionale","CARAIBI|Il mare a nord del Paese","SMERALDO|Pietra preziosa di cui è ricca"],
+"Croatia":["ZAGABRIA|La capitale croata","MODRIC|Pallone d'Oro 2018","ISTRIA|Penisola a forma di cuore","DALMAZIA|Regione costiera sull'Adriatico","CRAVATTA|Accessorio di origine croata","ADRIATICO|Il mare lungo la costa"],
+"Curaçao":["CARAIBI|Il mare dell'isola","LIQUORE|Il celebre distillato blu prende il nome dall'isola","OLANDA|Il Paese europeo di cui fa parte il regno","CORALLO|Barriera amata dai sub","ISOLA|Si trova al largo del Venezuela","SPIAGGIA|Le tante cale dell'isola"],
+"Czech Republic":["PRAGA|La capitale, città dei cento campanili","PILSNER|Stile di birra chiara nato qui","KAFKA|Scrittore praghese","BOEMIA|Regione storica del Paese","NEDVED|Pallone d'Oro ceco 2003","MOLDAVA|Il fiume che attraversa Praga"],
+"DR Congo":["KINSHASA|La capitale, tra le più popolose d'Africa","CONGO|Il grande fiume del Paese","RUMBA|Genere musicale congolese","COBALTO|Minerale di cui il Paese è ricco","FORESTA|La fitta giungla equatoriale","GORILLA|Grande primate che vive qui"],
+"Ecuador":["QUITO|La capitale sulle Ande","GALAPAGOS|Arcipelago di Darwin","EQUATORE|La linea immaginaria che dà il nome al Paese","BANANA|Frutto tra i più esportati","ANDE|La catena montuosa centrale","CACAO|Pregiata materia prima del cioccolato"],
+"Egypt":["CAIRO|La capitale sul Nilo","PIRAMIDE|Monumento di Giza","NILO|Il fiume più lungo d'Africa","SALAH|La stella egiziana del Liverpool","FARAONE|Antico sovrano d'Egitto","SFINGE|Statua con corpo di leone"],
+"England":["LONDRA|La capitale inglese","KANE|Capocannoniere e capitano","TAMIGI|Il fiume di Londra","BIGBEN|La celebre torre dell'orologio","BEATLES|Il quartetto di Liverpool","REGINA|A lungo a capo della monarchia"],
+"France":["PARIGI|La Ville Lumière","MBAPPE|Velocissima stella dei Bleus","SENNA|Il fiume di Parigi","BAGUETTE|Il classico pane francese","LOUVRE|Museo della Gioconda","EIFFEL|La torre simbolo di Parigi"],
+"Germany":["BERLINO|La capitale tedesca","MULLER|Storico bomber della Mannschaft","WURSTEL|La tipica salsiccia","BAVIERA|Regione dell'Oktoberfest","MURO|Cadde a Berlino nel 1989","FORESTA|La Selva Nera in tedesco è ___ Nera"],
+"Ghana":["ACCRA|La capitale del Ghana","CACAO|Tra i maggiori produttori al mondo","KENTE|Tessuto colorato tradizionale","ASANTE|Storico popolo e regno ghanese","ORO|La 'Costa d'___' era il vecchio nome","BAOBAB|Albero simbolo della savana"],
+"Haiti":["CREOLO|La lingua parlata oltre al francese","VUDU|Religione sincretica diffusa sull'isola","CARAIBI|Il mare di Haiti","ISOLA|Condivide Hispaniola con la Rep. Dominicana","RUM|Distillato dalla canna da zucchero","TAMBURO|Strumento centrale nei riti"],
+"Iran":["TEHERAN|La capitale iraniana","PERSIA|L'antico nome del Paese","TAPPETO|Pregiato manufatto persiano","CASPIO|Il mare a nord","ZAFFERANO|Spezia di cui l'Iran è top produttore","KEBAB|Spiedino di carne diffuso"],
+"Iraq":["BAGHDAD|La capitale irachena","TIGRI|Uno dei due grandi fiumi","EUFRATE|L'altro grande fiume","DATTERO|Frutto della palma molto coltivato","DESERTO|Domina gran parte del territorio","BABELE|L'antica torre biblica sorgeva qui"],
+"Ivory Coast":["ABIDJAN|La maggiore città del Paese","DROGBA|Bomber simbolo degli Elefanti","CACAO|Primo produttore mondiale","AVORIO|Materiale che dà il nome al Paese","ELEFANTE|Animale soprannome della nazionale","COCCO|Frutto tropicale molto diffuso"],
+"Japan":["TOKYO|La capitale giapponese","SUSHI|Riso e pesce crudo","FUJI|Il monte sacro del Paese","SAMURAI|Antico guerriero","GEISHA|Artista di intrattenimento tradizionale","SAKE|Bevanda alcolica di riso"],
+"Jordan":["AMMAN|La capitale giordana","PETRA|La città rosa scavata nella roccia","DESERTO|Il Wadi Rum è famoso","BEDUINO|Popolo nomade del deserto","GIORDANO|Il fiume che dà il nome al Paese","HUMMUS|Crema di ceci diffusa"],
+"Korea Republic":["SEUL|La capitale sudcoreana","KIMCHI|Verdure fermentate piccanti","KPOP|Il fenomeno musicale coreano","GINSENG|Radice usata in medicina","SON|Heung-min, capitano del Tottenham","TAEGUK|Il simbolo rosso-blu della bandiera"],
+"Mexico":["AZTECHI|Antica civiltà precolombiana","TACO|Tortilla ripiena","TEQUILA|Distillato dall'agave","SOMBRERO|Il celebre cappello a larghe tese","MAYA|Civiltà delle piramidi nello Yucatán","CHILI|Il peperoncino piccante"],
+"Morocco":["RABAT|La capitale marocchina","HAKIMI|Terzino stella dei Leoni dell'Atlante","TAJINE|Stufato cotto nel tegame di terracotta","ATLANTE|La catena montuosa del Paese","MENTA|Il tè verde tradizionale ne è aromatizzato","CASBAH|La cittadella fortificata"],
+"Netherlands":["TULIPANO|Il fiore simbolo del Paese","CRUYFF|Il genio del calcio totale","GOUDA|Celebre formaggio","MULINO|A vento, immagine classica olandese","ORANJE|Il colore e il soprannome della nazionale","ZOCCOLO|La calzatura di legno tradizionale"],
+"New Zealand":["KIWI|Uccello e soprannome dei neozelandesi","HAKA|La danza maori prima delle partite","MAORI|Il popolo indigeno","RUGBY|Sport degli All Blacks","HOBBIT|Saga girata tra questi paesaggi","FIORDO|Il Milford Sound ne è uno celebre"],
+"Norway":["OSLO|La capitale norvegese","FIORDO|Insenatura tipica della costa","HAALAND|Implacabile bomber del City","AURORA|Boreale, spettacolo del nord","SALMONE|Pesce molto pescato","VICHINGO|Antico navigatore scandinavo"],
+"Panama":["CANALE|La via d'acqua tra due oceani","ISTMO|La striscia di terra del Paese","CAPPELLO|Il 'Panama' è un copricapo di paglia","OCEANI|Atlantico e Pacifico lo bagnano","TROPICO|Clima caldo e umido","RANA|Quella dorata è simbolo nazionale"],
+"Paraguay":["ASUNCION|La capitale paraguaiana","GUARANI|Lingua indigena e moneta","MATE|Infuso, qui bevuto anche freddo (tereré)","CHACO|Vasta regione semiarida","ARPA|Strumento nazionale paraguaiano","IGUAZU|Le cascate al confine"],
+"Portugal":["LISBONA|La capitale portoghese","RONALDO|Cinque volte Pallone d'Oro","FADO|Il canto malinconico portoghese","PORTO|Città del celebre vino","BACCALA|Il pesce simbolo della cucina","AZULEJO|La tipica piastrella decorata"],
+"Qatar":["DOHA|La capitale del Qatar","DESERTO|Domina il territorio","GOLFO|Il braccio di mare persico","FALCO|Uccello da caccia tradizionale","DUNA|Collina di sabbia","GAS|Risorsa di cui il Paese è ricco"],
+"Saudi Arabia":["RIAD|La capitale saudita","MECCA|La città santa dell'Islam","DESERTO|Il Rub al-Khali è immenso","CAMMELLO|Animale del deserto","DATTERO|Frutto molto consumato","PETROLIO|La grande ricchezza del Paese"],
+"Scotland":["KILT|La gonna tradizionale scozzese","WHISKY|Il distillato nazionale","TARTAN|Il tessuto a quadri dei clan","NESSIE|Il mostro del Loch Ness","HIGHLAND|Le aspre terre alte del nord","CORNAMUSA|Lo strumento a sacco"],
+"Senegal":["DAKAR|La capitale e meta del rally","MANE|Attaccante stella dei Leoni","TERANGA|L'ospitalità, valore senegalese","BAOBAB|L'albero simbolo del Paese","ARACHIDE|Coltivazione molto diffusa","LOTTA|Sport tradizionale molto seguito"],
+"South Africa":["PRETORIA|Una delle capitali del Paese","MANDELA|Il leader contro l'apartheid","SAFARI|Esperienza nei parchi come il Kruger","VUVUZELA|La trombetta dei Mondiali 2010","DIAMANTE|Pietra di cui il Paese è ricco","ZULU|Noto popolo sudafricano"],
+"Spain":["MADRID|La capitale spagnola","PAELLA|Riso valenciano con frutti di mare","YAMAL|Giovanissimo talento blaugrana","FLAMENCO|Ballo andaluso","TORO|Protagonista della corrida","GAUDI|Architetto della Sagrada Familia"],
+"Sweden":["ABBA|Il celebre gruppo pop svedese","IKEA|Colosso dei mobili da montare","ISAK|Bomber svedese della nazionale","ALCE|Il grande cervide dei boschi","NOBEL|Il premio assegnato a Stoccolma","VICHINGO|Antico guerriero scandinavo"],
+"Switzerland":["BERNA|La capitale svizzera","XHAKA|Capitano della nazionale rossocrociata","ALPI|Le montagne del Paese","OROLOGIO|Prodotto di precisione celebre","GRUVIERA|Il formaggio con i buchi","FONDUTA|Formaggio fuso in cui si intinge il pane"],
+"Tunisia":["TUNISI|La capitale tunisina","SAHARA|Il deserto a sud","MEDINA|Il centro storico arabo","CUSCUS|Piatto nazionale di semola","CARTAGINE|L'antica città rivale di Roma","DATTERO|Frutto delle oasi"],
+"Turkey":["ANKARA|La capitale turca","ISTANBUL|La città tra due continenti","BOSFORO|Lo stretto che divide Europa e Asia","KEBAB|Carne allo spiedo verticale","CUPOLA|La Moschea Blu ne ha molte","TULIPANO|Fiore originario dell'Anatolia"],
+"United States":["PULISIC|La stella del calcio a stelle e strisce","LIBERTA|La Statua simbolo di New York","JAZZ|Musica nata a New Orleans","BASEBALL|Lo sport del 'pastime' nazionale","DOLLARO|La valuta del Paese","HOLLYWOOD|Il cuore del cinema"],
+"Uruguay":["SUAREZ|Attaccante simbolo della Celeste","MATE|L'infuso onnipresente","ASADO|La grigliata di carne","CHARRUA|Antico popolo indigeno","TANGO|Ballo condiviso con l'Argentina","CANDOMBE|Ritmo di tamburi afro-uruguaiano"],
+"Uzbekistan":["TASHKENT|La capitale uzbeka","SETA|La via che attraversava il Paese","COTONE|Coltivazione fondamentale","DESERTO|Il Kyzylkum è vastissimo","STEPPA|La pianura erbosa centrale","PLOV|Piatto di riso nazionale"]
+};
+/* ===== CRUCIVERBA DEL GIORNO ===== */
+function cwStrSeed(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function cwRng(seed){let t=seed>>>0;return()=>{t+=0x6D2B79F5;let x=Math.imul(t^(t>>>15),1|t);x^=x+Math.imul(x^(x>>>7),61|x);return((x^(x>>>14))>>>0)/4294967296;};}
+function cwBuild(pool,seedStr,maxWords){
+  maxWords=maxWords||10;const rnd=cwRng(cwStrSeed(seedStr));
+  const seen=new Set();let words=[];
+  for(const w of pool){const a=(w.a||"").toUpperCase().normalize("NFD").replace(/[^A-Z]/g,"");if(a.length<3||a.length>9||seen.has(a))continue;seen.add(a);words.push({a,q:w.q});}
+  for(let i=words.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[words[i],words[j]]=[words[j],words[i]];}
+  words.sort((x,y)=>y.a.length-x.a.length);
+  const grid={},placed=[],key=(r,c)=>r+","+c;
+  let bb={minR:0,minC:0,maxR:0,maxC:0};
+  function canPlace(a,r,c,dir){const dr=dir?1:0,dc=dir?0:1;
+    if(grid[key(r-dr,c-dc)])return false;
+    if(grid[key(r+dr*a.length,c+dc*a.length)])return false;
+    let cross=0;
+    for(let i=0;i<a.length;i++){const rr=r+dr*i,cc=c+dc*i,cur=grid[key(rr,cc)];
+      if(cur){if(cur!==a[i])return false;cross++;}
+      else{if(dir){if(grid[key(rr,cc-1)]||grid[key(rr,cc+1)])return false;}else{if(grid[key(rr-1,cc)]||grid[key(rr+1,cc)])return false;}}}
+    return cross;}
+  function place(w,r,c,dir){const dr=dir?1:0,dc=dir?0:1;for(let i=0;i<w.a.length;i++){const rr=r+dr*i,cc=c+dc*i;grid[key(rr,cc)]=w.a[i];bb.minR=Math.min(bb.minR,rr);bb.minC=Math.min(bb.minC,cc);bb.maxR=Math.max(bb.maxR,rr);bb.maxC=Math.max(bb.maxC,cc);}placed.push({a:w.a,q:w.q,r,c,dir});}
+  if(!words.length)return null;
+  place(words[0],0,0,0);
+  for(let wi=1;wi<words.length&&placed.length<maxWords;wi++){const word=words[wi];let best=null,bestScore=-1e9;
+    for(const pw of placed){for(let pi=0;pi<pw.a.length;pi++){const ch=pw.a[pi];
+      for(let li=0;li<word.a.length;li++){if(word.a[li]!==ch)continue;
+        const dir=pw.dir?0:1,dr=dir?1:0,dc=dir?0:1;
+        const pr=pw.r+(pw.dir?pi:0),pc=pw.c+(pw.dir?0:pi);
+        const r=pr-dr*li,c=pc-dc*li;
+        const cr=canPlace(word.a,r,c,dir);
+        if(cr===false||cr<1)continue;
+        const nR0=Math.min(bb.minR,r),nC0=Math.min(bb.minC,c),nR1=Math.max(bb.maxR,r+dr*(word.a.length-1)),nC1=Math.max(bb.maxC,c+dc*(word.a.length-1));
+        const w2=nC1-nC0+1,h2=nR1-nR0+1;
+        const score=cr*12-Math.max(w2,h2)*2-Math.abs(w2-h2);
+        if(score>bestScore){bestScore=score;best={r,c,dir};}}}}
+    if(best)place(word,best.r,best.c,best.dir);}
+  const minR=bb.minR,minC=bb.minC,H=bb.maxR-bb.minR+1,W=bb.maxC-bb.minC+1;
+  const cells=[];for(let r=0;r<H;r++){cells.push([]);for(let c=0;c<W;c++)cells[r].push(grid[key(r+minR,c+minC)]||null);}
+  const ents=placed.map(p=>({a:p.a,q:p.q,r:p.r-minR,c:p.c-minC,dir:p.dir}));
+  const num={};let n=0;
+  for(let r=0;r<H;r++)for(let c=0;c<W;c++){if(!cells[r][c])continue;
+    const sA=(c===0||!cells[r][c-1])&&(c+1<W&&cells[r][c+1]);
+    const sD=(r===0||!cells[r-1][c])&&(r+1<H&&cells[r+1][c]);
+    if(sA||sD)num[key(r,c)]=++n;}
+  ents.forEach(e=>e.n=num[key(e.r,e.c)]);
+  return{W,H,cells,ents:ents.sort((a,b)=>(a.n-b.n)||a.dir-b.dir)};
+}
+function cwDateKey(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function cwToday(){
+  const now=new Date();
+  const sd=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+  let day=MATCHES.filter(m=>sd(m.dt,now)),key;
+  if(day.length){key=cwDateKey(now);}
+  else{const fut=MATCHES.filter(m=>m.dt>now).sort((a,b)=>a.dt-b.dt);
+    if(fut.length){const d0=fut[0].dt;day=MATCHES.filter(m=>sd(m.dt,d0));key=cwDateKey(d0);}
+    else{day=MATCHES.slice(-6);key="finale";}}
+  const nats=[...new Set([].concat(...day.map(m=>[m.t1,m.t2])))];
+  let pool=[];nats.forEach(en=>{(CWDATA[en]||[]).forEach(s=>{const p=s.split("|");pool.push({a:p[0],q:p[1]});});});
+  if(pool.length<6){Object.values(CWDATA).forEach(arr=>arr.forEach(s=>{const p=s.split("|");pool.push({a:p[0],q:p[1]});}));}
+  return {key,nats,cw:cwBuild(pool,key,10)};
+}
+function cwLeaderboard(key){const d=store.get("fm26_cw_"+key)||{};return Object.keys(d).map(t=>({team:t,t:d[t].t})).sort((a,b)=>a.t-b.t);}
+function cwFmt(s){s=Math.round(s);const m=Math.floor(s/60),x=s%60;return m+":"+pad(x);}
+function homeCWHTML(){
+  const day=cwToday();if(!day.cw)return "";
+  const theme=day.nats.slice(0,4).map(n=>natIT(n)).join(" · ");
+  const lb=cwLeaderboard(day.key),me=lb.find(e=>e.team===user);
+  return `<div class="dash fade cwcard"><h3>🧩 Cruciverba del giorno</h3>
+   <div class="cw-theme">Tema: <b>${theme}${day.nats.length>4?" …":""}</b></div>
+   ${me?`<div class="cw-done">✓ Risolto in <b>${cwFmt(me.t)}</b></div>`:`<div class="cw-sub">${day.cw.ents.length} parole · geografia, storia, cultura, calciatori</div>`}
+   <button class="cw-play" id="cwPlay">${me?"Rigioca · vedi classifica":"Gioca →"}</button></div>`;
+}
+let cwState=null,cwTimer=null,cwStart=0;
+function cwGet(r,c){const el=view.querySelector(`.cw-in[data-r="${r}"][data-c="${c}"]`);return el?el.value:"";}
+function cwSolved(){const cw=cwState.cw;for(let r=0;r<cw.H;r++)for(let c=0;c<cw.W;c++){if(cw.cells[r][c]&&cwGet(r,c)!==cw.cells[r][c])return false;}return true;}
+function cwRenderLb(){const lb=cwLeaderboard(cwState.key),el=document.getElementById("cwLb");if(!el)return;
+  el.innerHTML=lb.length?'<ol class="cw-lb">'+lb.map((e,i)=>`<li class="${e.team===user?'me':''}"><span class="cw-rk">${i+1}</span><span class="cw-tm">${e.team}</span><span class="cw-tt">${cwFmt(e.t)}</span></li>`).join("")+'</ol>':'<p class="cw-empty">Nessuno ha ancora risolto. Sii il primo!</p>';}
+function cwWin(){if(cwState.won)return;cwState.won=true;clearInterval(cwTimer);
+  const sec=(Date.now()-cwStart)/1000,key=cwState.key,cur=store.get("fm26_cw_"+key)||{};
+  if(!cur[user]||sec<cur[user].t){cur[user]={t:sec,ts:Date.now()};store.set("fm26_cw_"+key,cur);}
+  const m=document.getElementById("cwMsg");if(m)m.innerHTML=`✓ Risolto in <b>${cwFmt(sec)}</b>`;
+  view.querySelectorAll(".cw-in").forEach(i=>{i.disabled=true;i.classList.remove("cw-bad");});
+  cwRenderLb();}
+function cwVerify(){const cw=cwState.cw;let blank=false;
+  view.querySelectorAll(".cw-in").forEach(inp=>{const r=+inp.dataset.r,c=+inp.dataset.c,sol=cw.cells[r][c];inp.classList.remove("cw-bad");
+    if(!inp.value)blank=true;else if(inp.value!==sol)inp.classList.add("cw-bad");});
+  if(cwSolved())cwWin();else{const m=document.getElementById("cwMsg");if(m)m.textContent=blank?"Compila tutte le caselle":"Qualche lettera è sbagliata";}}
+function renderCruciverba(){
+  const day=cwToday();
+  if(!day.cw){view.innerHTML='<div class="dash"><p>Nessun cruciverba disponibile oggi.</p></div>';return;}
+  cwState={key:day.key,nats:day.nats,cw:day.cw,won:false};
+  const cw=day.cw,num={};cw.ents.forEach(e=>{num[e.r+","+e.c]=e.n;});
+  let grid=`<div class="cw-grid" style="grid-template-columns:repeat(${cw.W},22px)">`;
+  for(let r=0;r<cw.H;r++)for(let c=0;c<cw.W;c++){const ch=cw.cells[r][c];
+    if(!ch){grid+=`<div class="cw-cell cw-blank"></div>`;continue;}
+    const n=num[r+","+c];
+    grid+=`<div class="cw-cell">${n?`<span class="cw-n">${n}</span>`:""}<input class="cw-in" data-r="${r}" data-c="${c}" maxlength="1" autocomplete="off" inputmode="latin"></div>`;}
+  grid+=`</div>`;
+  const acr=cw.ents.filter(e=>e.dir===0).map(e=>`<li><b>${e.n}.</b> ${e.q}</li>`).join("");
+  const dwn=cw.ents.filter(e=>e.dir===1).map(e=>`<li><b>${e.n}.</b> ${e.q}</li>`).join("");
+  const theme=day.nats.slice(0,5).map(n=>natIT(n)).join(" · ");
+  view.innerHTML=`
+  <div class="top"><div class="brand"><img class="hlogo" src="${LOGO}" alt="">Cruciverba</div><span class="topbtns"><button class="out" id="cwBack">Home</button></span></div>
+  <div class="dash fade"><div class="cw-theme">Tema: <b>${theme}</b></div>
+    <div class="cw-head"><div class="cw-timer" id="cwTimer">0:00</div><div class="cw-msg" id="cwMsg"></div></div>
+    <div class="cw-gridwrap">${grid}</div>
+    <button class="cw-check" id="cwCheck">Controlla</button></div>
+  <div class="dash fade"><h3>Orizzontali</h3><ul class="cw-clues">${acr}</ul>
+    <h3>Verticali</h3><ul class="cw-clues">${dwn}</ul></div>
+  <div class="dash fade"><h3>🏆 Classifica del giorno</h3><div id="cwLb"></div></div>`;
+  cwRenderLb();cwStart=Date.now();
+  if(cwTimer)clearInterval(cwTimer);
+  cwTimer=setInterval(()=>{const el=document.getElementById("cwTimer");if(!el){clearInterval(cwTimer);return;}el.textContent=cwFmt((Date.now()-cwStart)/1000);},1000);
+  const bk=document.getElementById("cwBack");if(bk)bk.onclick=()=>{clearInterval(cwTimer);go("home");};
+  const ck=document.getElementById("cwCheck");if(ck)ck.onclick=cwVerify;
+  view.querySelectorAll(".cw-in").forEach(inp=>inp.addEventListener("input",e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z]/g,"");if(cwSolved())cwWin();}));
+}
+
 function renderHome(){
  const st=jerseyOf(user),s=myStats(user),ci=cdInfo(),g=ci&&ci.g,R=ROSTERS[user];
  view.innerHTML=`
@@ -893,6 +1092,7 @@ function renderHome(){
  <div class="fmtoggle fade" id="fmToggle"><span>Formazioni schierate · <b>${g?g.label:"—"}</b></span><span class="fmtg-ar" id="fmTgAr">▾</span></div>
  <div id="fmPanel" style="display:none"><div class="dash" id="fmHome"></div></div>
  ${newsBannerHTML()}
+ ${homeCWHTML()}
  ${homeLineupPreviewHTML()}
  <div class="dash fade"><h3>La tua stagione</h3>
    <div class="stats">
@@ -912,6 +1112,7 @@ function renderHome(){
  document.getElementById("logout").onclick=logout;
  const _gs=document.getElementById("goSettings");if(_gs)_gs.onclick=()=>go("settings");
  const _nb=document.getElementById("newsBand");if(_nb)_nb.onclick=()=>{newsView=+_nb.dataset.i;go("news")};
+ const _cw=document.getElementById("cwPlay");if(_cw)_cw.onclick=()=>go("cruciverba");
  document.getElementById("editJersey").onclick=e=>{e.preventDefault();e.stopPropagation();openSheet()};
  document.getElementById("banner").onclick=()=>go("formazione");
  const gr=document.getElementById("goRosa");
@@ -1526,6 +1727,7 @@ function cloudPathFor(key){
  if(key.indexOf("fm26_voti_")===0)return{sec:"voti",sub:key.slice(10)};
  if(key.indexOf("fm26_lineup_")===0)return{sec:"lineups",sub:key.slice(12)};
  if(key==="fm26_results")return{sec:"results",sub:null};
+ if(key.indexOf("fm26_cw_")===0)return{sec:"cw",sub:key.slice(8)};
  return null}
 function cloudPush(key,val){if(!cloudReady||_suppress||!leagueRef)return;const p=cloudPathFor(key);if(!p)return;
  try{const payload=p.sub?{[p.sec]:{[p.sub]:val}}:{[p.sec]:val};
@@ -1537,6 +1739,7 @@ function applyCloud(d){_suppress=true;try{
    if(d.lineups)for(const k in d.lineups)store.set("fm26_lineup_"+k,d.lineups[k]);
    if(d.voti)for(const g in d.voti)store.set("fm26_voti_"+g,d.voti[g]);
    if(d.results)store.set("fm26_results",d.results);
+   if(d.cw)for(const k in d.cw)store.set("fm26_cw_"+k,d.cw[k]);
    if(d.live)store.set("fm26_live",d.live);
    if(d.members)MEMBERS=d.members;
  }finally{_suppress=false}}
