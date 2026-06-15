@@ -563,6 +563,34 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .cw-cell.cw-hl .cw-in{border-color:#3a5187;background:#16264f}
 .cw-dir{border:1px solid #2c3f6e;background:#0f1c3d;color:#cfd8ee;font-size:12px;font-weight:600;padding:5px 10px;border-radius:9px;cursor:pointer}
 .cw-dir:active{background:var(--yellow,#FFC21E);color:#11214a}
+.games-hub .gh-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.gh-ic{font-size:30px;line-height:1}.games-hub h3{margin:0}
+.gh-sub{font-size:12px;color:#9aa7c7;margin-top:2px}
+.gh-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gh-tile{position:relative;text-align:left;border:1px solid #25325a;background:linear-gradient(150deg,#16264f,#0e1b3c);border-radius:16px;padding:14px;cursor:pointer;color:#fff;overflow:hidden;transition:transform .1s,border-color .1s}
+.gh-tile:active{transform:scale(.97)}.gh-tile:hover{border-color:#3a5187}
+.gh-emoji{font-size:30px;margin-bottom:8px}
+.gh-tt{font-weight:800;font-size:16px;letter-spacing:.3px}
+.gh-st{font-size:12px;color:#9fb0d4;margin-top:3px;min-height:16px}
+.gh-go{display:inline-block;margin-top:10px;font-size:12px;font-weight:700;color:var(--yellow,#FFC21E)}
+.hm-sub2{font-size:13px;color:#9fb0d4;margin-bottom:12px}
+.hm-top{display:flex;gap:16px;align-items:flex-start;margin-bottom:8px}
+.hm-gallows{width:120px;height:140px;flex:none}
+.hm-gallows line,.hm-gallows circle{stroke:#e7ecf7;stroke-width:3;fill:none;stroke-linecap:round}
+.hm-side{flex:1;display:flex;flex-direction:column;gap:10px;padding-top:6px}
+.hm-lives{font-size:20px;font-weight:800;color:#ff6b6b}.hm-lives small{color:#7d8aa8;font-weight:600}
+.hm-hint{border:1px solid #6b4d1a;background:#2a2008;color:#ffd97a;font-weight:700;font-size:13px;padding:9px 12px;border-radius:11px;cursor:pointer}
+.hm-hint:disabled{opacity:.45;cursor:default}
+.hm-flag{font-size:24px}.hm-flag b{font-size:14px;vertical-align:middle;color:#cfe0ff;font-weight:700}
+.hm-word{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:18px 0}
+.hm-ch{min-width:24px;height:34px;border-bottom:3px solid #4a5f93;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;padding:0 2px}
+.hm-fix{border-bottom:none;color:#9fb0d4}.hm-sp{width:14px}
+.hm-msg{text-align:center;font-size:15px;min-height:22px;margin-bottom:10px}
+.hm-keys{display:grid;grid-template-columns:repeat(9,1fr);gap:6px}
+.hm-key{aspect-ratio:1;border:1px solid #2c3f6e;background:#12203f;color:#dfe7f7;font-weight:700;font-size:15px;border-radius:9px;cursor:pointer;padding:0}
+.hm-key:disabled{cursor:default}
+.hm-key.ok{background:var(--green,#16A24A);border-color:var(--green,#16A24A);color:#fff}
+.hm-key.no{background:#3a1414;border-color:#7a2a2a;color:#caa}
 </style>
 </head>
 <body>
@@ -880,7 +908,7 @@ function logout(){const A=fbAuth();if(A){A.signOut().catch(()=>{})}else{user=nul
 const view=document.getElementById("view");
 function setNav(v){document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===v))}
 function go(v){curView=v;if(cdTimer){clearInterval(cdTimer);cdTimer=null}setNav(["home","squadre","calendario","votigiornata","classifica"].includes(v)?v:"home");view.scrollTop=0;document.getElementById("nav").style.display="flex";document.getElementById("fmActions").style.display="none";var _vf=document.getElementById("vgFoot");if(_vf&&v!=="votigiornata")_vf.style.display="none";
- if(v==="home")renderHome();else if(v==="cruciverba")renderCruciverba();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
+ if(v==="home")renderHome();else if(v==="cruciverba")renderCruciverba();else if(v==="impiccato")renderImpiccato();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
  else if(v==="classifica")renderClassifica();else if(v==="formazione")renderFormazione();
  else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
@@ -1057,12 +1085,13 @@ function renderCruciverba(){
   const day=cwToday();
   if(!day.cw){view.innerHTML='<div class="dash"><p>Nessun cruciverba disponibile oggi.</p></div>';return;}
   cwState={key:day.key,nats:day.nats,cw:day.cw,won:false};
+  const _meDone=cwLeaderboard(day.key).find(e=>e.team===user);cwState.locked=!!_meDone;cwState.won=cwState.locked;
   const cw=day.cw,num={};cw.ents.forEach(e=>{num[e.r+","+e.c]=e.n;});
   let grid=`<div class="cw-grid" style="grid-template-columns:repeat(${cw.W},22px)">`;
   for(let r=0;r<cw.H;r++)for(let c=0;c<cw.W;c++){const ch=cw.cells[r][c];
     if(!ch){grid+=`<div class="cw-cell cw-blank"></div>`;continue;}
     const n=num[r+","+c];
-    grid+=`<div class="cw-cell">${n?`<span class="cw-n">${n}</span>`:""}<input class="cw-in" data-r="${r}" data-c="${c}" maxlength="1" autocomplete="off" inputmode="latin"></div>`;}
+    grid+=`<div class="cw-cell">${n?`<span class="cw-n">${n}</span>`:""}<input class="cw-in" data-r="${r}" data-c="${c}" maxlength="1" autocomplete="off" inputmode="latin"${cwState.locked?` value="${ch}" disabled`:""}></div>`;}
   grid+=`</div>`;
   const acr=cw.ents.filter(e=>e.dir===0).map(e=>`<li><b>${e.n}.</b> <i class="cw-nat">${e.nat}</i> ${e.q}</li>`).join("");
   const dwn=cw.ents.filter(e=>e.dir===1).map(e=>`<li><b>${e.n}.</b> <i class="cw-nat">${e.nat}</i> ${e.q}</li>`).join("");
@@ -1070,16 +1099,18 @@ function renderCruciverba(){
   view.innerHTML=`
   <div class="top"><div class="brand"><img class="hlogo" src="${LOGO}" alt="">Cruciverba</div><span class="topbtns"><button class="out" id="cwBack">Home</button></span></div>
   <div class="dash fade"><div class="cw-theme">Tema: <b>${theme}</b></div>
-    <div class="cw-head"><div class="cw-timer" id="cwTimer">0:00</div><button class="cw-dir" id="cwDirBtn">↔ direzione</button><div class="cw-msg" id="cwMsg"></div></div>
+    <div class="cw-head">${cwState.locked?`<div class="cw-timer">✓ ${cwFmt(_meDone.t)}</div>`:`<div class="cw-timer" id="cwTimer">0:00</div><button class="cw-dir" id="cwDirBtn">↔ direzione</button>`}<div class="cw-msg" id="cwMsg">${cwState.locked?"Già completato oggi":""}</div></div>
     <div class="cw-gridwrap">${grid}</div>
-    <button class="cw-check" id="cwCheck">Controlla</button></div>
+    ${cwState.locked?"":`<button class="cw-check" id="cwCheck">Controlla</button>`}</div>
   <div class="dash fade"><h3>Orizzontali</h3><ul class="cw-clues">${acr}</ul>
     <h3>Verticali</h3><ul class="cw-clues">${dwn}</ul></div>
   <div class="dash fade"><h3>🏆 Classifica del giorno</h3><div id="cwLb"></div></div>`;
-  cwRenderLb();cwStart=Date.now();
+  cwRenderLb();
+  const bk=document.getElementById("cwBack");if(bk)bk.onclick=()=>{if(cwTimer)clearInterval(cwTimer);go("home");};
+  if(cwState.locked)return;
+  cwStart=Date.now();
   if(cwTimer)clearInterval(cwTimer);
   cwTimer=setInterval(()=>{const el=document.getElementById("cwTimer");if(!el){clearInterval(cwTimer);return;}el.textContent=cwFmt((Date.now()-cwStart)/1000);},1000);
-  const bk=document.getElementById("cwBack");if(bk)bk.onclick=()=>{clearInterval(cwTimer);go("home");};
   const ck=document.getElementById("cwCheck");if(ck)ck.onclick=cwVerify;
   cwDir=0;cwCur=null;cwActive=null;
   const db=document.getElementById("cwDirBtn");if(db)db.onclick=()=>{cwDir=cwDir?0:1;if(cwCur){cwFocus(cwCur.r,cwCur.c);cwHL(cwCur.r,cwCur.c);}};
@@ -1101,6 +1132,85 @@ function renderCruciverba(){
   });
 }
 
+/* ===== IMPICCATO DEL GIORNO ===== */
+let hmState=null;
+function hmLetters(name){let n=0;for(const ch of name){if(ch.normalize("NFD").replace(/[^A-Za-z]/g,""))n++;}return n;}
+function hmLettersOf(name){const s=new Set();for(const ch of name){const x=ch.normalize("NFD").replace(/[^A-Za-z]/g,"").toUpperCase();if(x)s.add(x);}return s;}
+function hmHas(L){return hmLettersOf(hmState.name).has(L);}
+function hmNeeded(){return hmLettersOf(hmState.name);}
+function hmWon(){for(const L of hmNeeded())if(!hmState.guessed.has(L))return false;return true;}
+function hmPool(){const arr=[],seen=new Set();
+  for(const t in ROSTERS)for(const p of ROSTERS[t].players){if(p.name.indexOf(".")>=0)continue;if(hmLetters(p.name)<4)continue;if(seen.has(p.name))continue;seen.add(p.name);arr.push({name:p.name,nat:p.nat});}
+  for(const p of SVINC){if(p.name.indexOf(".")>=0)continue;if(hmLetters(p.name)<4)continue;if(seen.has(p.name))continue;seen.add(p.name);arr.push({name:p.name,nat:p.nat});}
+  arr.sort((a,b)=>a.name<b.name?-1:(a.name>b.name?1:0));return arr;}
+function hmToday(){const key=cwDateKey(new Date());const pool=hmPool();const idx=Math.floor(cwRng(cwStrSeed("hm"+key))()*pool.length);const pick=pool[idx]||pool[0];return {key,name:pick.name.toUpperCase(),nat:pick.nat};}
+function hmLeaderboard(key){const d=store.get("fm26_hm_"+key)||{};return Object.keys(d).map(t=>({team:t,win:d[t].win,wrong:d[t].wrong,t:d[t].t})).sort((a,b)=>(b.win-a.win)||(a.wrong-b.wrong)||(a.t-b.t));}
+function hmGallows(w){const P=n=>w>=n;return `<svg class="hm-gallows" viewBox="0 0 120 140">
+  <line x1="10" y1="135" x2="80" y2="135"/><line x1="30" y1="135" x2="30" y2="10"/><line x1="30" y1="10" x2="80" y2="10"/><line x1="80" y1="10" x2="80" y2="26"/>
+  ${P(1)?'<circle cx="80" cy="38" r="12"/>':''}${P(2)?'<line x1="80" y1="50" x2="80" y2="90"/>':''}
+  ${P(3)?'<line x1="80" y1="60" x2="63" y2="74"/>':''}${P(4)?'<line x1="80" y1="60" x2="97" y2="74"/>':''}
+  ${P(5)?'<line x1="80" y1="90" x2="65" y2="112"/>':''}${P(6)?'<line x1="80" y1="90" x2="95" y2="112"/>':''}</svg>`;}
+function hmWordHTML(){const s=hmState;let out="";
+  for(const ch of s.name){
+    if(ch===" "){out+='<span class="hm-sp"></span>';continue;}
+    const norm=ch.normalize("NFD").replace(/[^A-Za-z]/g,"").toUpperCase();
+    if(!norm){out+=`<span class="hm-ch hm-fix">${ch}</span>`;continue;}
+    const shown=s.guessed.has(norm)||s.over;
+    out+=`<span class="hm-ch ${shown?'on':''}">${shown?ch:''}</span>`;}
+  return out;}
+function hmRecord(){const s=hmState,cur=store.get("fm26_hm_"+s.key)||{};
+  if(!cur[user]){cur[user]={win:s.won,wrong:s.wrong,t:(Date.now()-s.start)/1000,ts:Date.now()};store.set("fm26_hm_"+s.key,cur);}}
+function hmAfter(){const s=hmState;if(!s.over){if(hmWon()){s.over=true;s.won=true;hmRecord();}else if(s.wrong>=s.max){s.over=true;s.won=false;hmRecord();}}hmPaint();}
+function hmGuess(L){const s=hmState;if(s.over||s.locked||s.guessed.has(L))return;s.guessed.add(L);if(!hmHas(L))s.wrong++;hmAfter();}
+function hmHint(){const s=hmState;if(s.over||s.locked||s.hinted)return;s.hinted=true;s.wrong+=2;hmAfter();}
+function hmRenderLb(){const lb=hmLeaderboard(hmState.key),el=document.getElementById("hmLb");if(!el)return;
+  el.innerHTML=lb.length?'<ol class="cw-lb">'+lb.map((e,i)=>`<li class="${e.team===user?'me':''}"><span class="cw-rk">${i+1}</span><span class="cw-tm">${e.team} ${e.win?'✓':'✗'}</span><span class="cw-tt">${e.wrong}❤ · ${cwFmt(e.t)}</span></li>`).join("")+'</ol>':'<p class="cw-empty">Nessuno ha ancora giocato oggi. Tocca a te!</p>';}
+function hmPaint(){const s=hmState;
+  const g=document.getElementById("hmGallows");if(g)g.innerHTML=hmGallows(Math.min(s.wrong,s.max));
+  const w=document.getElementById("hmWord");if(w)w.innerHTML=hmWordHTML();
+  const lv=document.getElementById("hmLives");if(lv)lv.innerHTML=`❤ ${Math.max(0,s.max-s.wrong)} <small>/ ${s.max}</small>`;
+  const fl=document.getElementById("hmFlag");if(fl)fl.innerHTML=s.hinted?`${flag(s.nat)} <b>${s.nat}</b>`:"";
+  const hb=document.getElementById("hmHint");if(hb)hb.disabled=s.over||s.locked||s.hinted;
+  document.querySelectorAll(".hm-key").forEach(b=>{const L=b.dataset.l;if(s.guessed.has(L)){b.disabled=true;b.classList.add(hmHas(L)?"ok":"no");}if(s.over||s.locked)b.disabled=true;});
+  const m=document.getElementById("hmMsg");
+  if(m){if(s.over)m.innerHTML=s.won?`🎉 Indovinato! Era <b>${s.name}</b>`:`💀 Impiccato! Era <b>${s.name}</b>`;else m.textContent="";}
+  hmRenderLb();}
+function renderImpiccato(){
+  const day=hmToday();const rec=(store.get("fm26_hm_"+day.key)||{})[user];
+  if(rec){hmState={key:day.key,name:day.name,nat:day.nat,guessed:hmLettersOf(day.name),wrong:rec.wrong,max:6,over:true,won:rec.win,hinted:true,locked:true,start:Date.now()};}
+  else{hmState={key:day.key,name:day.name,nat:day.nat,guessed:new Set(),wrong:0,max:6,over:false,won:false,hinted:false,locked:false,start:Date.now()};}
+  view.innerHTML=`
+  <div class="top"><div class="brand"><img class="hlogo" src="${LOGO}" alt="">Impiccato</div><span class="topbtns"><button class="out" id="hmBack">Home</button></span></div>
+  <div class="dash fade">
+    <div class="hm-sub2">Indovina il calciatore misterioso del giorno · una sola partita</div>
+    <div class="hm-top"><div id="hmGallows"></div>
+      <div class="hm-side"><div class="hm-lives" id="hmLives"></div>
+        <button class="hm-hint" id="hmHint">🏳️ Rivela bandiera (−2 ❤)</button>
+        <div class="hm-flag" id="hmFlag"></div></div></div>
+    <div class="hm-word" id="hmWord"></div>
+    <div class="hm-msg" id="hmMsg"></div>
+    <div class="hm-keys" id="hmKeys"></div>
+  </div>
+  <div class="dash fade"><h3>🏆 Classifica del giorno</h3><div id="hmLb"></div></div>`;
+  const kb=document.getElementById("hmKeys");
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(L=>{const b=document.createElement("button");b.className="hm-key";b.textContent=L;b.dataset.l=L;b.onclick=()=>hmGuess(L);kb.appendChild(b);});
+  const hb=document.getElementById("hmHint");if(hb)hb.onclick=hmHint;
+  const bk=document.getElementById("hmBack");if(bk)bk.onclick=()=>go("home");
+  hmPaint();}
+function homeGamesHTML(){
+  const cd=cwToday(),cwLb=cwLeaderboard(cd.key),cwMe=cwLb.find(e=>e.team===user);
+  const hd=hmToday(),hmDone=(store.get("fm26_hm_"+hd.key)||{})[user];
+  return `<div class="dash fade games-hub">
+    <div class="gh-head"><div class="gh-ic">🎮</div><div><h3>Giochi del giorno</h3><div class="gh-sub">Una giocata al giorno · sfida la lega</div></div></div>
+    <div class="gh-grid">
+      <button class="gh-tile" id="cwPlay"><div class="gh-emoji">🧩</div><div class="gh-tt">Cruciverba</div>
+        <div class="gh-st">${cwMe?`✓ Risolto · ${cwFmt(cwMe.t)}`:`${cd.cw?cd.cw.ents.length:0} parole a tema`}</div>
+        <span class="gh-go">${cwMe?"Classifica":"Gioca"} →</span></button>
+      <button class="gh-tile" id="hmPlay"><div class="gh-emoji">💀</div><div class="gh-tt">Impiccato</div>
+        <div class="gh-st">${hmDone?(hmDone.win?"✓ Indovinato!":"✗ Fallito"):"Calciatore misterioso"}</div>
+        <span class="gh-go">${hmDone?"Classifica":"Gioca"} →</span></button>
+    </div></div>`;}
+
 function renderHome(){
  const st=jerseyOf(user),s=myStats(user),ci=cdInfo(),g=ci&&ci.g,R=ROSTERS[user];
  view.innerHTML=`
@@ -1119,7 +1229,7 @@ function renderHome(){
  <div class="fmtoggle fade" id="fmToggle"><span>Formazioni schierate · <b>${g?g.label:"—"}</b></span><span class="fmtg-ar" id="fmTgAr">▾</span></div>
  <div id="fmPanel" style="display:none"><div class="dash" id="fmHome"></div></div>
  ${newsBannerHTML()}
- ${homeCWHTML()}
+ ${homeGamesHTML()}
  ${homeLineupPreviewHTML()}
  <div class="dash fade"><h3>La tua stagione</h3>
    <div class="stats">
@@ -1140,6 +1250,7 @@ function renderHome(){
  const _gs=document.getElementById("goSettings");if(_gs)_gs.onclick=()=>go("settings");
  const _nb=document.getElementById("newsBand");if(_nb)_nb.onclick=()=>{newsView=+_nb.dataset.i;go("news")};
  const _cw=document.getElementById("cwPlay");if(_cw)_cw.onclick=()=>go("cruciverba");
+ const _hm=document.getElementById("hmPlay");if(_hm)_hm.onclick=()=>go("impiccato");
  document.getElementById("editJersey").onclick=e=>{e.preventDefault();e.stopPropagation();openSheet()};
  document.getElementById("banner").onclick=()=>go("formazione");
  const gr=document.getElementById("goRosa");
@@ -1755,6 +1866,7 @@ function cloudPathFor(key){
  if(key.indexOf("fm26_lineup_")===0)return{sec:"lineups",sub:key.slice(12)};
  if(key==="fm26_results")return{sec:"results",sub:null};
  if(key.indexOf("fm26_cw_")===0)return{sec:"cw",sub:key.slice(8)};
+ if(key.indexOf("fm26_hm_")===0)return{sec:"hm",sub:key.slice(8)};
  return null}
 function cloudPush(key,val){if(!cloudReady||_suppress||!leagueRef)return;const p=cloudPathFor(key);if(!p)return;
  try{const payload=p.sub?{[p.sec]:{[p.sub]:val}}:{[p.sec]:val};
@@ -1767,6 +1879,7 @@ function applyCloud(d){_suppress=true;try{
    if(d.voti)for(const g in d.voti)store.set("fm26_voti_"+g,d.voti[g]);
    if(d.results)store.set("fm26_results",d.results);
    if(d.cw)for(const k in d.cw)store.set("fm26_cw_"+k,d.cw[k]);
+   if(d.hm)for(const k in d.hm)store.set("fm26_hm_"+k,d.hm[k]);
    if(d.live)store.set("fm26_live",d.live);
    if(d.members)MEMBERS=d.members;
  }finally{_suppress=false}}
