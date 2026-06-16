@@ -15,21 +15,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,300..900;1,400..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --ink:#0b1c40; --paper:#FBF7EF; --white:#fff; --line:#1c2c57;
   --blue:#1763B6; --red:#E5322B; --green:#16A24A; --yellow:#FFC21E;
   --magenta:#E11C8E; --cyan:#16D6D6; --gold:#F4B41A; --orange:#F6911E;
   --navy:#16236b; --wcblue:#1763B6; --cream:#FFF8EC;
+  --lime:#9FD420; --teal:#16D6D6; --violet:#7B5FD6; --pink:#FF4D9D; --azzurro:#2B5FD9;
+  --stripe:linear-gradient(90deg,#E5322B,#F6911E,#FFC21E,#9FD420,#16A24A,#16D6D6,#1763B6,#7B5FD6,#E11C8E);
+  --pgA:#13235e; --pgB:#070d20; --pgGlow:#1763B6;
   --font:'Archivo',system-ui,sans-serif; --nav-h:74px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{font-family:var(--font);background:#06122b;color:var(--paper);overflow:hidden}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-.app{position:relative;max-width:480px;margin:0 auto;height:100svh;background:var(--ink);display:flex;flex-direction:column;overflow:hidden}
-.app::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:60;opacity:.045;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.app{position:relative;max-width:480px;margin:0 auto;height:100svh;background:radial-gradient(100% 55% at 50% -5%, color-mix(in srgb, var(--pgGlow) 30%, transparent), transparent 68%),linear-gradient(180deg, var(--pgA), var(--pgB));transition:background .45s ease;display:flex;flex-direction:column;overflow:hidden}
+.app::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:60;opacity:.09;mix-blend-mode:soft-light;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 
 /* LOGIN */
 .login{position:absolute;inset:0;z-index:50;background:var(--ink);display:flex;flex-direction:column;padding:max(34px,env(safe-area-inset-top)) 22px 26px;overflow-y:auto}
@@ -79,7 +83,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 /* DASHBOARD */
 .dash{padding:14px 16px 8px}
-.dash h3{font-weight:800;font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.45;margin:6px 4px 12px}
+.dash h3{font-weight:800;font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.6;margin:6px 4px 12px;position:relative;padding-left:16px}
+.dash h3::before{content:"";position:absolute;left:1px;top:50%;transform:translateY(-50%);width:9px;height:9px;background:var(--pgGlow);border-radius:2px 2px 2px 7px}
 .hlprev{cursor:pointer}
 .hlprev h3{display:flex;align-items:center;justify-content:space-between}
 .hlprev .hl-go{font-size:10px;letter-spacing:.06em;opacity:.8;color:var(--yellow)}
@@ -127,10 +132,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 /* NAV */
 .nav{position:absolute;left:0;right:0;bottom:0;z-index:40;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(10,10,10,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1.5px solid #1e1e1e;display:flex}
 .nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:800;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#6a6a6a;transition:color .2s;position:relative}
-.nav button .ic{font-size:22px;line-height:1;transition:transform .2s}
+.nav button .ic{font-size:0;line-height:1;transition:transform .2s}
+.nav button .ic svg{width:25px;height:25px;display:block}
 .nav button.active{color:#fff}
 .nav button.active .ic{transform:translateY(-2px)}
-.nav button.active::after{content:"";position:absolute;top:0;width:34px;height:3px;background:var(--green);border-radius:0 0 4px 4px}
+.nav button.active::after{content:"";position:absolute;top:0;width:40px;height:3px;background:var(--stripe);border-radius:0 0 4px 4px}
 .nav button:active .ic{transform:scale(.9)}
 
 /* SHEET */
@@ -290,7 +296,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .crow .cpts{font-weight:900;font-size:20px;text-align:right;flex-shrink:0}
 .crow .cpts small{display:block;font-size:8px;font-weight:800;opacity:.45;letter-spacing:.1em;margin-top:1px}
 .info{padding:8px 16px 8px}
-.card{background:#11214a;border:1.5px solid #27376b;border-radius:18px;padding:16px;margin-bottom:14px}
+.card{background:linear-gradient(180deg,#13234e,#101d42);border:1.5px solid #27376b;border-radius:18px;padding:16px;margin-bottom:14px}
 .card .ct{font-weight:800;font-size:11px;letter-spacing:.13em;text-transform:uppercase;opacity:.5;margin-bottom:14px}
 .bar{display:flex;align-items:center;gap:10px;margin-bottom:9px}
 .bar:last-child{margin-bottom:0}
@@ -598,6 +604,68 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .hm-key:disabled{cursor:default}
 .hm-key.ok{background:var(--green,#16A24A);border-color:var(--green,#16A24A);color:#fff}
 .hm-key.no{background:#3a1414;border-color:#7a2a2a;color:#caa}
+body{--pgA:#13235e;--pgB:#070d20;--pgGlow:#1763B6}
+body[data-view="home"]{--pgA:#16245c;--pgB:#070d20;--pgGlow:#2B5FD9}
+body[data-view="squadre"],body[data-view="roster"],body[data-view="svincolati"],body[data-view="info"],body[data-view="formview"],body[data-view="formazione"]{--pgA:#281b54;--pgB:#0b0820;--pgGlow:#7B5FD6}
+body[data-view="calendario"],body[data-view="risultati"]{--pgA:#0f3a44;--pgB:#06141a;--pgGlow:#16D6D6}
+body[data-view="votigiornata"],body[data-view="voti"]{--pgA:#481622;--pgB:#170810;--pgGlow:#E5322B}
+body[data-view="classifica"]{--pgA:#0f3a28;--pgB:#06160e;--pgGlow:#16A24A}
+body[data-view="cruciverba"]{--pgA:#1a2356;--pgB:#080a1e;--pgGlow:#2B5FD9}
+body[data-view="impiccato"]{--pgA:#3c1640;--pgB:#140618;--pgGlow:#E11C8E}
+body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],body[data-view="porceddu"]{--pgA:#3a2410;--pgB:#160c06;--pgGlow:#F6911E}
+.games-hub{position:relative;overflow:hidden}
+.games-hub::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:var(--stripe)}
+.gh-ic svg,.gh-emoji svg{width:30px;height:30px;display:block}
+.hm-hint svg{width:15px;height:15px;vertical-align:-2px;margin-right:1px}
+.dash h3 .h3ic,.h3ic{width:15px;height:15px;vertical-align:-2px;margin-right:6px}
+.brand .brandic,.brandic{width:18px;height:18px;vertical-align:-3px;margin-right:5px}
+/* ============ DESIGN SYSTEM v1 — applicato all'app ============ */
+:root{
+  --acid:#C6FF3D;--violet:#7A3FF2;--crimson:#E11D48;--orange:#FF6A1A;--cyan:#22D3EE;--elec:#2B5FE3;--cream:#F7F3E8;
+  --font:'Inter',system-ui,sans-serif;--font-display:'Syne','Inter',system-ui,sans-serif;
+  --stripe:linear-gradient(90deg,#E11D48,#FF6A1A,#FFC21E,#C6FF3D,#16C98A,#22D3EE,#2B5FE3,#7A3FF2,#FF4D9D);
+  --ease:cubic-bezier(.4,0,.2,1);
+  --glass-bg:rgba(255,255,255,.085);--glass-bd:rgba(255,255,255,.16);
+  --glass-sh:0 22px 60px -28px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.10);
+}
+body{font-family:var(--font)}
+.top .brand,.hero .me,.login h1,.login .big26,.gh-tt,.games-hub .gh-head h3,.tcard .nm{font-family:var(--font-display)}
+.hero .me,.login h1{letter-spacing:-.035em}
+
+/* sfondo dinamico: palette DS + vinyl + glow, transizione 550ms */
+.app{transition:background .55s var(--ease);
+  background:
+    repeating-radial-gradient(circle at 50% 26%, rgba(255,255,255,.035) 0 1px, transparent 1px 3.6px),
+    radial-gradient(100% 55% at 50% -4%, color-mix(in srgb, var(--pgGlow) 30%, transparent), transparent 66%),
+    linear-gradient(180deg, var(--pgA), var(--pgB));}
+.app::after{opacity:.11}
+
+/* tono dominante per pagina */
+body{--pgA:#16142b;--pgB:#070611;--pgGlow:var(--violet)}
+body[data-view="home"]{--pgA:#1a1140;--pgB:#080611;--pgGlow:var(--violet)}
+body[data-view="squadre"],body[data-view="roster"],body[data-view="svincolati"],body[data-view="info"],body[data-view="formview"],body[data-view="formazione"]{--pgA:#0e1f4d;--pgB:#06091c;--pgGlow:var(--elec)}
+body[data-view="calendario"],body[data-view="risultati"]{--pgA:#0e3a44;--pgB:#06141a;--pgGlow:var(--cyan)}
+body[data-view="votigiornata"],body[data-view="voti"]{--pgA:#451521;--pgB:#16070d;--pgGlow:var(--crimson)}
+body[data-view="classifica"]{--pgA:#1f3b16;--pgB:#0a1606;--pgGlow:var(--acid)}
+body[data-view="cruciverba"]{--pgA:#16245c;--pgB:#080a1e;--pgGlow:var(--elec)}
+body[data-view="impiccato"]{--pgA:#3a2410;--pgB:#160c06;--pgGlow:var(--orange)}
+body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],body[data-view="porceddu"]{--pgA:#161427;--pgB:#07060f;--pgGlow:var(--violet)}
+
+/* login texturizzato */
+.login{background:linear-gradient(180deg,#1a1140,#080611)}
+
+/* ===== VETRO SATINATO (Glassmorphism) ===== */
+.card,.fmInfo,.tcard,.gh-tile,.games-hub{
+  background:var(--glass-bg);border:1px solid var(--glass-bd);
+  -webkit-backdrop-filter:blur(20px) saturate(1.2);backdrop-filter:blur(20px) saturate(1.2);
+  box-shadow:var(--glass-sh)}
+.card{border-radius:26px}
+.fmInfo{border-radius:22px}
+.tcard{border-radius:20px}
+.gh-tile{border-radius:22px}
+.games-hub{border-radius:26px;margin:14px 16px;padding:18px}
+.banner{border-radius:26px}
+.nav{border-top:1px solid rgba(255,255,255,.1)}
 </style>
 </head>
 <body>
@@ -608,11 +676,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   </div>
   <div class="view" id="view"></div>
   <nav class="nav" id="nav">
-    <button data-v="home" class="active"><span class="ic">🏠</span>Home</button>
-    <button data-v="squadre"><span class="ic">👕</span>Squadre</button>
-    <button data-v="calendario"><span class="ic">🗓️</span>Calendario</button>
-    <button data-v="votigiornata"><span class="ic">🎯</span>Voti</button>
-    <button data-v="classifica"><span class="ic">🏅</span>Classifica</button>
+    <button data-v="home" class="active"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span>Home</button>
+    <button data-v="squadre"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M9 3 4 6l2 4 2-1v9h8v-9l2 1 2-4-5-3a3 3 0 0 1-6 0z"/></svg></span>Squadre</button>
+    <button data-v="calendario"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg></span>Calendario</button>
+    <button data-v="votigiornata"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></span>Voti</button>
+    <button data-v="classifica"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5v1A3 3 0 0 0 7.5 10M17 6h2.5v1A3 3 0 0 1 16.5 10"/><path d="M12 14v3M8.5 20h7M10 20l.4-3h3.2l.4 3"/></svg></span>Classifica</button>
   </nav>
   <div class="fmActions" id="fmActions" style="display:none"><button class="fmCancel" id="fmCancel">Annulla</button><button class="fmConfirm" id="fmConfirm">Schiera</button></div>
   <div class="vgfoot" id="vgFoot" style="display:none"></div>
@@ -784,18 +852,21 @@ const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){retu
 let uid=0;
 function lum(h){const n=parseInt(h.slice(1),16);return((n>>16&255)*.2126+(n>>8&255)*.7152+(n&255)*.0722)/255}
 function contrast(h){return lum(h)>.6?"#0A0A0A":"#FFFFFF"}
+function shade(h,p){let n=parseInt(h.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;const t=p<0?0:255,a=Math.abs(p);r=Math.round((t-r)*a+r);g=Math.round((t-g)*a+g);b=Math.round((t-b)*a+b);return"#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);}
 function jerseyOf(t){const s=store.get("fm26_jersey_"+t),b=PRESET[t]||{primary:"#1A52F5",secondary:"#fff",detail:"#0A0A0A",pattern:"solid"};return Object.assign({number:10,name:t.toUpperCase()},b,s||{})}
 function jerseySVG(st,showText){
  const id="jc"+(uid++);
  const body="M70,26 C86,18 114,18 130,26 L166,44 L196,82 L172,106 L150,90 L150,212 L50,212 L50,90 L28,106 L4,82 L34,44 Z";
+ const P=st.primary,S=st.secondary,D=st.detail,dk=shade(P,-.34),dk2=shade(P,-.55),lt=shade(P,.26);
  let pat="";
- if(st.pattern==="stripes"){for(let x=34;x<170;x+=24)pat+=`<rect x="${x}" y="0" width="12" height="220" fill="${st.secondary}"/>`}
- else if(st.pattern==="hoops"){for(let y=20;y<214;y+=24)pat+=`<rect x="0" y="${y}" width="200" height="12" fill="${st.secondary}"/>`}
- else if(st.pattern==="half"){pat=`<rect x="100" y="0" width="100" height="220" fill="${st.secondary}"/>`}
- else if(st.pattern==="sash"){pat=`<polygon points="118,6 176,6 78,220 20,220" fill="${st.secondary}"/>`}
- const tc=contrast(st.primary);
- const txt=showText?`<text x="100" y="78" text-anchor="middle" fill="${tc}" font-family="Archivo" font-weight="800" font-size="13" letter-spacing="1" opacity=".85">${(st.name||"").slice(0,12)}</text><text x="100" y="158" text-anchor="middle" fill="${tc}" font-family="Archivo" font-weight="900" font-size="66" letter-spacing="-2">${st.number??""}</text>`:"";
- return `<defs><clipPath id="${id}"><path d="${body}"/></clipPath></defs><g clip-path="url(#${id})"><rect width="200" height="220" fill="${st.primary}"/>${pat}<rect x="0" y="202" width="200" height="10" fill="${st.detail}"/></g><path d="M82,24 L100,46 L118,24 L112,21 L100,40 L88,21 Z" fill="${st.detail}"/><polygon points="196,82 172,106 165,99 189,75" fill="${st.detail}"/><polygon points="4,82 28,106 35,99 11,75" fill="${st.detail}"/><path d="${body}" fill="none" stroke="#0A0A0A" stroke-width="3" stroke-linejoin="round"/>${txt}`;
+ if(st.pattern==="stripes"){for(let x=34;x<170;x+=24)pat+=`<rect x="${x}" y="0" width="12" height="220" fill="${S}"/>`}
+ else if(st.pattern==="hoops"){for(let y=20;y<214;y+=24)pat+=`<rect x="0" y="${y}" width="200" height="12" fill="${S}"/>`}
+ else if(st.pattern==="half"){pat=`<rect x="100" y="0" width="100" height="220" fill="${S}"/>`}
+ else if(st.pattern==="sash"){pat=`<polygon points="118,6 176,6 78,220 20,220" fill="${S}"/>`}
+ const tc=contrast(P);
+ const txt=showText?`<text x="100" y="80" text-anchor="middle" fill="#000" opacity=".3" font-family="Archivo" font-weight="800" font-size="13" letter-spacing="1">${(st.name||"").slice(0,12)}</text><text x="100" y="77.2" text-anchor="middle" fill="#fff" opacity=".22" font-family="Archivo" font-weight="800" font-size="13" letter-spacing="1">${(st.name||"").slice(0,12)}</text><text x="100" y="78" text-anchor="middle" fill="${tc}" font-family="Archivo" font-weight="800" font-size="13" letter-spacing="1" opacity=".95">${(st.name||"").slice(0,12)}</text><text x="100" y="161.5" text-anchor="middle" fill="#000" opacity=".34" font-family="Archivo" font-weight="900" font-size="66" letter-spacing="-2">${st.number??""}</text><text x="100" y="156.6" text-anchor="middle" fill="#fff" opacity=".18" font-family="Archivo" font-weight="900" font-size="66" letter-spacing="-2">${st.number??""}</text><text x="100" y="158" text-anchor="middle" fill="${tc}" font-family="Archivo" font-weight="900" font-size="66" letter-spacing="-2">${st.number??""}</text>`:"";
+ const folds=`<g filter="url(#${id}f)"><path d="M62,72 C72,122 72,174 64,208" stroke="#000" stroke-opacity=".22" stroke-width="5" fill="none"/><path d="M138,72 C128,122 128,174 136,208" stroke="#000" stroke-opacity=".22" stroke-width="5" fill="none"/><path d="M86,66 C90,124 88,178 90,208" stroke="#000" stroke-opacity=".16" stroke-width="4" fill="none"/><path d="M114,66 C110,124 112,178 110,208" stroke="#000" stroke-opacity=".16" stroke-width="4" fill="none"/><path d="M57,74 C67,122 67,174 59,206" stroke="#fff" stroke-opacity=".17" stroke-width="3.5" fill="none"/><path d="M133,74 C123,122 123,174 131,206" stroke="#fff" stroke-opacity=".17" stroke-width="3.5" fill="none"/><path d="M100,60 C98,124 98,178 100,208" stroke="#fff" stroke-opacity=".14" stroke-width="4" fill="none"/><path d="M52,148 C72,158 90,160 100,158" stroke="#000" stroke-opacity=".18" stroke-width="4" fill="none"/><path d="M148,148 C128,158 110,160 100,158" stroke="#000" stroke-opacity=".18" stroke-width="4" fill="none"/><path d="M60,196 C80,202 120,202 140,196" stroke="#000" stroke-opacity=".2" stroke-width="4" fill="none"/><path d="M64,190 C84,195 116,195 136,190" stroke="#fff" stroke-opacity=".1" stroke-width="3" fill="none"/></g>`;
+ return `<defs><clipPath id="${id}c"><path d="${body}"/></clipPath><filter id="${id}s" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7"/></filter><filter id="${id}f" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="3.6"/></filter><filter id="${id}ao" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6"/></filter><filter id="${id}w"><feTurbulence type="turbulence" baseFrequency=".62 .92" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0"/></filter><radialGradient id="${id}h" cx=".42" cy=".26" r=".85"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".5" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><radialGradient id="${id}sp" cx=".34" cy=".2" r=".22"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient><linearGradient id="${id}cyl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset=".2" stop-color="#000" stop-opacity=".05"/><stop offset=".5" stop-color="#fff" stop-opacity=".06"/><stop offset=".82" stop-color="#000" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".52"/></linearGradient><linearGradient id="${id}v" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".26"/><stop offset=".16" stop-color="#000" stop-opacity="0"/><stop offset=".58" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient><linearGradient id="${id}rim" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".1" stop-color="#fff" stop-opacity="0"/></linearGradient><radialGradient id="${id}nk" cx=".5" cy="0" r=".4"><stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs><path d="${body}" fill="#000" opacity=".42" filter="url(#${id}s)" transform="translate(2,9)"/><ellipse cx="100" cy="213" rx="62" ry="8" fill="#000" opacity=".3" filter="url(#${id}ao)"/><g clip-path="url(#${id}c)"><rect width="200" height="220" fill="${P}"/>${pat}<path d="M70,24 C86,40 114,40 130,24 L130,52 C114,64 86,64 70,52 Z" fill="${dk2}"/><rect width="200" height="220" fill="url(#${id}cyl)"/><rect width="200" height="220" fill="url(#${id}v)"/><rect width="200" height="60" fill="url(#${id}nk)"/><ellipse cx="44" cy="86" rx="26" ry="40" fill="#000" opacity=".22" filter="url(#${id}ao)"/><ellipse cx="156" cy="86" rx="26" ry="40" fill="#000" opacity=".22" filter="url(#${id}ao)"/>${folds}<rect width="200" height="220" fill="#fff" filter="url(#${id}w)" opacity=".06" style="mix-blend-mode:overlay"/><ellipse cx="84" cy="66" rx="78" ry="64" fill="url(#${id}h)" style="mix-blend-mode:screen"/><ellipse cx="70" cy="44" rx="40" ry="30" fill="url(#${id}sp)" style="mix-blend-mode:screen"/><rect x="150" y="0" width="50" height="220" fill="url(#${id}rim)" style="mix-blend-mode:screen"/><rect x="0" y="201" width="200" height="11" fill="${D}"/><rect x="0" y="198" width="200" height="4" fill="#000" opacity=".25"/></g><path d="M78,22 L100,48 L122,22 L114,18 L100,40 L86,18 Z" fill="${D}"/><path d="M86,19 L100,40 L114,19" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.4"/><path d="M82,24 L100,49 L118,24" fill="none" stroke="#000" stroke-opacity=".4" stroke-width="1.6"/><path d="M84,21 L100,44 L116,21" fill="none" stroke="${lt}" stroke-opacity=".5" stroke-width="1"/><polygon points="196,82 172,106 164,98 188,74" fill="${D}"/><polygon points="4,82 28,106 36,98 12,74" fill="${D}"/><path d="M171,105 L165,99" stroke="#fff" stroke-opacity=".3" stroke-width="1.4"/><path d="M29,105 L35,99" stroke="#fff" stroke-opacity=".3" stroke-width="1.4"/><path d="M150,92 C160,96 167,101 174,106" stroke="#000" stroke-opacity=".32" stroke-width="3" fill="none" filter="url(#${id}f)"/><path d="M50,92 C40,96 33,101 26,106" stroke="#000" stroke-opacity=".32" stroke-width="3" fill="none" filter="url(#${id}f)"/><path d="${body}" fill="none" stroke="${dk2}" stroke-opacity=".5" stroke-width="2.2" stroke-linejoin="round"/><path d="M54,92 L54,206" stroke="#000" stroke-opacity=".14" stroke-width="1" stroke-dasharray="2 3"/><path d="M146,92 L146,206" stroke="#000" stroke-opacity=".14" stroke-width="1" stroke-dasharray="2 3"/>${txt}`;
 }
 function paint(svg,st,showText=true){svg.setAttribute("viewBox","0 0 200 220");svg.innerHTML=jerseySVG(st,showText)}
 
@@ -914,7 +985,7 @@ function logout(){const A=fbAuth();if(A){A.signOut().catch(()=>{})}else{user=nul
 /* ===== ROUTING ===== */
 const view=document.getElementById("view");
 function setNav(v){document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===v))}
-function go(v){curView=v;if(cdTimer){clearInterval(cdTimer);cdTimer=null}setNav(["home","squadre","calendario","votigiornata","classifica"].includes(v)?v:"home");view.scrollTop=0;document.getElementById("nav").style.display="flex";document.getElementById("fmActions").style.display="none";var _vf=document.getElementById("vgFoot");if(_vf&&v!=="votigiornata")_vf.style.display="none";
+function go(v){curView=v;document.body.dataset.view=v;if(cdTimer){clearInterval(cdTimer);cdTimer=null}setNav(["home","squadre","calendario","votigiornata","classifica"].includes(v)?v:"home");view.scrollTop=0;document.getElementById("nav").style.display="flex";document.getElementById("fmActions").style.display="none";var _vf=document.getElementById("vgFoot");if(_vf&&v!=="votigiornata")_vf.style.display="none";
  if(v==="home")renderHome();else if(v==="cruciverba")renderCruciverba();else if(v==="impiccato")renderImpiccato();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
  else if(v==="classifica")renderClassifica();else if(v==="formazione")renderFormazione();
  else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
@@ -1111,7 +1182,7 @@ function renderCruciverba(){
     ${cwState.locked?"":`<button class="cw-check" id="cwCheck">Controlla</button>`}</div>
   <div class="dash fade"><h3>Orizzontali</h3><ul class="cw-clues">${acr}</ul>
     <h3>Verticali</h3><ul class="cw-clues">${dwn}</ul></div>
-  <div class="dash fade"><h3>🏆 Classifica del giorno</h3><div id="cwLb"></div></div>`;
+  <div class="dash fade"><h3><svg class="h3ic" viewBox="0 0 24 24"><path d="M6 4h12v5a6 6 0 0 1-12 0z" fill="#F7F3E8"/><path d="M6 6H3.2v1a3 3 0 0 0 3 3M18 6h2.8v1a3 3 0 0 1-3 3" fill="none" stroke="#F7F3E8" stroke-width="2"/><path d="M12 14.5v3M8.5 20.5h7M10 20.5l.4-3h3.2l.4 3" fill="none" stroke="#F7F3E8" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="8" r="2.2" fill="#C6FF3D"/></svg>Classifica del giorno</h3><div id="cwLb"></div></div>`;
   cwRenderLb();
   const bk=document.getElementById("cwBack");if(bk)bk.onclick=()=>{if(cwTimer)clearInterval(cwTimer);go("home");};
   if(cwState.locked)return;
@@ -1192,13 +1263,13 @@ function renderImpiccato(){
     <div class="hm-sub2">Indovina il calciatore misterioso del giorno · una sola partita</div>
     <div class="hm-top"><div id="hmGallows"></div>
       <div class="hm-side"><div class="hm-lives" id="hmLives"></div>
-        <button class="hm-hint" id="hmHint">🏳️ Rivela bandiera (−2 ❤)</button>
+        <button class="hm-hint" id="hmHint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4"/><path d="M6 4h11l-2.2 4L17 12H6"/></svg> Rivela bandiera (−2 ❤)</button>
         <div class="hm-flag" id="hmFlag"></div></div></div>
     <div class="hm-word" id="hmWord"></div>
     <div class="hm-msg" id="hmMsg"></div>
     <div class="hm-keys" id="hmKeys"></div>
   </div>
-  <div class="dash fade"><h3>🏆 Classifica del giorno</h3><div id="hmLb"></div></div>`;
+  <div class="dash fade"><h3><svg class="h3ic" viewBox="0 0 24 24"><path d="M6 4h12v5a6 6 0 0 1-12 0z" fill="#F7F3E8"/><path d="M6 6H3.2v1a3 3 0 0 0 3 3M18 6h2.8v1a3 3 0 0 1-3 3" fill="none" stroke="#F7F3E8" stroke-width="2"/><path d="M12 14.5v3M8.5 20.5h7M10 20.5l.4-3h3.2l.4 3" fill="none" stroke="#F7F3E8" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="8" r="2.2" fill="#C6FF3D"/></svg>Classifica del giorno</h3><div id="hmLb"></div></div>`;
   const kb=document.getElementById("hmKeys");
   "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(L=>{const b=document.createElement("button");b.className="hm-key";b.textContent=L;b.dataset.l=L;b.onclick=()=>hmGuess(L);kb.appendChild(b);});
   const hb=document.getElementById("hmHint");if(hb)hb.onclick=hmHint;
@@ -1208,12 +1279,12 @@ function homeGamesHTML(){
   const cd=cwToday(),cwLb=cwLeaderboard(cd.key),cwMe=cwLb.find(e=>e.team===user);
   const hd=hmToday(),hmDone=(store.get("fm26_hm_"+hd.key)||{})[user];
   return `<div class="dash fade games-hub">
-    <div class="gh-head"><div class="gh-ic">🎮</div><div><h3>Giochi del giorno</h3><div class="gh-sub">Una giocata al giorno · sfida la lega</div></div></div>
+    <div class="gh-head"><div class="gh-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10a4.5 4.5 0 0 1 4.5 4.5l-.6 3.6A2.6 2.6 0 0 1 16 16l-1.4-1.6H9.4L8 16a2.6 2.6 0 0 1-4.9-.4l-.6-3.6A4.5 4.5 0 0 1 7 8z"/><path d="M6.5 11.5v2M5.5 12.5h2"/><circle cx="16" cy="11.6" r=".7" fill="currentColor" stroke="none"/><circle cx="17.6" cy="13.2" r=".7" fill="currentColor" stroke="none"/></svg></div><div><h3>Giochi del giorno</h3><div class="gh-sub">Una giocata al giorno · sfida la lega</div></div></div>
     <div class="gh-grid">
-      <button class="gh-tile" id="cwPlay"><div class="gh-emoji">🧩</div><div class="gh-tt">Cruciverba</div>
+      <button class="gh-tile" id="cwPlay"><div class="gh-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/></svg></div><div class="gh-tt">Cruciverba</div>
         <div class="gh-st">${cwMe?`✓ Risolto · ${cwFmt(cwMe.t)}`:`${cd.cw?cd.cw.ents.length:0} parole a tema`}</div>
         <span class="gh-go">${cwMe?"Classifica":"Gioca"} →</span></button>
-      <button class="gh-tile" id="hmPlay"><div class="gh-emoji">💀</div><div class="gh-tt">Impiccato</div>
+      <button class="gh-tile" id="hmPlay"><div class="gh-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11.5a7 7 0 0 1 14 0c0 2.3-1.3 3.4-1.3 4.8v.7a1.2 1.2 0 0 1-1.2 1.2H7.5a1.2 1.2 0 0 1-1.2-1.2v-.7C6.3 14.9 5 13.8 5 11.5z"/><circle cx="9.2" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="14.8" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M10.3 18v2M13.7 18v2"/></svg></div><div class="gh-tt">Impiccato</div>
         <div class="gh-st">${hmDone?(hmDone.win?"✓ Indovinato!":"✗ Fallito"):"Calciatore misterioso"}</div>
         <span class="gh-go">${hmDone?"Classifica":"Gioca"} →</span></button>
     </div></div>`;}
@@ -1756,7 +1827,7 @@ function renderVotiGiornata(){
    benchSorted((R?R.players:[]).filter(p=>!inUse.has(pid(p))),saved.order).forEach(p=>{bench+=vgRow(p,voti[pid(p)],null,subbedIn.has(pid(p)))});
  }
  const played=tg&&tg.played,totTxt=played?tg.tot:"\u2013";
- view.innerHTML=`<div class="top"><div class="brand">\ud83c\udfafVoti giornata</div></div>
+ view.innerHTML=`<div class="top"><div class="brand"><svg class="brandic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#F7F3E8"/><circle cx="12" cy="12" r="5.4" fill="#0B0B10"/><circle cx="12" cy="12" r="2.2" fill="#E11D48"/></svg>Voti giornata</div></div>
   <div class="fmSelLab">Turno</div><div class="modrow" id="vgTurni">${turni}</div>
   <div class="fmSelLab">Squadra</div><div class="modrow" id="vgTeams">${teamsB}</div>
   <div style="padding:10px 16px 0"><button class="rosabtn alt" id="vgAdmin" style="margin-top:0">\ud83d\udcdd Inserisci voti (admin) \u2192</button></div>
