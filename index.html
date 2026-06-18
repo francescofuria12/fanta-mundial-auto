@@ -471,7 +471,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .mc-live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
 @keyframes blink{50%{opacity:.25}}
 .mc-rows{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;border-left:1.5px solid #26366a;padding-left:12px}
-.mc-row{display:grid;grid-template-columns:22px minmax(0,1fr) 22px;align-items:center;gap:8px}
+.mc-row{display:grid;grid-template-columns:22px minmax(0,1fr) 28px;align-items:center;gap:8px;min-width:0}
 .mc-row .fl{width:22px;height:15px;border-radius:2px;object-fit:cover}
 .mc-row .nm{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .mc-row .sc{font-weight:900;font-size:15px;text-align:right;font-variant-numeric:tabular-nums}
@@ -523,7 +523,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .na-t{flex:1;font-weight:700;font-size:12.5px;line-height:1.3;min-width:0}
 .na-d{font-size:11px;opacity:.5;font-weight:700;flex-shrink:0}
 
-.mcexp{display:block;text-align:center;font-size:11px;opacity:.5;margin-top:4px}
+.mcexp{display:block;text-align:center;font-size:11px;opacity:.5;margin-top:4px;flex-shrink:0;transition:transform .25s ease}
+.mcw[open] .mcexp{transform:rotate(180deg)}
 .mcw{margin-bottom:8px}
 .mcw>summary{list-style:none;cursor:pointer}
 .mcw>summary::-webkit-details-marker{display:none}
@@ -1551,10 +1552,13 @@ function calMatchCard(m){
  if(livePlay)mid=`<span class="mc-mid"><span class="mc-live">${lv.minute!=null?lv.minute+"'":"LIVE"}</span></span>`;
  else if(res||(lv&&lv.goals&&!isLiveStatus(lv.status)))mid=`<span class="mc-mid">FT</span>`;
  else mid=`<span class="mc-mid">${pad(m.dt.getHours())}:${pad(m.dt.getMinutes())}<br><span style="opacity:.55;font-size:10px">${pad(m.dt.getDate())}/${pad(m.dt.getMonth()+1)}</span></span>`;
- const ev=(lv&&Array.isArray(lv.ev))?lv.ev:[];const hasEv=ev.length>0;
+ // Dettagli eventi: generati dinamicamente solo dai dati del match (lv.ev).
+ // Qualsiasi partita con eventi mostra l'accordion, senza casi speciali per singole gare.
+ const events=(lv&&Array.isArray(lv.ev))?lv.ev:[];
+ const hasEv=events.length>0;
  const inner=`${mid}<div class="mc-rows"><div class="mc-row ${c1}"><img class="fl" src="${flag(i1)}" alt=""><span class="nm">${i1}</span><span class="sc">${s1}</span></div><div class="mc-row ${c2}"><img class="fl" src="${flag(i2)}" alt=""><span class="nm">${i2}</span><span class="sc">${s2}</span></div></div>${hasEv?'<span class="mcexp">▾</span>':''}`;
  if(!hasEv)return `<div class="mc ${livePlay?'live':''}">${inner}</div>`;
- const rows=ev.slice().sort((a,b)=>(a.min||0)-(b.min||0)).map(e=>{const meta=EVMETA[e.type]||["•",e.type];const neg=(e.pts||0)<0;const fl=e.team===m.t2?flag(i2):flag(i1);return `<div class="evrow"><span class="evmin">${e.min!=null?e.min+"'":""}</span><span class="evic">${meta[0]}</span><img class="evfl" src="${fl}" alt=""><span class="evpl">${e.player||""}</span><span class="evlb">${meta[1]}</span><span class="evpt ${neg?'neg':'pos'}">${e.pts>0?'+':''}${e.pts!=null?e.pts:''}</span></div>`}).join("");
+ const rows=events.slice().sort((a,b)=>(a.min||0)-(b.min||0)).map(e=>{const meta=EVMETA[e.type]||["•",e.type];const neg=(e.pts||0)<0;const fl=e.team===m.t2?flag(i2):flag(i1);return `<div class="evrow"><span class="evmin">${e.min!=null?e.min+"'":""}</span><span class="evic">${meta[0]}</span><img class="evfl" src="${fl}" alt=""><span class="evpl">${e.player||""}</span><span class="evlb">${meta[1]}</span><span class="evpt ${neg?'neg':'pos'}">${e.pts>0?'+':''}${e.pts!=null?e.pts:''}</span></div>`}).join("");
  return `<details class="mcw"><summary class="mc ${livePlay?'live':''}">${inner}</summary><div class="mcev">${rows}</div></details>`;
 }
 function renderCalendario(){
