@@ -471,10 +471,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .mc-live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
 @keyframes blink{50%{opacity:.25}}
 .mc-rows{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;border-left:1.5px solid #26366a;padding-left:12px}
-.mc-row{display:grid;grid-template-columns:22px minmax(0,1fr) 28px;align-items:center;gap:8px;min-width:0}
+.mc-row{display:grid;grid-template-columns:22px minmax(0,1fr) 26px;align-items:center;gap:8px;min-width:0}
 .mc-row .fl{width:22px;height:15px;border-radius:2px;object-fit:cover}
 .mc-row .nm{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.mc-row .sc{font-weight:900;font-size:15px;text-align:right;font-variant-numeric:tabular-nums}
+.mc-row .sc{font-weight:900;font-size:15px;text-align:right;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
 .mc-row.win .nm{font-weight:900}
 .mc-row.lose{opacity:.5}
 .gt{background:#11214a;border:1.5px solid #26366a;border-radius:14px;padding:10px 12px;margin-bottom:12px}
@@ -523,8 +523,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .na-t{flex:1;font-weight:700;font-size:12.5px;line-height:1.3;min-width:0}
 .na-d{font-size:11px;opacity:.5;font-weight:700;flex-shrink:0}
 
-.mcexp{display:block;text-align:center;font-size:11px;opacity:.5;margin-top:4px;flex-shrink:0;transition:transform .25s ease}
-.mcw[open] .mcexp{transform:rotate(180deg)}
+.mcexp{display:block;text-align:center;font-size:11px;opacity:.5;margin-top:4px}
 .mcw{margin-bottom:8px}
 .mcw>summary{list-style:none;cursor:pointer}
 .mcw>summary::-webkit-details-marker{display:none}
@@ -1536,6 +1535,74 @@ function groupTable(g){const res=getResults();
  return teams}
 function liveKey(a,b){return [a,b].slice().sort().join("|")}
 function getLive(){return store.get("fm26_live")||{}}
+function getEvents(){return store.get("fm26_events")||{}}
+/* Eventi derivati dai VOTI di giornata: validi per QUALSIASI partita conclusa,
+   non solo per il feed live. Per ogni giocatore di proprieta' delle due nazionali
+   in campo, i bonus/malus registrati (gol, assist, ammonizioni, ecc.) diventano
+   righe-evento. Tutto data-driven: funziona su ogni giornata/fase senza modifiche. */
+const EVTORD={goal:0,pengoal:1,owngoal:2,penmiss:3,assist:4,pensave:5,yellow:6,red:7};
+function derivedMatchEvents(m){
+  const gid=m.round; if(!gid)return null;
+  const voti=getVoti(gid); if(!voti||!Object.keys(voti).length)return null;
+  const itHome=natIT(m.t1),itAway=natIT(m.t2);
+  const out=[];
+  ownedPlayers().forEach(p=>{
+    if(p.nat!==itHome&&p.nat!==itAway)return;
+    const rec=voti[pid(p)]; if(!rec)return;
+    const team=p.nat===itAway?m.t2:m.t1;
+    const add=(type,n,pts)=>{for(let i=0;i<(n||0);i++)out.push({type,team,player:surnameOf(p.name),pts})};
+    add("goal",rec.g,BONUS.gol);
+    add("pengoal",rec.rs,BONUS.rigSeg);
+    add("assist",rec.a,BONUS.assist);
+    add("pensave",rec.rp,BONUS.rigPar);
+    add("penmiss",rec.rsb,BONUS.rigSb);
+    add("owngoal",rec.og,BONUS.autorete);
+    add("yellow",rec.amm,BONUS.amm);
+    add("red",rec.esp,BONUS.esp);
+  });
+  if(!out.length)return null;
+  out.sort((x,y)=>(x.team===m.t1?0:1)-(y.team===m.t1?0:1)||(EVTORD[x.type]??9)-(EVTORD[y.type]??9)||x.player.localeCompare(y.player,"it"));
+  return out;
+}
+/* ===== Eventi reali esterni (anche giocatori NON in lega) =====
+   Archivio statico per-partita (keyed per m.n) degli avvenimenti reali del Mondiale:
+   gol, rigori, assist, ammonizioni, espulsioni, autogol. Va popolato SOLO con partite
+   gia' disputate (dati reali); le partite future non hanno eventi finche' non si giocano.
+   Formato evento: {min, type, team, player}. 'type' tra: goal, pengoal, penmiss,
+   pensave, owngoal, assist, yellow, red. 'team' = nome nazionale (come in MATCHES).
+   I punti (bonus/malus) sono calcolati automaticamente da evPts(). Per aggiornare il
+   torneo basta aggiungere qui le nuove partite, oppure passarle dal feed live/cloud. */
+const WC_EVENTS={
+  // n.17 — Francia 3-1 Senegal (16/06/2026)
+  17:[
+    {min:66,type:"goal",team:"France",player:"Mbappé"},
+    {min:66,type:"assist",team:"France",player:"Olise"},
+    {min:82,type:"goal",team:"France",player:"Barcola"},
+    {min:82,type:"assist",team:"France",player:"Rabiot"},
+    {min:95,type:"goal",team:"Senegal",player:"Mbaye"},
+    {min:96,type:"goal",team:"France",player:"Mbappé"}
+  ]
+  // n.18 (Iraq-Norvegia) e' gia' coperta dal feed live.
+};
+function evPts(type){const M={goal:BONUS.gol,pengoal:BONUS.rigSeg,pensave:BONUS.rigPar,assist:BONUS.assist,penmiss:BONUS.rigSb,owngoal:BONUS.autorete,yellow:BONUS.amm,red:BONUS.esp};return M[type];}
+/* Eventi di una partita, in ordine di priorita':
+   1) feed live (con minuti) - persistito cosi' resta dopo la fine e la finestra live;
+   2) storico persistito (keyed per m.n);
+   3) archivio reale WC_EVENTS (tutti i giocatori, anche fuori lega);
+   4) eventi derivati dai voti di giornata - copre i giocatori della lega.
+   Nessuna eccezione hardcoded su Iraq-Norvegia: e' solo l'unica con feed live. */
+function matchEvents(m){
+  const lv=getLive()[liveKey(m.t1,m.t2)];
+  const live=lv&&Array.isArray(lv.ev)&&lv.ev.length?lv.ev:null;
+  if(live){const all=getEvents();const cur=JSON.stringify(live);
+    if(JSON.stringify(all[m.n]||null)!==cur){all[m.n]=live;store.set("fm26_events",all)}
+    return live}
+  const stored=getEvents()[m.n];
+  if(Array.isArray(stored)&&stored.length)return stored;
+  const seed=WC_EVENTS[m.n];
+  if(Array.isArray(seed)&&seed.length)return seed.map(e=>({min:e.min,type:e.type,team:e.team,player:e.player,pts:e.pts!=null?e.pts:evPts(e.type)}));
+  return derivedMatchEvents(m);
+}
 const EVMETA={goal:["⚽","Gol"],pengoal:["⚽","Rig."],penmiss:["⚽","Rig. sbagliato"],pensave:["🧤","Rig. parato"],owngoal:["🥅","Autogol"],assist:["👟","Assist"],yellow:["🟨","Ammonito"],red:["🟥","Espulso"]};
 function isLiveStatus(s){return s&&!["FT","AET","PEN","PST","CANC","ABD","TBD","NS"].includes(s)}
 function calMatchCard(m){
@@ -1552,13 +1619,11 @@ function calMatchCard(m){
  if(livePlay)mid=`<span class="mc-mid"><span class="mc-live">${lv.minute!=null?lv.minute+"'":"LIVE"}</span></span>`;
  else if(res||(lv&&lv.goals&&!isLiveStatus(lv.status)))mid=`<span class="mc-mid">FT</span>`;
  else mid=`<span class="mc-mid">${pad(m.dt.getHours())}:${pad(m.dt.getMinutes())}<br><span style="opacity:.55;font-size:10px">${pad(m.dt.getDate())}/${pad(m.dt.getMonth()+1)}</span></span>`;
- // Dettagli eventi: generati dinamicamente solo dai dati del match (lv.ev).
- // Qualsiasi partita con eventi mostra l'accordion, senza casi speciali per singole gare.
- const events=(lv&&Array.isArray(lv.ev))?lv.ev:[];
- const hasEv=events.length>0;
+ const ev=matchEvents(m);
+ const hasEv=!!(ev&&ev.length);
  const inner=`${mid}<div class="mc-rows"><div class="mc-row ${c1}"><img class="fl" src="${flag(i1)}" alt=""><span class="nm">${i1}</span><span class="sc">${s1}</span></div><div class="mc-row ${c2}"><img class="fl" src="${flag(i2)}" alt=""><span class="nm">${i2}</span><span class="sc">${s2}</span></div></div>${hasEv?'<span class="mcexp">▾</span>':''}`;
  if(!hasEv)return `<div class="mc ${livePlay?'live':''}">${inner}</div>`;
- const rows=events.slice().sort((a,b)=>(a.min||0)-(b.min||0)).map(e=>{const meta=EVMETA[e.type]||["•",e.type];const neg=(e.pts||0)<0;const fl=e.team===m.t2?flag(i2):flag(i1);return `<div class="evrow"><span class="evmin">${e.min!=null?e.min+"'":""}</span><span class="evic">${meta[0]}</span><img class="evfl" src="${fl}" alt=""><span class="evpl">${e.player||""}</span><span class="evlb">${meta[1]}</span><span class="evpt ${neg?'neg':'pos'}">${e.pts>0?'+':''}${e.pts!=null?e.pts:''}</span></div>`}).join("");
+ const rows=ev.slice().sort((a,b)=>(a.min||0)-(b.min||0)).map(e=>{const meta=EVMETA[e.type]||["•",e.type];const neg=(e.pts||0)<0;const fl=e.team===m.t2?flag(i2):flag(i1);return `<div class="evrow"><span class="evmin">${e.min!=null?e.min+"'":""}</span><span class="evic">${meta[0]}</span><img class="evfl" src="${fl}" alt=""><span class="evpl">${e.player||""}</span><span class="evlb">${meta[1]}</span><span class="evpt ${neg?'neg':'pos'}">${e.pts>0?'+':''}${e.pts!=null?e.pts:''}</span></div>`}).join("");
  return `<details class="mcw"><summary class="mc ${livePlay?'live':''}">${inner}</summary><div class="mcev">${rows}</div></details>`;
 }
 function renderCalendario(){
@@ -1947,6 +2012,7 @@ function cloudPathFor(key){
  if(key.indexOf("fm26_voti_")===0)return{sec:"voti",sub:key.slice(10)};
  if(key.indexOf("fm26_lineup_")===0)return{sec:"lineups",sub:key.slice(12)};
  if(key==="fm26_results")return{sec:"results",sub:null};
+ if(key==="fm26_events")return{sec:"events",sub:null};
  if(key.indexOf("fm26_cw_")===0)return{sec:"cw",sub:key.slice(8)};
  if(key.indexOf("fm26_hm_")===0)return{sec:"hm",sub:key.slice(8)};
  return null}
@@ -1960,6 +2026,7 @@ function applyCloud(d){_suppress=true;try{
    if(d.lineups)for(const k in d.lineups)store.set("fm26_lineup_"+k,d.lineups[k]);
    if(d.voti)for(const g in d.voti)store.set("fm26_voti_"+g,d.voti[g]);
    if(d.results)store.set("fm26_results",d.results);
+   if(d.events)store.set("fm26_events",d.events);
    if(d.cw)for(const k in d.cw)store.set("fm26_cw_"+k,d.cw[k]);
    if(d.hm)for(const k in d.hm)store.set("fm26_hm_"+k,d.hm[k]);
    if(d.live)store.set("fm26_live",d.live);
