@@ -581,6 +581,11 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .gh-ic{font-size:30px;line-height:1}.games-hub h3{margin:0}
 .gh-sub{font-size:12px;color:#9aa7c7;margin-top:2px}
 .gh-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gh-grid3{grid-template-columns:repeat(3,1fr);gap:10px}
+.gh-mini{display:flex;align-items:center;justify-content:center;padding:0;aspect-ratio:1/1}
+.gh-mini .gh-emoji{margin:0}
+.gh-mini .gh-emoji svg{width:42px;height:42px}
+.gh-badge{position:absolute;top:6px;right:8px;font-size:13px;font-weight:900;color:var(--yellow,#FFC21E)}
 .gh-tile{position:relative;text-align:left;border:1px solid #25325a;background:linear-gradient(150deg,#16264f,#0e1b3c);border-radius:16px;padding:14px;cursor:pointer;color:#fff;overflow:hidden;transition:transform .1s,border-color .1s}
 .gh-tile:active{transform:scale(.97)}.gh-tile:hover{border-color:#3a5187}
 .gh-emoji{font-size:30px;margin-bottom:8px}
@@ -667,6 +672,38 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .games-hub{border-radius:26px;margin:14px 16px;padding:18px}
 .banner{border-radius:26px}
 .nav{border-top:1px solid rgba(255,255,255,.1)}
+.t10-cat{font-family:var(--font-display);font-size:18px;font-weight:800;text-align:center;margin:2px 0}
+.t10-era{font-size:11px;color:#8a99bf;text-align:center;margin-bottom:12px}
+.t10-board{display:flex;flex-direction:column;gap:6px;margin:6px 0 12px}
+.t10-row{display:grid;grid-template-columns:26px 22px 1fr auto;align-items:center;gap:9px;background:#0c1838;border:1px solid #21315f;border-radius:11px;padding:8px 11px;min-height:40px}
+.t10-row.hid{grid-template-columns:26px 1fr auto;opacity:.55}
+.t10-row.got{border-color:#2f7d3a;background:#0e2417}
+.t10-row.miss{opacity:.7;border-style:dashed}
+.t10-rk{width:24px;height:24px;border-radius:50%;background:#1b2c52;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
+.t10-row.got .t10-rk{background:#37b24d;color:#06210f}
+.t10-fl{width:22px;height:15px;border-radius:2px;object-fit:cover}
+.t10-nm{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t10-vl{font-weight:900;font-size:14px;color:var(--yellow,#FFC21E);white-space:nowrap}
+.t10-vl small{font-weight:600;font-size:10px;color:#9fb0d4}
+.t10-prog{text-align:center;font-weight:800;font-size:14px;margin-bottom:8px}
+.t10-inrow{display:flex;gap:8px;margin-bottom:8px;position:relative}
+.t10-sug{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#0e1c40;border:1px solid #2a3b66;border-radius:11px;overflow-y:auto;max-height:232px;z-index:40;box-shadow:0 12px 26px rgba(0,0,0,.45)}
+.t10-sug-item{display:block;width:100%;text-align:left;background:transparent;border:none;border-bottom:1px solid #1a2a55;color:#F7F3E8;padding:10px 13px;font-size:14px;font-weight:600;cursor:pointer}
+.t10-sug-item:last-child{border-bottom:none}
+.t10-sug-item:hover,.t10-sug-item:active{background:#1a2a55}
+.t10-in{flex:1;min-width:0;background:#0c1838;border:1px solid #2a3b66;border-radius:11px;padding:11px 13px;color:#fff;font-size:15px;font-weight:600;outline:none}
+.t10-in:focus{border-color:var(--yellow,#FFC21E)}
+.t10-gbtn{background:var(--yellow,#FFC21E);color:#11214a;border:none;border-radius:11px;padding:0 16px;font-weight:800;cursor:pointer}
+.t10-gbtn:disabled{opacity:.5}
+.t10-surr{width:100%;background:transparent;color:#e6a;border:1px solid #5a3a4a;border-radius:11px;padding:9px;font-weight:700;cursor:pointer;margin-bottom:6px}
+.t10-surr:disabled{opacity:.4}
+.t10-hint{width:100%;background:rgba(255,194,30,.1);color:#FFC21E;border:1px solid #6a5a23;border-radius:11px;padding:9px;font-weight:700;cursor:pointer;margin-bottom:7px}
+.t10-hint:disabled{opacity:.5;cursor:default}
+.t10-row.hint{border-color:#6a5a23;background:#1a1604}
+.t10-row.hint.noflag{grid-template-columns:26px 1fr auto}
+.t10-row .t10-nm.dim{color:#d8c98a;font-weight:600;font-style:italic}
+.t10-msg{text-align:center;min-height:20px;font-weight:700;font-size:13px;margin:4px 0 2px}
+.t10-fb.ok{color:#5fdc7a}.t10-fb.no{color:#ff8a8a}.t10-fb.dup{color:#FFC21E}
 </style>
 </head>
 <body>
@@ -987,7 +1024,7 @@ function logout(){const A=fbAuth();if(A){A.signOut().catch(()=>{})}else{user=nul
 const view=document.getElementById("view");
 function setNav(v){document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.v===v))}
 function go(v){curView=v;document.body.dataset.view=v;if(cdTimer){clearInterval(cdTimer);cdTimer=null}setNav(["home","squadre","calendario","votigiornata","classifica"].includes(v)?v:"home");view.scrollTop=0;document.getElementById("nav").style.display="flex";document.getElementById("fmActions").style.display="none";var _vf=document.getElementById("vgFoot");if(_vf&&v!=="votigiornata")_vf.style.display="none";
- if(v==="home")renderHome();else if(v==="cruciverba")renderCruciverba();else if(v==="impiccato")renderImpiccato();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
+ if(v==="home")renderHome();else if(v==="cruciverba")renderCruciverba();else if(v==="impiccato")renderImpiccato();else if(v==="top10")renderTop10();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
  else if(v==="classifica")renderClassifica();else if(v==="formazione")renderFormazione();
  else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
@@ -1276,18 +1313,148 @@ function renderImpiccato(){
   const hb=document.getElementById("hmHint");if(hb)hb.onclick=hmHint;
   const bk=document.getElementById("hmBack");if(bk)bk.onclick=()=>go("home");
   hmPaint();}
+/* ===== TOP 10 DEL GIORNO =====
+   Indovina la classifica del giorno (giocatori/squadre/allenatori a tema Mondiali).
+   Conta gli errori, pulsante "mi arrendo", classifica di lega. Rotazione giornaliera
+   deterministica (stessa sfida per tutti). Per aggiungere temi: push in T10 con lo
+   stesso formato {cat, sub, unit, items:[{n:nome, v:valore, nat:nazione_per_bandiera}]}.
+   Le classifiche "all-time" sono ancorate a "fino a Qatar 2022" perche' Mondiale in corso. */
+const T10=[
+ {cat:"Marcatori con più gol nella storia dei Mondiali",sub:"Classifica all-time · fino a Qatar 2022",kind:"player",unit:"gol",items:[
+   {n:"Miroslav Klose",v:16,nat:"Germania"},{n:"Ronaldo",v:15,nat:"Brasile"},{n:"Gerd Müller",v:14,nat:"Germania"},
+   {n:"Just Fontaine",v:13,nat:"Francia"},{n:"Lionel Messi",v:13,nat:"Argentina"},{n:"Pelé",v:12,nat:"Brasile"},
+   {n:"Sándor Kocsis",v:11,nat:"Ungheria"},{n:"Jürgen Klinsmann",v:11,nat:"Germania"}]},
+ {cat:"Più gol in una singola edizione dei Mondiali",sub:"Record in un solo torneo",kind:"player",unit:"gol",items:[
+   {n:"Just Fontaine",v:13,nat:"Francia"},{n:"Sándor Kocsis",v:11,nat:"Ungheria"},{n:"Gerd Müller",v:10,nat:"Germania"},
+   {n:"Eusébio",v:9,nat:"Portogallo"},{n:"Guillermo Stábile",v:8,nat:"Argentina"},{n:"Ademir",v:8,nat:"Brasile"},
+   {n:"Ronaldo",v:8,nat:"Brasile"},{n:"Kylian Mbappé",v:8,nat:"Francia"}]},
+ {cat:"Nazionali campioni del mondo",sub:"Titoli iridati vinti nella storia",kind:"team",unit:"titoli",items:[
+   {n:"Brasile",v:5,nat:"Brasile"},{n:"Italia",v:4,nat:"Italia"},{n:"Germania",v:4,nat:"Germania"},
+   {n:"Argentina",v:3,nat:"Argentina"},{n:"Uruguay",v:2,nat:"Uruguay"},{n:"Francia",v:2,nat:"Francia"},
+   {n:"Inghilterra",v:1,nat:"Inghilterra"},{n:"Spagna",v:1,nat:"Spagna"}]},
+ {cat:"Allenatori vincitori dei Mondiali",sub:"Commissari tecnici campioni dal 1982",kind:"coach",unit:"anno",items:[
+   {n:"Enzo Bearzot",v:1982,nat:"Italia"},{n:"Carlos Bilardo",v:1986,nat:"Argentina"},{n:"Franz Beckenbauer",v:1990,nat:"Germania"},
+   {n:"Carlos Alberto Parreira",v:1994,nat:"Brasile"},{n:"Aimé Jacquet",v:1998,nat:"Francia"},{n:"Luiz Felipe Scolari",v:2002,nat:"Brasile"},
+   {n:"Marcello Lippi",v:2006,nat:"Italia"},{n:"Vicente del Bosque",v:2010,nat:"Spagna"},{n:"Joachim Löw",v:2014,nat:"Germania"},
+   {n:"Didier Deschamps",v:2018,nat:"Francia"},{n:"Lionel Scaloni",v:2022,nat:"Argentina"}]},
+ {cat:"Giocatori con più presenze ai Mondiali",sub:"Partite giocate · record fino al 2022",kind:"player",unit:"presenze",items:[
+   {n:"Lionel Messi",v:26,nat:"Argentina"},{n:"Lothar Matthäus",v:25,nat:"Germania"},{n:"Miroslav Klose",v:24,nat:"Germania"},
+   {n:"Paolo Maldini",v:23,nat:"Italia"},{n:"Diego Maradona",v:21,nat:"Argentina"}]},
+ {cat:"Paesi che hanno ospitato i Mondiali",sub:"Nazioni ospitanti dal 1990",kind:"team",unit:"anno",items:[
+   {n:"Italia",v:1990,nat:"Italia"},{n:"Stati Uniti",v:1994,nat:"Stati Uniti"},{n:"Francia",v:1998,nat:"Francia"},
+   {n:"Corea del Sud",v:2002,nat:"Corea del Sud"},{n:"Giappone",v:2002,nat:"Giappone"},{n:"Germania",v:2006,nat:"Germania"},
+   {n:"Sudafrica",v:2010,nat:"Sudafrica"},{n:"Brasile",v:2014,nat:"Brasile"},{n:"Russia",v:2018,nat:"Russia"},{n:"Qatar",v:2022,nat:"Qatar"}]}
+];
+let t10State=null;
+function t10Norm(s){return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();}
+let _t10pp=null,_t10cp=null;
+function t10PlayerPool(){if(_t10pp)return _t10pp;const m=new Map();const add=n=>{const k=t10Norm(n);if(k.length<3||k.indexOf(" ")<0&&n.indexOf(".")>=0)return;if(!m.has(k))m.set(k,n);};
+  for(const t in ROSTERS)for(const p of ROSTERS[t].players)add(p.name);
+  for(const p of SVINC)add(p.name);
+  for(const pz of T10)if(pz.kind==="player")for(const it of pz.items)add(it.n);
+  _t10pp=[...m.values()].sort((a,b)=>a.localeCompare(b,"it"));return _t10pp;}
+function t10CoachPool(){if(_t10cp)return _t10cp;const m=new Map();const add=n=>{const k=t10Norm(n);if(!m.has(k))m.set(k,n);};
+  for(const pz of T10)if(pz.kind==="coach")for(const it of pz.items)add(it.n);
+  ["Roberto Mancini","Carlo Ancelotti","Pep Guardiola","José Mourinho","Fabio Capello","Arrigo Sacchi","Giovanni Trapattoni","Antonio Conte","Luis Aragonés","Cesare Prandelli","Roberto Martínez","Gareth Southgate","Tite","Hansi Flick","Fernando Santos","Zinédine Zidane","Diego Simeone","Jürgen Klopp"].forEach(add);
+  _t10cp=[...m.values()].sort((a,b)=>a.localeCompare(b,"it"));return _t10cp;}
+function t10Pool(kind){return kind==="team"?Object.keys(FLAGSVG):kind==="coach"?t10CoachPool():t10PlayerPool();}
+function t10Suggest(){const s=t10State;const box=document.getElementById("t10Sug"),inp=document.getElementById("t10In");if(!box||!inp)return;
+  if(s.over||s.locked){box.style.display="none";box.innerHTML="";return;}
+  const q=t10Norm(inp.value);if(q.length<2){box.style.display="none";box.innerHTML="";return;}
+  const found=new Set([...s.found].map(i=>t10Norm(s.puz.items[i].n)));
+  const pool=t10Pool(s.puz.kind),starts=[],incl=[];
+  for(const name of pool){const nn=t10Norm(name);if(found.has(nn))continue;
+    if(nn.startsWith(q)||nn.split(" ").some(w=>w.startsWith(q)))starts.push(name);
+    else if(nn.indexOf(q)>=0)incl.push(name);}
+  const list=starts.concat(incl).slice(0,6);
+  if(!list.length){box.style.display="none";box.innerHTML="";return;}
+  box.innerHTML=list.map(n=>`<button type="button" class="t10-sug-item" data-n="${n.replace(/"/g,'&quot;')}">${n}</button>`).join("");
+  box.style.display="block";
+  box.querySelectorAll(".t10-sug-item").forEach(b=>b.onclick=()=>{inp.value=b.dataset.n;box.style.display="none";box.innerHTML="";t10Guess();if(!t10State.over)inp.focus();});}
+function t10HideSug(){const b=document.getElementById("t10Sug");if(b){b.style.display="none";b.innerHTML="";}}
+function t10Accept(puz){const surC={};const fulls=puz.items.map(it=>{const f=t10Norm(it.n);const p=f.split(" ");const sur=p[p.length-1];surC[sur]=(surC[sur]||0)+1;return{f,sur};});
+  return fulls.map(o=>{const a=new Set([o.f]);if(surC[o.sur]===1&&o.sur.length>=3)a.add(o.sur);return a;});}
+function t10DayIndex(){const k=cwDateKey(new Date());const a=k.split("-").map(Number);return Math.floor(Date.UTC(a[0],a[1]-1,a[2])/86400000);}
+const T10_BYDATE={"2026-06-19":3}; /* override manuale: data -> indice quiz in T10 (oggi: Allenatori vincitori) */
+function t10Today(){const date=cwDateKey(new Date());
+  const idx=(T10_BYDATE[date]!=null)?T10_BYDATE[date]:((t10DayIndex()%T10.length)+T10.length)%T10.length;
+  return{key:date+"_p"+idx,date,idx,puz:T10[idx]};}
+function t10Leaderboard(key){const d=store.get("fm26_t10_"+key)||{};return Object.keys(d).map(t=>({team:t,found:d[t].found,total:d[t].total,wrong:d[t].wrong,hints:d[t].hints||0,won:d[t].won,surr:d[t].surr,t:d[t].t})).sort((a,b)=>(b.found-a.found)||((a.wrong+a.hints)-(b.wrong+b.hints))||(a.t-b.t));}
+function t10Record(){const s=t10State,cur=store.get("fm26_t10_"+s.key)||{};
+  if(!cur[user]){cur[user]={found:s.found.size,total:s.puz.items.length,wrong:s.wrong,hints:s.hintUsed?1:0,won:s.won,surr:s.surrendered,t:(Date.now()-s.start)/1000,ts:Date.now()};store.set("fm26_t10_"+s.key,cur);}}
+function t10After(){const s=t10State;if(!s.over&&s.found.size===s.puz.items.length){s.over=true;s.won=true;t10Record();}t10Paint();}
+function t10Guess(){const s=t10State;if(s.over||s.locked)return;const inp=document.getElementById("t10In");if(!inp)return;const g=t10Norm(inp.value);inp.value="";
+  if(!g){t10Paint();return;}
+  let hit=-1;for(let i=0;i<s.acc.length;i++){if(s.acc[i].has(g)){hit=i;break;}}
+  if(hit>=0){if(s.found.has(hit)){s.msg={k:"dup",txt:"Già trovato"};}else{s.found.add(hit);s.msg={k:"ok",txt:"Giusto! +1"};}}
+  else{s.wrong++;s.msg={k:"no",txt:"No, riprova"};}
+  t10HideSug();t10After();}
+function t10Surrender(){const s=t10State;if(s.over||s.locked)return;s.over=true;s.won=false;s.surrendered=true;t10Record();t10Paint();}
+function t10HintFn(){const s=t10State;if(s.over||s.locked||s.hintUsed)return;s.hintUsed=true;s.msg={k:"dup",txt:"💡 Aiuto: nazionalità e anni svelati"};t10HideSug();t10Paint();}
+function t10RenderLb(){const lb=t10Leaderboard(t10State.key),el=document.getElementById("t10Lb");if(!el)return;
+  el.innerHTML=lb.length?'<ol class="cw-lb">'+lb.map((e,i)=>`<li class="${e.team===user?'me':''}"><span class="cw-rk">${i+1}</span><span class="cw-tm">${e.team}${e.won?' ✓':(e.surr?' 🏳️':'')}</span><span class="cw-tt">${e.found}/${e.total} · ${e.wrong}❌${e.hints?` · ${e.hints}💡`:""}</span></li>`).join("")+'</ol>':'<p class="cw-empty">Nessuno ha ancora giocato oggi. Tocca a te!</p>';}
+function t10Paint(){const s=t10State,total=s.puz.items.length,cnt=s.locked?s.lockFound:s.found.size,hints=s.locked?s.lockHints:(s.hintUsed?1:0);
+  const board=document.getElementById("t10Board");
+  if(board){board.innerHTML=s.puz.items.map((it,i)=>{
+    const open=s.found.has(i)||s.over;
+    if(open){const cls=s.locked?'':(s.found.has(i)?'got':(s.over?'miss':''));
+      const val=s.unit==="anno"?it.v:`${it.v} <small>${s.puz.unit}</small>`;
+      return `<div class="t10-row ${cls}"><span class="t10-rk">${i+1}</span><img class="t10-fl" src="${flag(it.nat)}" alt=""><span class="t10-nm">${it.n}</span><span class="t10-vl">${val}</span></div>`;}
+    return `<div class="t10-row hid"><span class="t10-rk">${i+1}</span><span class="t10-nm">• • • • •</span><span class="t10-vl"></span></div>`;
+  }).join("");}
+  if(s.hintUsed&&board){board.innerHTML=s.puz.items.map((it,i)=>{
+    const open=s.found.has(i)||s.over;
+    if(open){const cls=s.locked?'':(s.found.has(i)?'got':(s.over?'miss':''));
+      const val=s.unit==="anno"?it.v:`${it.v} <small>${s.puz.unit}</small>`;
+      return `<div class="t10-row ${cls}"><span class="t10-rk">${i+1}</span><img class="t10-fl" src="${flag(it.nat)}" alt=""><span class="t10-nm">${it.n}</span><span class="t10-vl">${val}</span></div>`;}
+    if(s.puz.kind==="team"){const lab=s.puz.unit==="anno"?`Anno ${it.v}`:`${it.v} ${s.puz.unit}`;
+      return `<div class="t10-row hint noflag"><span class="t10-rk">${i+1}</span><span class="t10-nm dim">${lab}</span><span class="t10-vl">💡</span></div>`;}
+    const sub=s.puz.kind==="coach"?`${it.nat} · Mondiale ${it.v}`:it.nat;
+    return `<div class="t10-row hint"><span class="t10-rk">${i+1}</span><img class="t10-fl" src="${flag(it.nat)}" alt=""><span class="t10-nm dim">${sub}</span><span class="t10-vl">💡</span></div>`;
+  }).join("");}
+  const pr=document.getElementById("t10Prog");if(pr)pr.innerHTML=`✅ ${cnt}/${total} &nbsp;·&nbsp; ❌ ${s.wrong} errori${hints?` &nbsp;·&nbsp; 💡 ${hints}`:""}`;
+  const inp=document.getElementById("t10In"),gb=document.getElementById("t10GBtn"),sb=document.getElementById("t10Surr"),hb=document.getElementById("t10Hint");
+  const dis=s.over||s.locked;if(inp)inp.disabled=dis;if(gb)gb.disabled=dis;if(sb)sb.disabled=dis;
+  if(hb){hb.disabled=dis||s.hintUsed;hb.textContent=s.hintUsed?"💡 Aiuto usato":"💡 Aiuto (nazionalità / anni in gioco)";}
+  const m=document.getElementById("t10Msg");
+  if(m){if(s.over){m.innerHTML=s.won?`🎉 Tutti i ${total} indovinati! · ❌ ${s.wrong} errori`:(s.surrendered?`🏳️ Ti sei arreso · ${cnt}/${total} trovati`:`Concluso · ${cnt}/${total}`);}
+    else if(s.msg){m.innerHTML=`<span class="t10-fb ${s.msg.k}">${s.msg.txt}</span>`;}else m.textContent="";}
+  t10RenderLb();}
+function renderTop10(){setNav("home");if(cdTimer){clearInterval(cdTimer);cdTimer=null}
+  const day=t10Today();const rec=(store.get("fm26_t10_"+day.key)||{})[user];const acc=t10Accept(day.puz);
+  if(rec){t10State={key:day.key,idx:day.idx,puz:day.puz,unit:day.puz.unit,acc,found:new Set(),hintUsed:(rec.hints||0)>0,lockFound:rec.found,lockHints:rec.hints||0,wrong:rec.wrong,over:true,won:rec.won,surrendered:rec.surr,locked:true,start:Date.now(),msg:null};}
+  else{t10State={key:day.key,idx:day.idx,puz:day.puz,unit:day.puz.unit,acc,found:new Set(),hintUsed:false,lockFound:0,lockHints:0,wrong:0,over:false,won:false,surrendered:false,locked:false,start:Date.now(),msg:null};}
+  view.innerHTML=`
+  <div class="top"><div class="brand"><img class="hlogo" src="${LOGO}" alt="">Top 10</div><span class="topbtns"><button class="out" id="t10Back">Home</button></span></div>
+  <div class="dash fade">
+    <div class="hm-sub2">Indovina la classifica del giorno · una sola giocata</div>
+    <div class="t10-cat">${day.puz.cat}</div>
+    <div class="t10-era">${day.puz.sub}</div>
+    <div class="t10-prog" id="t10Prog"></div>
+    <div class="t10-inrow"><input class="t10-in" id="t10In" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Scrivi un nome…"><button class="t10-gbtn" id="t10GBtn">Tenta</button><div class="t10-sug" id="t10Sug" style="display:none"></div></div>
+    <button class="t10-hint" id="t10Hint">💡 Aiuto</button>
+    <button class="t10-surr" id="t10Surr">🏳️ Mi arrendo · rivela la classifica</button>
+    <div class="t10-msg" id="t10Msg"></div>
+    <div class="t10-board" id="t10Board"></div>
+  </div>
+  <div class="dash fade"><h3><svg class="h3ic" viewBox="0 0 24 24" fill="none" stroke="#F7F3E8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4v11H4zM10 4h4v16h-4zM16 13h4v7h-4z"/></svg>Classifica del giorno</h3><div id="t10Lb"></div></div>`;
+  const gb=document.getElementById("t10GBtn");if(gb)gb.onclick=t10Guess;
+  const sb=document.getElementById("t10Surr");if(sb)sb.onclick=t10Surrender;
+  const hb=document.getElementById("t10Hint");if(hb)hb.onclick=t10HintFn;
+  const inp=document.getElementById("t10In");if(inp)inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();t10Guess();}});
+  if(inp){inp.addEventListener("input",t10Suggest);inp.addEventListener("blur",()=>setTimeout(t10HideSug,160));inp.addEventListener("focus",t10Suggest);}
+  const bk=document.getElementById("t10Back");if(bk)bk.onclick=()=>go("home");
+  t10Paint();if(inp&&!t10State.locked)inp.focus();}
 function homeGamesHTML(){
   const cd=cwToday(),cwLb=cwLeaderboard(cd.key),cwMe=cwLb.find(e=>e.team===user);
   const hd=hmToday(),hmDone=(store.get("fm26_hm_"+hd.key)||{})[user];
+  const t10d=t10Today(),t10Me=(store.get("fm26_t10_"+t10d.key)||{})[user];
   return `<div class="dash fade games-hub">
     <div class="gh-head"><div class="gh-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10a4.5 4.5 0 0 1 4.5 4.5l-.6 3.6A2.6 2.6 0 0 1 16 16l-1.4-1.6H9.4L8 16a2.6 2.6 0 0 1-4.9-.4l-.6-3.6A4.5 4.5 0 0 1 7 8z"/><path d="M6.5 11.5v2M5.5 12.5h2"/><circle cx="16" cy="11.6" r=".7" fill="currentColor" stroke="none"/><circle cx="17.6" cy="13.2" r=".7" fill="currentColor" stroke="none"/></svg></div><div><h3>Giochi del giorno</h3><div class="gh-sub">Una giocata al giorno · sfida la lega</div></div></div>
-    <div class="gh-grid">
-      <button class="gh-tile" id="cwPlay"><div class="gh-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/></svg></div><div class="gh-tt">Cruciverba</div>
-        <div class="gh-st">${cwMe?`✓ Risolto · ${cwFmt(cwMe.t)}`:`${cd.cw?cd.cw.ents.length:0} parole a tema`}</div>
-        <span class="gh-go">${cwMe?"Classifica":"Gioca"} →</span></button>
-      <button class="gh-tile" id="hmPlay"><div class="gh-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11.5a7 7 0 0 1 14 0c0 2.3-1.3 3.4-1.3 4.8v.7a1.2 1.2 0 0 1-1.2 1.2H7.5a1.2 1.2 0 0 1-1.2-1.2v-.7C6.3 14.9 5 13.8 5 11.5z"/><circle cx="9.2" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="14.8" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M10.3 18v2M13.7 18v2"/></svg></div><div class="gh-tt">Impiccato</div>
-        <div class="gh-st">${hmDone?(hmDone.win?"✓ Indovinato!":"✗ Fallito"):"Calciatore misterioso"}</div>
-        <span class="gh-go">${hmDone?"Classifica":"Gioca"} →</span></button>
+    <div class="gh-grid gh-grid3">
+      <button class="gh-tile gh-mini" id="cwPlay" title="Cruciverba" aria-label="Cruciverba"><div class="gh-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/></svg></div>${cwMe?'<span class="gh-badge">✓</span>':''}</button>
+      <button class="gh-tile gh-mini" id="hmPlay" title="Impiccato" aria-label="Impiccato"><div class="gh-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11.5a7 7 0 0 1 14 0c0 2.3-1.3 3.4-1.3 4.8v.7a1.2 1.2 0 0 1-1.2 1.2H7.5a1.2 1.2 0 0 1-1.2-1.2v-.7C6.3 14.9 5 13.8 5 11.5z"/><circle cx="9.2" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="14.8" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M10.3 18v2M13.7 18v2"/></svg></div>${hmDone?`<span class="gh-badge">${hmDone.win?"✓":"✗"}</span>`:''}</button>
+      <button class="gh-tile gh-mini" id="t10Play" title="Top 10" aria-label="Top 10"><div class="gh-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4v11H4zM10 4h4v16h-4zM16 13h4v7h-4z"/></svg></div>${t10Me?'<span class="gh-badge">✓</span>':''}</button>
     </div></div>`;}
 
 function renderHome(){
@@ -1330,6 +1497,7 @@ function renderHome(){
  const _nb=document.getElementById("newsBand");if(_nb)_nb.onclick=()=>{newsView=+_nb.dataset.i;go("news")};
  const _cw=document.getElementById("cwPlay");if(_cw)_cw.onclick=()=>go("cruciverba");
  const _hm=document.getElementById("hmPlay");if(_hm)_hm.onclick=()=>go("impiccato");
+ const _t10=document.getElementById("t10Play");if(_t10)_t10.onclick=()=>go("top10");
  document.getElementById("editJersey").onclick=e=>{e.preventDefault();e.stopPropagation();openSheet()};
  document.getElementById("banner").onclick=()=>go("formazione");
  const gr=document.getElementById("goRosa");
@@ -2036,6 +2204,7 @@ function cloudPathFor(key){
  if(key==="fm26_events")return{sec:"events",sub:null};
  if(key.indexOf("fm26_cw_")===0)return{sec:"cw",sub:key.slice(8)};
  if(key.indexOf("fm26_hm_")===0)return{sec:"hm",sub:key.slice(8)};
+ if(key.indexOf("fm26_t10_")===0)return{sec:"t10",sub:key.slice(9)};
  return null}
 function cloudPush(key,val){if(!cloudReady||_suppress||!leagueRef)return;const p=cloudPathFor(key);if(!p)return;
  try{const payload=p.sub?{[p.sec]:{[p.sub]:val}}:{[p.sec]:val};
@@ -2050,6 +2219,7 @@ function applyCloud(d){_suppress=true;try{
    if(d.events)store.set("fm26_events",d.events);
    if(d.cw)for(const k in d.cw)store.set("fm26_cw_"+k,d.cw[k]);
    if(d.hm)for(const k in d.hm)store.set("fm26_hm_"+k,d.hm[k]);
+   if(d.t10)for(const k in d.t10)store.set("fm26_t10_"+k,d.t10[k]);
    if(d.live)store.set("fm26_live",d.live);
    if(d.members)MEMBERS=d.members;
  }finally{_suppress=false}}
