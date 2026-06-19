@@ -529,6 +529,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .mcw>summary::-webkit-details-marker{display:none}
 .mcw .mc{margin-bottom:0}
 .mcev{background:#0c1838;border:1px solid #21315f;border-top:none;border-radius:0 0 13px 13px;padding:6px 10px;margin:-6px 0 8px}
+.evempty{text-align:center;font-size:12px;opacity:.5;padding:8px 4px}
 .evrow{display:flex;align-items:center;gap:7px;padding:5px 2px;border-bottom:1px solid #16224a;font-size:12.5px}
 .evrow:last-child{border-bottom:none}
 .evmin{width:30px;font-weight:800;opacity:.65;font-size:11px;flex-shrink:0}
@@ -1573,7 +1574,7 @@ function derivedMatchEvents(m){
    I punti (bonus/malus) sono calcolati automaticamente da evPts(). Per aggiornare il
    torneo basta aggiungere qui le nuove partite, oppure passarle dal feed live/cloud. */
 const WC_EVENTS={
-  // n.17 — Francia 3-1 Senegal (16/06/2026)
+  // n.17 — Francia 3-1 Senegal (16/06/2026) — report ufficiale FIFA
   17:[
     {min:66,type:"goal",team:"France",player:"Mbappé"},
     {min:66,type:"assist",team:"France",player:"Olise"},
@@ -1581,26 +1582,38 @@ const WC_EVENTS={
     {min:82,type:"assist",team:"France",player:"Rabiot"},
     {min:95,type:"goal",team:"Senegal",player:"Mbaye"},
     {min:96,type:"goal",team:"France",player:"Mbappé"}
+  ],
+  // n.18 — Iraq 1-4 Norvegia (16/06/2026) — report ufficiale FIFA
+  18:[
+    {min:29,type:"goal",team:"Norway",player:"Haaland"},
+    {min:29,type:"assist",team:"Norway",player:"Møller Wolfe"},
+    {min:39,type:"goal",team:"Iraq",player:"Hussein"},
+    {min:39,type:"assist",team:"Iraq",player:"Al-Ammari"},
+    {min:43,type:"goal",team:"Norway",player:"Haaland"},
+    {min:76,type:"goal",team:"Norway",player:"Østigård"},
+    {min:76,type:"assist",team:"Norway",player:"Ødegaard"},
+    {min:96,type:"owngoal",team:"Iraq",player:"Hussein"}
   ]
-  // n.18 (Iraq-Norvegia) e' gia' coperta dal feed live.
 };
 function evPts(type){const M={goal:BONUS.gol,pengoal:BONUS.rigSeg,pensave:BONUS.rigPar,assist:BONUS.assist,penmiss:BONUS.rigSb,owngoal:BONUS.autorete,yellow:BONUS.amm,red:BONUS.esp};return M[type];}
 /* Eventi di una partita, in ordine di priorita':
-   1) feed live (con minuti) - persistito cosi' resta dopo la fine e la finestra live;
-   2) storico persistito (keyed per m.n);
-   3) archivio reale WC_EVENTS (tutti i giocatori, anche fuori lega);
+   1) feed live FRESCO (partita in diretta) - e' la verita' in tempo reale, e lo persistiamo;
+   2) archivio reale verificato WC_EVENTS - tutti i giocatori (anche fuori lega), dati ufficiali;
+   3) feed live non piu' fresco / storico persistito;
    4) eventi derivati dai voti di giornata - copre i giocatori della lega.
-   Nessuna eccezione hardcoded su Iraq-Norvegia: e' solo l'unica con feed live. */
+   Nessuna eccezione hardcoded su Iraq-Norvegia. */
 function matchEvents(m){
   const lv=getLive()[liveKey(m.t1,m.t2)];
-  const live=lv&&Array.isArray(lv.ev)&&lv.ev.length?lv.ev:null;
-  if(live){const all=getEvents();const cur=JSON.stringify(live);
-    if(JSON.stringify(all[m.n]||null)!==cur){all[m.n]=live;store.set("fm26_events",all)}
-    return live}
-  const stored=getEvents()[m.n];
-  if(Array.isArray(stored)&&stored.length)return stored;
+  const fresh=lv&&lv.ts&&(Date.now()-lv.ts<25*60000);
+  const liveEv=lv&&Array.isArray(lv.ev)&&lv.ev.length?lv.ev:null;
+  if(fresh&&liveEv){const all=getEvents();const cur=JSON.stringify(liveEv);
+    if(JSON.stringify(all[m.n]||null)!==cur){all[m.n]=liveEv;store.set("fm26_events",all)}
+    return liveEv}
   const seed=WC_EVENTS[m.n];
   if(Array.isArray(seed)&&seed.length)return seed.map(e=>({min:e.min,type:e.type,team:e.team,player:e.player,pts:e.pts!=null?e.pts:evPts(e.type)}));
+  if(liveEv)return liveEv;
+  const stored=getEvents()[m.n];
+  if(Array.isArray(stored)&&stored.length)return stored;
   return derivedMatchEvents(m);
 }
 const EVMETA={goal:["⚽","Gol"],pengoal:["⚽","Rig."],penmiss:["⚽","Rig. sbagliato"],pensave:["🧤","Rig. parato"],owngoal:["🥅","Autogol"],assist:["👟","Assist"],yellow:["🟨","Ammonito"],red:["🟥","Espulso"]};
@@ -1621,10 +1634,18 @@ function calMatchCard(m){
  else mid=`<span class="mc-mid">${pad(m.dt.getHours())}:${pad(m.dt.getMinutes())}<br><span style="opacity:.55;font-size:10px">${pad(m.dt.getDate())}/${pad(m.dt.getMonth()+1)}</span></span>`;
  const ev=matchEvents(m);
  const hasEv=!!(ev&&ev.length);
- const inner=`${mid}<div class="mc-rows"><div class="mc-row ${c1}"><img class="fl" src="${flag(i1)}" alt=""><span class="nm">${i1}</span><span class="sc">${s1}</span></div><div class="mc-row ${c2}"><img class="fl" src="${flag(i2)}" alt=""><span class="nm">${i2}</span><span class="sc">${s2}</span></div></div>${hasEv?'<span class="mcexp">▾</span>':''}`;
- if(!hasEv)return `<div class="mc ${livePlay?'live':''}">${inner}</div>`;
- const rows=ev.slice().sort((a,b)=>(a.min||0)-(b.min||0)).map(e=>{const meta=EVMETA[e.type]||["•",e.type];const neg=(e.pts||0)<0;const fl=e.team===m.t2?flag(i2):flag(i1);return `<div class="evrow"><span class="evmin">${e.min!=null?e.min+"'":""}</span><span class="evic">${meta[0]}</span><img class="evfl" src="${fl}" alt=""><span class="evpl">${e.player||""}</span><span class="evlb">${meta[1]}</span><span class="evpt ${neg?'neg':'pos'}">${e.pts>0?'+':''}${e.pts!=null?e.pts:''}</span></div>`}).join("");
- return `<details class="mcw"><summary class="mc ${livePlay?'live':''}">${inner}</summary><div class="mcev">${rows}</div></details>`;
+ const inner=`${mid}<div class="mc-rows"><div class="mc-row ${c1}"><img class="fl" src="${flag(i1)}" alt=""><span class="nm">${i1}</span><span class="sc">${s1}</span></div><div class="mc-row ${c2}"><img class="fl" src="${flag(i2)}" alt=""><span class="nm">${i2}</span><span class="sc">${s2}</span></div></div><span class="mcexp">▾</span>`;
+ let body;
+ if(hasEv){
+   const rows=ev.slice().sort((a,b)=>(a.min||0)-(b.min||0)).map(e=>{const meta=EVMETA[e.type]||["•",e.type];const neg=(e.pts||0)<0;const fl=e.team===m.t2?flag(i2):flag(i1);return `<div class="evrow"><span class="evmin">${e.min!=null?e.min+"'":""}</span><span class="evic">${meta[0]}</span><img class="evfl" src="${fl}" alt=""><span class="evpl">${e.player||""}</span><span class="evlb">${meta[1]}</span><span class="evpt ${neg?'neg':'pos'}">${e.pts>0?'+':''}${e.pts!=null?e.pts:''}</span></div>`}).join("");
+   body=`<div class="mcev">${rows}</div>`;
+ }else{
+   const played=!!res||livePlay||(lv&&lv.goals&&!isLiveStatus(lv.status));
+   const future=!played&&m.dt>new Date();
+   const ph=future?"Partita non ancora giocata":"Nessun evento disponibile";
+   body=`<div class="mcev"><div class="evempty">${ph}</div></div>`;
+ }
+ return `<details class="mcw"><summary class="mc ${livePlay?'live':''}">${inner}</summary>${body}</details>`;
 }
 function renderCalendario(){
  setNav("calendario");if(cdTimer){clearInterval(cdTimer);cdTimer=null}
