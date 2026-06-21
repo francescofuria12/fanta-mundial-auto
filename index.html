@@ -586,6 +586,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .gh-mini .gh-emoji{margin:0}
 .gh-mini .gh-emoji svg{width:42px;height:42px}
 .gh-badge{position:absolute;top:6px;right:8px;font-size:13px;font-weight:900;color:var(--yellow,#FFC21E)}
+.gh-special{border-color:#7a2e63!important;background:linear-gradient(150deg,#3a1430,#1f0e2c)!important}
+.gh-special .gh-emoji svg{stroke:#ff5db1}
+.gh-star{color:#ff5db1}
+.t10-row.noflag{grid-template-columns:26px 1fr auto}
 .gh-tile{position:relative;text-align:left;border:1px solid #25325a;background:linear-gradient(150deg,#16264f,#0e1b3c);border-radius:16px;padding:14px;cursor:pointer;color:#fff;overflow:hidden;transition:transform .1s,border-color .1s}
 .gh-tile:active{transform:scale(.97)}.gh-tile:hover{border-color:#3a5187}
 .gh-emoji{font-size:30px;margin-bottom:8px}
@@ -704,6 +708,23 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .t10-row .t10-nm.dim{color:#d8c98a;font-weight:600;font-style:italic}
 .t10-msg{text-align:center;min-height:20px;font-weight:700;font-size:13px;margin:4px 0 2px}
 .t10-fb.ok{color:#5fdc7a}.t10-fb.no{color:#ff8a8a}.t10-fb.dup{color:#FFC21E}
+/* ===== Music player (persiste tra le pagine) ===== */
+.mpbar{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding:11px 13px;background:var(--glass-bg);border:1px solid var(--glass-bd);border-radius:22px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:var(--glass-sh)}
+.mp-art{width:44px;height:44px;border-radius:13px;flex-shrink:0;display:grid;place-items:center;background:linear-gradient(135deg,var(--violet,#7A3FF2),var(--crimson,#E11D48));color:#fff;position:relative;overflow:hidden}
+.mp-art svg{width:22px;height:22px}
+.mpbar.playing .mp-art::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.35),transparent 62%);animation:mppulse 1.6s ease-in-out infinite}
+@keyframes mppulse{0%,100%{opacity:.2}50%{opacity:.7}}
+.mp-mid{flex:1;min-width:0}
+.mp-title{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-display,inherit)}
+.mp-sub{font-size:10.5px;opacity:.55;font-weight:600;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-prog{height:5px;border-radius:5px;background:rgba(255,255,255,.14);margin-top:7px;cursor:pointer;overflow:hidden}
+.mp-fill{height:100%;width:0;border-radius:5px;background:linear-gradient(90deg,var(--acid,#C6FF3D),var(--cyan,#22D3EE));transition:width .15s linear}
+.mp-ctrls{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.mp-b{width:34px;height:34px;border:none;background:rgba(255,255,255,.08);color:#fff;border-radius:50%;display:grid;place-items:center;cursor:pointer;transition:background .15s;padding:0}
+.mp-b:active{background:rgba(255,255,255,.22)}
+.mp-b svg{width:18px;height:18px}
+.mp-play{width:40px;height:40px;background:var(--acid,#C6FF3D);color:#0b0b10}
+.mp-play svg{width:20px;height:20px}
 </style>
 </head>
 <body>
@@ -1320,6 +1341,11 @@ function renderImpiccato(){
    stesso formato {cat, sub, unit, items:[{n:nome, v:valore, nat:nazione_per_bandiera}]}.
    Le classifiche "all-time" sono ancorate a "fino a Qatar 2022" perche' Mondiale in corso. */
 const T10=[
+ {cat:"Allenatori vincitori dei Mondiali",sub:"Commissari tecnici campioni dal 1982",kind:"coach",unit:"anno",items:[
+   {n:"Enzo Bearzot",v:1982,nat:"Italia"},{n:"Carlos Bilardo",v:1986,nat:"Argentina"},{n:"Franz Beckenbauer",v:1990,nat:"Germania"},
+   {n:"Carlos Alberto Parreira",v:1994,nat:"Brasile"},{n:"Aimé Jacquet",v:1998,nat:"Francia"},{n:"Luiz Felipe Scolari",v:2002,nat:"Brasile"},
+   {n:"Marcello Lippi",v:2006,nat:"Italia"},{n:"Vicente del Bosque",v:2010,nat:"Spagna"},{n:"Joachim Löw",v:2014,nat:"Germania"},
+   {n:"Didier Deschamps",v:2018,nat:"Francia"},{n:"Lionel Scaloni",v:2022,nat:"Argentina"}]},
  {cat:"Marcatori con più gol nella storia dei Mondiali",sub:"Classifica all-time · fino a Qatar 2022",kind:"player",unit:"gol",items:[
    {n:"Miroslav Klose",v:16,nat:"Germania"},{n:"Ronaldo",v:15,nat:"Brasile"},{n:"Gerd Müller",v:14,nat:"Germania"},
    {n:"Just Fontaine",v:13,nat:"Francia"},{n:"Lionel Messi",v:13,nat:"Argentina"},{n:"Pelé",v:12,nat:"Brasile"},
@@ -1332,19 +1358,30 @@ const T10=[
    {n:"Brasile",v:5,nat:"Brasile"},{n:"Italia",v:4,nat:"Italia"},{n:"Germania",v:4,nat:"Germania"},
    {n:"Argentina",v:3,nat:"Argentina"},{n:"Uruguay",v:2,nat:"Uruguay"},{n:"Francia",v:2,nat:"Francia"},
    {n:"Inghilterra",v:1,nat:"Inghilterra"},{n:"Spagna",v:1,nat:"Spagna"}]},
- {cat:"Allenatori vincitori dei Mondiali",sub:"Commissari tecnici campioni dal 1982",kind:"coach",unit:"anno",items:[
-   {n:"Enzo Bearzot",v:1982,nat:"Italia"},{n:"Carlos Bilardo",v:1986,nat:"Argentina"},{n:"Franz Beckenbauer",v:1990,nat:"Germania"},
-   {n:"Carlos Alberto Parreira",v:1994,nat:"Brasile"},{n:"Aimé Jacquet",v:1998,nat:"Francia"},{n:"Luiz Felipe Scolari",v:2002,nat:"Brasile"},
-   {n:"Marcello Lippi",v:2006,nat:"Italia"},{n:"Vicente del Bosque",v:2010,nat:"Spagna"},{n:"Joachim Löw",v:2014,nat:"Germania"},
-   {n:"Didier Deschamps",v:2018,nat:"Francia"},{n:"Lionel Scaloni",v:2022,nat:"Argentina"}]},
  {cat:"Giocatori con più presenze ai Mondiali",sub:"Partite giocate · record fino al 2022",kind:"player",unit:"presenze",items:[
    {n:"Lionel Messi",v:26,nat:"Argentina"},{n:"Lothar Matthäus",v:25,nat:"Germania"},{n:"Miroslav Klose",v:24,nat:"Germania"},
    {n:"Paolo Maldini",v:23,nat:"Italia"},{n:"Diego Maradona",v:21,nat:"Argentina"}]},
  {cat:"Paesi che hanno ospitato i Mondiali",sub:"Nazioni ospitanti dal 1990",kind:"team",unit:"anno",items:[
    {n:"Italia",v:1990,nat:"Italia"},{n:"Stati Uniti",v:1994,nat:"Stati Uniti"},{n:"Francia",v:1998,nat:"Francia"},
    {n:"Corea del Sud",v:2002,nat:"Corea del Sud"},{n:"Giappone",v:2002,nat:"Giappone"},{n:"Germania",v:2006,nat:"Germania"},
-   {n:"Sudafrica",v:2010,nat:"Sudafrica"},{n:"Brasile",v:2014,nat:"Brasile"},{n:"Russia",v:2018,nat:"Russia"},{n:"Qatar",v:2022,nat:"Qatar"}]}
+   {n:"Sudafrica",v:2010,nat:"Sudafrica"},{n:"Brasile",v:2014,nat:"Brasile"},{n:"Russia",v:2018,nat:"Russia"},{n:"Qatar",v:2022,nat:"Qatar"}]},
+ {cat:"Allenatori vincitori dei Mondiali",sub:"Commissari tecnici campioni prima del 1982",kind:"coach",unit:"anno",items:[
+   {n:"Alberto Suppici",v:1930,nat:"Uruguay"},{n:"Vittorio Pozzo",v:1934,nat:"Italia"},{n:"Juan López Fontana",v:1950,nat:"Uruguay"},
+   {n:"Sepp Herberger",v:1954,nat:"Germania"},{n:"Vicente Feola",v:1958,nat:"Brasile"},{n:"Aymoré Moreira",v:1962,nat:"Brasile"},
+   {n:"Alf Ramsey",v:1966,nat:"Inghilterra"},{n:"Mário Zagallo",v:1970,nat:"Brasile"},{n:"Helmut Schön",v:1974,nat:"Germania"},
+   {n:"César Luis Menotti",v:1978,nat:"Argentina"}]},
+ {cat:"Paesi che hanno ospitato i Mondiali",sub:"Nazioni ospitanti prima del 1990",kind:"team",unit:"anno",items:[
+   {n:"Uruguay",v:1930,nat:"Uruguay"},{n:"Italia",v:1934,nat:"Italia"},{n:"Francia",v:1938,nat:"Francia"},
+   {n:"Brasile",v:1950,nat:"Brasile"},{n:"Svizzera",v:1954,nat:"Svizzera"},{n:"Svezia",v:1958,nat:"Svezia"},
+   {n:"Cile",v:1962,nat:"Cile"},{n:"Inghilterra",v:1966,nat:"Inghilterra"},{n:"Messico",v:1970,nat:"Messico"},
+   {n:"Germania Ovest",v:1974,nat:"Germania"},{n:"Argentina",v:1978,nat:"Argentina"},{n:"Spagna",v:1982,nat:"Spagna"}]}
 ];
+/* Tema SPECIALE del lunedì, indicizzato per offset di giorno dal via (0 = oggi).
+   Unico speciale: offset 3 = lunedì 22/6. Tutti gli altri giorni sono a tema Mondiali. */
+const T10_SPECIAL={
+ 3:{cat:"Le quattro pupille del Riccetto",sub:"Tema speciale del lunedì",special:true,kind:"special",unit:"",items:[
+   {n:"Toa"},{n:"Maddimara"},{n:"Busa"},{n:"Geggia"}]}
+};
 let t10State=null;
 function t10Norm(s){return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();}
 let _t10pp=null,_t10cp=null;
@@ -1359,7 +1396,7 @@ function t10CoachPool(){if(_t10cp)return _t10cp;const m=new Map();const add=n=>{
   _t10cp=[...m.values()].sort((a,b)=>a.localeCompare(b,"it"));return _t10cp;}
 function t10Pool(kind){return kind==="team"?Object.keys(FLAGSVG):kind==="coach"?t10CoachPool():t10PlayerPool();}
 function t10Suggest(){const s=t10State;const box=document.getElementById("t10Sug"),inp=document.getElementById("t10In");if(!box||!inp)return;
-  if(s.over||s.locked){box.style.display="none";box.innerHTML="";return;}
+  if(s.over||s.locked||s.puz.special){box.style.display="none";box.innerHTML="";return;}
   const q=t10Norm(inp.value);if(q.length<2){box.style.display="none";box.innerHTML="";return;}
   const found=new Set([...s.found].map(i=>t10Norm(s.puz.items[i].n)));
   const pool=t10Pool(s.puz.kind),starts=[],incl=[];
@@ -1375,9 +1412,14 @@ function t10HideSug(){const b=document.getElementById("t10Sug");if(b){b.style.di
 function t10Accept(puz){const surC={};const fulls=puz.items.map(it=>{const f=t10Norm(it.n);const p=f.split(" ");const sur=p[p.length-1];surC[sur]=(surC[sur]||0)+1;return{f,sur};});
   return fulls.map(o=>{const a=new Set([o.f]);if(surC[o.sur]===1&&o.sur.length>=3)a.add(o.sur);return a;});}
 function t10DayIndex(){const k=cwDateKey(new Date());const a=k.split("-").map(Number);return Math.floor(Date.UTC(a[0],a[1]-1,a[2])/86400000);}
-const T10_BYDATE={"2026-06-19":3}; /* override manuale: data -> indice quiz in T10 (oggi: Allenatori vincitori) */
-function t10Today(){const date=cwDateKey(new Date());
-  const idx=(T10_BYDATE[date]!=null)?T10_BYDATE[date]:((t10DayIndex()%T10.length)+T10.length)%T10.length;
+const T10_START="2026-06-19"; /* via della campagna 30 giorni; oggi = tema 1 (offset 0) */
+function t10DayOffset(){const a=cwDateKey(new Date()).split("-").map(Number);const b=T10_START.split("-").map(Number);
+  return Math.round((Date.UTC(a[0],a[1]-1,a[2])-Date.UTC(b[0],b[1]-1,b[2]))/86400000);}
+function t10Today(){const date=cwDateKey(new Date());const off=t10DayOffset();
+  if(off>=0&&off<30&&T10_SPECIAL[off])return{key:date+"_s"+off,date,idx:"s"+off,puz:T10_SPECIAL[off]};
+  let idx;
+  if(off>=0&&off<30){let w=0;for(let i=0;i<off;i++){if(!T10_SPECIAL[i])w++;}idx=w%T10.length;}
+  else idx=((t10DayIndex()%T10.length)+T10.length)%T10.length;
   return{key:date+"_p"+idx,date,idx,puz:T10[idx]};}
 function t10Leaderboard(key){const d=store.get("fm26_t10_"+key)||{};return Object.keys(d).map(t=>({team:t,found:d[t].found,total:d[t].total,wrong:d[t].wrong,hints:d[t].hints||0,won:d[t].won,surr:d[t].surr,t:d[t].t})).sort((a,b)=>(b.found-a.found)||((a.wrong+a.hints)-(b.wrong+b.hints))||(a.t-b.t));}
 function t10Record(){const s=t10State,cur=store.get("fm26_t10_"+s.key)||{};
@@ -1396,21 +1438,19 @@ function t10RenderLb(){const lb=t10Leaderboard(t10State.key),el=document.getElem
 function t10Paint(){const s=t10State,total=s.puz.items.length,cnt=s.locked?s.lockFound:s.found.size,hints=s.locked?s.lockHints:(s.hintUsed?1:0);
   const board=document.getElementById("t10Board");
   if(board){board.innerHTML=s.puz.items.map((it,i)=>{
+    const hasFlag=!!it.nat;
+    const valTxt=!s.puz.unit?"":(s.puz.unit==="anno"?it.v:`${it.v} <small>${s.puz.unit}</small>`);
     const open=s.found.has(i)||s.over;
     if(open){const cls=s.locked?'':(s.found.has(i)?'got':(s.over?'miss':''));
-      const val=s.unit==="anno"?it.v:`${it.v} <small>${s.puz.unit}</small>`;
-      return `<div class="t10-row ${cls}"><span class="t10-rk">${i+1}</span><img class="t10-fl" src="${flag(it.nat)}" alt=""><span class="t10-nm">${it.n}</span><span class="t10-vl">${val}</span></div>`;}
+      if(hasFlag)return `<div class="t10-row ${cls}"><span class="t10-rk">${i+1}</span><img class="t10-fl" src="${flag(it.nat)}" alt=""><span class="t10-nm">${it.n}</span><span class="t10-vl">${valTxt}</span></div>`;
+      return `<div class="t10-row noflag ${cls}"><span class="t10-rk">${i+1}</span><span class="t10-nm">${it.n}</span><span class="t10-vl">${valTxt}</span></div>`;}
+    if(s.hintUsed){
+      if(s.puz.special)return `<div class="t10-row hint noflag"><span class="t10-rk">${i+1}</span><span class="t10-nm dim">Iniziale: ${it.n.charAt(0).toUpperCase()}</span><span class="t10-vl">💡</span></div>`;
+      if(s.puz.kind==="team"){const lab=s.puz.unit==="anno"?`Anno ${it.v}`:`${it.v} ${s.puz.unit}`;
+        return `<div class="t10-row hint noflag"><span class="t10-rk">${i+1}</span><span class="t10-nm dim">${lab}</span><span class="t10-vl">💡</span></div>`;}
+      const sub=s.puz.kind==="coach"?`${it.nat} · Mondiale ${it.v}`:it.nat;
+      return `<div class="t10-row hint"><span class="t10-rk">${i+1}</span><img class="t10-fl" src="${flag(it.nat)}" alt=""><span class="t10-nm dim">${sub}</span><span class="t10-vl">💡</span></div>`;}
     return `<div class="t10-row hid"><span class="t10-rk">${i+1}</span><span class="t10-nm">• • • • •</span><span class="t10-vl"></span></div>`;
-  }).join("");}
-  if(s.hintUsed&&board){board.innerHTML=s.puz.items.map((it,i)=>{
-    const open=s.found.has(i)||s.over;
-    if(open){const cls=s.locked?'':(s.found.has(i)?'got':(s.over?'miss':''));
-      const val=s.unit==="anno"?it.v:`${it.v} <small>${s.puz.unit}</small>`;
-      return `<div class="t10-row ${cls}"><span class="t10-rk">${i+1}</span><img class="t10-fl" src="${flag(it.nat)}" alt=""><span class="t10-nm">${it.n}</span><span class="t10-vl">${val}</span></div>`;}
-    if(s.puz.kind==="team"){const lab=s.puz.unit==="anno"?`Anno ${it.v}`:`${it.v} ${s.puz.unit}`;
-      return `<div class="t10-row hint noflag"><span class="t10-rk">${i+1}</span><span class="t10-nm dim">${lab}</span><span class="t10-vl">💡</span></div>`;}
-    const sub=s.puz.kind==="coach"?`${it.nat} · Mondiale ${it.v}`:it.nat;
-    return `<div class="t10-row hint"><span class="t10-rk">${i+1}</span><img class="t10-fl" src="${flag(it.nat)}" alt=""><span class="t10-nm dim">${sub}</span><span class="t10-vl">💡</span></div>`;
   }).join("");}
   const pr=document.getElementById("t10Prog");if(pr)pr.innerHTML=`✅ ${cnt}/${total} &nbsp;·&nbsp; ❌ ${s.wrong} errori${hints?` &nbsp;·&nbsp; 💡 ${hints}`:""}`;
   const inp=document.getElementById("t10In"),gb=document.getElementById("t10GBtn"),sb=document.getElementById("t10Surr"),hb=document.getElementById("t10Hint");
@@ -1421,7 +1461,12 @@ function t10Paint(){const s=t10State,total=s.puz.items.length,cnt=s.locked?s.loc
     else if(s.msg){m.innerHTML=`<span class="t10-fb ${s.msg.k}">${s.msg.txt}</span>`;}else m.textContent="";}
   t10RenderLb();}
 function renderTop10(){setNav("home");if(cdTimer){clearInterval(cdTimer);cdTimer=null}
-  const day=t10Today();const rec=(store.get("fm26_t10_"+day.key)||{})[user];const acc=t10Accept(day.puz);
+  const day=t10Today();
+  if(!day.puz.items.length){view.innerHTML=`
+  <div class="top"><div class="brand"><img class="hlogo" src="${LOGO}" alt="">Top 10</div><span class="topbtns"><button class="out" id="t10Back">Home</button></span></div>
+  <div class="dash fade" style="text-align:center;padding:30px 16px"><div class="t10-cat">${day.puz.cat}</div><div class="t10-era">${day.puz.sub}</div><p style="opacity:.7;margin-top:14px">🔒 Tema speciale in arrivo!<br>Sarà disponibile in giornata.</p></div>`;
+    const bk=document.getElementById("t10Back");if(bk)bk.onclick=()=>go("home");return;}
+  const rec=(store.get("fm26_t10_"+day.key)||{})[user];const acc=t10Accept(day.puz);
   if(rec){t10State={key:day.key,idx:day.idx,puz:day.puz,unit:day.puz.unit,acc,found:new Set(),hintUsed:(rec.hints||0)>0,lockFound:rec.found,lockHints:rec.hints||0,wrong:rec.wrong,over:true,won:rec.won,surrendered:rec.surr,locked:true,start:Date.now(),msg:null};}
   else{t10State={key:day.key,idx:day.idx,puz:day.puz,unit:day.puz.unit,acc,found:new Set(),hintUsed:false,lockFound:0,lockHints:0,wrong:0,over:false,won:false,surrendered:false,locked:false,start:Date.now(),msg:null};}
   view.innerHTML=`
@@ -1454,9 +1499,42 @@ function homeGamesHTML(){
     <div class="gh-grid gh-grid3">
       <button class="gh-tile gh-mini" id="cwPlay" title="Cruciverba" aria-label="Cruciverba"><div class="gh-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/></svg></div>${cwMe?'<span class="gh-badge">✓</span>':''}</button>
       <button class="gh-tile gh-mini" id="hmPlay" title="Impiccato" aria-label="Impiccato"><div class="gh-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11.5a7 7 0 0 1 14 0c0 2.3-1.3 3.4-1.3 4.8v.7a1.2 1.2 0 0 1-1.2 1.2H7.5a1.2 1.2 0 0 1-1.2-1.2v-.7C6.3 14.9 5 13.8 5 11.5z"/><circle cx="9.2" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="14.8" cy="12" r="1.5" fill="currentColor" stroke="none"/><path d="M10.3 18v2M13.7 18v2"/></svg></div>${hmDone?`<span class="gh-badge">${hmDone.win?"✓":"✗"}</span>`:''}</button>
-      <button class="gh-tile gh-mini" id="t10Play" title="Top 10" aria-label="Top 10"><div class="gh-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4v11H4zM10 4h4v16h-4zM16 13h4v7h-4z"/></svg></div>${t10Me?'<span class="gh-badge">✓</span>':''}</button>
+      <button class="gh-tile gh-mini${t10d.puz.special?' gh-special':''}" id="t10Play" title="Top 10" aria-label="Top 10"><div class="gh-emoji"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4v11H4zM10 4h4v16h-4zM16 13h4v7h-4z"/></svg></div>${t10Me?'<span class="gh-badge">✓</span>':(t10d.puz.special?'<span class="gh-badge gh-star">★</span>':'')}</button>
     </div></div>`;}
 
+/* ===== MUSIC PLAYER \u2014 audio fuori da #app, persiste tra le pagine ===== */
+const MP_TRACKS=[
+  {name:"Wavin' Flag",sub:"K'naan \u00b7 World Cup",src:"audio/wavin-flag.mp3"},
+  {name:"Pistorius",sub:"Gemitaiz feat. MadMan",src:"audio/pistorius.mp3"},
+  {name:"Spino Marittimo",sub:"Fanta Mundial",src:"audio/spino-maritimo.mp3"},
+  {name:"Remix 15 giu",sub:"Registrazione",src:"audio/remix-15giu.mp3"}
+];
+const MP_ICO={
+  note:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3z"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  pause:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+  prev:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h2v14H7zM10 12l9 7V5z"/></svg>',
+  next:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 5h2v14h-2zM14 12L5 5v14z"/></svg>'
+};
+let mpAudio=null,mpIdx=0,mpPlaying=false;
+function mpInit(){
+  if(mpAudio)return;
+  mpAudio=new Audio();mpAudio.preload="none";mpAudio.src=MP_TRACKS[mpIdx].src;
+  mpAudio.addEventListener("play",function(){mpPlaying=true;mpSync()});
+  mpAudio.addEventListener("pause",function(){mpPlaying=false;mpSync()});
+  mpAudio.addEventListener("ended",function(){mpNext(true)});
+  mpAudio.addEventListener("timeupdate",mpProgress);
+  mpAudio.addEventListener("loadedmetadata",mpProgress);
+}
+function mpLoad(i){mpInit();mpIdx=(i%MP_TRACKS.length+MP_TRACKS.length)%MP_TRACKS.length;mpAudio.src=MP_TRACKS[mpIdx].src;mpSync()}
+function mpToggle(){mpInit();if(mpAudio.paused)mpAudio.play().catch(function(){});else mpAudio.pause()}
+function mpNext(auto){var was=mpAudio&&!mpAudio.paused;mpLoad(mpIdx+1);if(was||auto===true)mpAudio.play().catch(function(){})}
+function mpPrev(){var was=mpAudio&&!mpAudio.paused;mpLoad(mpIdx-1);if(was)mpAudio.play().catch(function(){})}
+function mpSeek(e){mpInit();var b=document.getElementById("mpProg");if(!b||!mpAudio.duration)return;var r=b.getBoundingClientRect();mpAudio.currentTime=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*mpAudio.duration}
+function mpProgress(){var f=document.getElementById("mpFill");if(f&&mpAudio&&mpAudio.duration)f.style.width=(mpAudio.currentTime/mpAudio.duration*100)+"%"}
+function mpSync(){var t=MP_TRACKS[mpIdx];var ti=document.getElementById("mpTitle");if(ti)ti.textContent=t.name;var su=document.getElementById("mpSub");if(su)su.textContent=t.sub;var tg=document.getElementById("mpToggleBtn");if(tg)tg.innerHTML=mpPlaying?MP_ICO.pause:MP_ICO.play;var bar=document.getElementById("mpbar");if(bar)bar.classList.toggle("playing",mpPlaying);if(!mpPlaying&&(!mpAudio||!mpAudio.duration)){var f=document.getElementById("mpFill");if(f)f.style.width="0"}mpProgress()}
+function mpBarHTML(){var t=MP_TRACKS[mpIdx];return `<div class="mpbar fade${mpPlaying?' playing':''}" id="mpbar"><div class="mp-art">${MP_ICO.note}</div><div class="mp-mid"><div class="mp-title" id="mpTitle">${t.name}</div><div class="mp-sub" id="mpSub">${t.sub}</div><div class="mp-prog" id="mpProg"><div class="mp-fill" id="mpFill"></div></div></div><div class="mp-ctrls"><button class="mp-b" id="mpPrevB" aria-label="Precedente">${MP_ICO.prev}</button><button class="mp-b mp-play" id="mpToggleBtn" aria-label="Play/Pausa">${mpPlaying?MP_ICO.pause:MP_ICO.play}</button><button class="mp-b" id="mpNextB" aria-label="Successivo">${MP_ICO.next}</button></div></div>`}
+function mpWire(){var el=document.getElementById("mpbar");if(!el)return;document.getElementById("mpToggleBtn").onclick=mpToggle;document.getElementById("mpNextB").onclick=function(){mpNext(false)};document.getElementById("mpPrevB").onclick=mpPrev;document.getElementById("mpProg").onclick=mpSeek;mpSync()}
 function renderHome(){
  const st=jerseyOf(user),s=myStats(user),ci=cdInfo(),g=ci&&ci.g,R=ROSTERS[user];
  view.innerHTML=`
@@ -1464,6 +1542,7 @@ function renderHome(){
  <div class="hero fade"><div class="hi">Bentornato</div><div class="me">${user}</div></div>
  <div class="jersey-wrap fade"><button class="j-edit" id="editJersey">✎ Personalizza</button>
    <div class="jersey-stage"><svg id="homeJersey" viewBox="0 0 200 220"></svg></div><div class="j-name">La tua maglia</div></div>
+ ${mpBarHTML()}
  <a class="banner fade" id="banner"><div class="b26">26</div><div class="inner">
    <div class="bt">${ci&&ci.mode==="open"?"Finestra chiusa 🔒":"Inserisci formazione →"}</div>
    <div class="bs">${g?g.label:"Torneo concluso"}${ci?(ci.mode==="lock"?" · chiude "+fdt(new Date(ci.target)):" · apre "+fdt(new Date(ci.target))):""}</div>
@@ -1500,6 +1579,7 @@ function renderHome(){
  const _t10=document.getElementById("t10Play");if(_t10)_t10.onclick=()=>go("top10");
  document.getElementById("editJersey").onclick=e=>{e.preventDefault();e.stopPropagation();openSheet()};
  document.getElementById("banner").onclick=()=>go("formazione");
+ mpWire();
  const gr=document.getElementById("goRosa");
  if(gr)gr.onclick=()=>openRoster(user);
  const _hp=document.getElementById("hlPrev");if(_hp)_hp.onclick=()=>{vgTeam=user;vgGid=currentGiornata().id;go("votigiornata")};
