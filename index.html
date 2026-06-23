@@ -725,6 +725,50 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .mp-b svg{width:18px;height:18px}
 .mp-play{width:40px;height:40px;background:var(--acid,#C6FF3D);color:#0b0b10}
 .mp-play svg{width:20px;height:20px}
+
+/* ===== Menu a tendina (drawer) ===== */
+.menu-btn{font-size:19px}
+.drawer-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:120}
+.drawer-ov.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:76%;max-width:300px;z-index:121;transform:translateX(-102%);transition:transform .3s cubic-bezier(.2,.8,.2,1);
+  background:linear-gradient(180deg,#142a52,#0a1430 70%,#080f24);border-right:1px solid rgba(255,255,255,.1);box-shadow:10px 0 50px rgba(0,0,0,.6);
+  padding:max(26px,env(safe-area-inset-top)) 16px 20px;display:flex;flex-direction:column;gap:9px}
+.drawer.open{transform:none}
+.drawer-h{font-family:var(--font-display);font-weight:900;font-size:26px;letter-spacing:-.02em;margin:4px 4px 12px}
+.drawer-item{display:flex;align-items:center;gap:13px;padding:15px;border-radius:15px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#fff;font-family:inherit;font-weight:800;font-size:15.5px;text-align:left;transition:background .15s,transform .1s}
+.drawer-item span{font-size:19px;width:24px;text-align:center}
+.drawer-item:active{background:rgba(255,255,255,.13);transform:scale(.98)}
+.j-team{font-family:var(--font-display);font-weight:900;font-size:26px;letter-spacing:-.02em;text-align:center;margin:2px 0 -2px;line-height:1}
+.rankbar{display:flex;align-items:center;gap:14px;width:calc(100% - 32px);margin:14px 16px 4px;padding:14px 16px;border-radius:20px;
+  background:linear-gradient(120deg,rgba(79,214,160,.16),rgba(61,123,255,.14));border:1px solid rgba(255,255,255,.12);color:#fff;text-align:left}
+.rankbar:active{transform:scale(.99)}
+.rk-pos{font-family:var(--font-display);font-weight:900;font-size:38px;line-height:.9;color:var(--green,#4FD6A0);display:flex;align-items:flex-start}
+.rk-pos small{font-size:17px;opacity:.7;margin-top:3px}
+.rk-mid{flex:1;min-width:0}
+.rk-lab{font-weight:800;font-size:12.5px;opacity:.92}
+.rk-sub{font-size:11px;opacity:.55;font-weight:600;margin-top:2px}
+.rk-pts{font-family:var(--font-display);font-weight:900;font-size:30px;line-height:1;text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+.rk-pts small{font-size:8.5px;letter-spacing:.14em;opacity:.5;font-weight:800}
+.mpfloat{position:fixed;z-index:115;width:54px;height:54px;touch-action:none;user-select:none;-webkit-user-select:none}
+.mpfb{width:54px;height:54px;border-radius:16px;border:1px solid rgba(255,255,255,.18);color:#00231A;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#FFE600,#4FD6A0 55%,#3D7BFF);box-shadow:0 10px 26px rgba(0,0,0,.45);cursor:grab;position:relative;overflow:hidden}
+.mpfloat.dragging .mpfb{cursor:grabbing}
+.mpfb svg{width:24px;height:24px}
+.mpfloat.playing .mpfb::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.5),transparent 62%);animation:mppulse 1.5s ease-in-out infinite}
+.mpfpop{position:absolute;bottom:62px;left:50%;transform:translateX(-50%) scale(.9);transform-origin:bottom center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+  width:180px;padding:12px;border-radius:18px;background:linear-gradient(180deg,#16284e,#0b1430);border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 40px rgba(0,0,0,.55)}
+.mpfloat.open .mpfpop{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1)}
+.mpf-ttl{font-weight:800;font-size:12.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.mpf-sub{font-size:10px;opacity:.55;color:#fff;text-align:center;margin:1px 0 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mpf-ctrls{display:flex;align-items:center;justify-content:center;gap:8px}
+.mpf-b{width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.mpf-b svg{width:18px;height:18px}
+.mpf-b.big{width:42px;height:42px;background:#4FD6A0;color:#00231A}
+.mpf-b.big svg{width:22px;height:22px}
+@keyframes mppulse{0%,100%{opacity:.2}50%{opacity:.7}}
+.cstats{display:flex;gap:9px;margin-top:4px;font-weight:800;font-size:10.5px;opacity:.85}
+.cstats span{display:inline-flex;align-items:center;gap:3px}
+.cstats .as{color:#4FD6A0}.cstats .ya{color:#FFE600}.cstats .ra{color:#E5392B}
 </style>
 </head>
 <body>
@@ -1047,7 +1091,7 @@ function setNav(v){document.querySelectorAll(".nav button").forEach(b=>b.classLi
 function go(v){curView=v;document.body.dataset.view=v;if(cdTimer){clearInterval(cdTimer);cdTimer=null}setNav(["home","squadre","calendario","votigiornata","classifica"].includes(v)?v:"home");view.scrollTop=0;document.getElementById("nav").style.display="flex";document.getElementById("fmActions").style.display="none";var _vf=document.getElementById("vgFoot");if(_vf&&v!=="votigiornata")_vf.style.display="none";
  if(v==="home")renderHome();else if(v==="cruciverba")renderCruciverba();else if(v==="impiccato")renderImpiccato();else if(v==="top10")renderTop10();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
  else if(v==="classifica")renderClassifica();else if(v==="formazione")renderFormazione();
- else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
+ else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="astina")renderAstina();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
 
 /* ===== HOME ===== */
@@ -1536,14 +1580,52 @@ function mpProgress(){var f=document.getElementById("mpFill");if(f&&mpAudio&&mpA
 function mpSync(){var t=MP_TRACKS[mpIdx];var ti=document.getElementById("mpTitle");if(ti)ti.textContent=t.name;var su=document.getElementById("mpSub");if(su)su.textContent=t.sub;var tg=document.getElementById("mpToggleBtn");if(tg)tg.innerHTML=mpPlaying?MP_ICO.pause:MP_ICO.play;var bar=document.getElementById("mpbar");if(bar)bar.classList.toggle("playing",mpPlaying);if(!mpPlaying&&(!mpAudio||!mpAudio.duration)){var f=document.getElementById("mpFill");if(f)f.style.width="0"}mpProgress()}
 function mpBarHTML(){var t=MP_TRACKS[mpIdx];return `<div class="mpbar fade${mpPlaying?' playing':''}" id="mpbar"><div class="mp-art">${MP_ICO.note}</div><div class="mp-mid"><div class="mp-title" id="mpTitle">${t.name}</div><div class="mp-sub" id="mpSub">${t.sub}</div><div class="mp-prog" id="mpProg"><div class="mp-fill" id="mpFill"></div></div></div><div class="mp-ctrls"><button class="mp-b" id="mpPrevB" aria-label="Precedente">${MP_ICO.prev}</button><button class="mp-b mp-play" id="mpToggleBtn" aria-label="Play/Pausa">${mpPlaying?MP_ICO.pause:MP_ICO.play}</button><button class="mp-b" id="mpNextB" aria-label="Successivo">${MP_ICO.next}</button></div></div>`}
 function mpWire(){var el=document.getElementById("mpbar");if(!el)return;document.getElementById("mpToggleBtn").onclick=mpToggle;document.getElementById("mpNextB").onclick=function(){mpNext(false)};document.getElementById("mpPrevB").onclick=mpPrev;document.getElementById("mpProg").onclick=mpSeek;mpSync()}
+function ensureFloatPlayer(){
+ if(document.getElementById("mpFloat"))return;
+ if(typeof mpInit==="function")mpInit();
+ const app=document.querySelector(".app")||document.body;
+ const el=document.createElement("div");el.className="mpfloat";el.id="mpFloat";
+ el.style.right="14px";el.style.bottom="calc(var(--nav-h,74px) + 18px)";
+ el.innerHTML=`<button class="mpfb" id="mpFbtn">${MP_ICO.note}</button><div class="mpfpop" id="mpFpop"><div class="mpf-ttl" id="mpfTtl">${MP_TRACKS[mpIdx].name}</div><div class="mpf-sub" id="mpfSub">${MP_TRACKS[mpIdx].sub||""}</div><div class="mpf-ctrls"><button class="mpf-b" id="mpfPrev">${MP_ICO.prev}</button><button class="mpf-b big" id="mpfTog">${mpPlaying?MP_ICO.pause:MP_ICO.play}</button><button class="mpf-b" id="mpfNext">${MP_ICO.next}</button></div></div>`;
+ app.appendChild(el);
+ const fb=el.querySelector("#mpFbtn"),tog=el.querySelector("#mpfTog"),nx=el.querySelector("#mpfNext"),pv=el.querySelector("#mpfPrev");
+ tog.onclick=e=>{e.stopPropagation();mpToggle();mpfSyncFloat()};
+ nx.onclick=e=>{e.stopPropagation();mpNext(false);mpfSyncFloat()};
+ pv.onclick=e=>{e.stopPropagation();mpPrev();mpfSyncFloat()};
+ if(mpAudio){mpAudio.addEventListener("play",mpfSyncFloat);mpAudio.addEventListener("pause",mpfSyncFloat);mpAudio.addEventListener("ended",()=>setTimeout(mpfSyncFloat,40));}
+ let dragging=false,moved=false,sx=0,sy=0,ox=0,oy=0;
+ const down=e=>{const t=e.touches?e.touches[0]:e;dragging=true;moved=false;sx=t.clientX;sy=t.clientY;const r=el.getBoundingClientRect();ox=r.left;oy=r.top;el.style.right="auto";el.style.bottom="auto";el.style.left=ox+"px";el.style.top=oy+"px";el.classList.add("dragging");};
+ const move=e=>{if(!dragging)return;const t=e.touches?e.touches[0]:e;const dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)>4||Math.abs(dy)>4)moved=true;const nx2=Math.max(6,Math.min(window.innerWidth-60,ox+dx)),ny2=Math.max(6,Math.min(window.innerHeight-60,oy+dy));el.style.left=nx2+"px";el.style.top=ny2+"px";if(e.cancelable)e.preventDefault();};
+ const up=()=>{if(!dragging)return;dragging=false;el.classList.remove("dragging");if(!moved)el.classList.toggle("open");};
+ fb.addEventListener("pointerdown",down);window.addEventListener("pointermove",move);window.addEventListener("pointerup",up);
+ document.addEventListener("pointerdown",e=>{if(!el.contains(e.target))el.classList.remove("open")});
+ mpfSyncFloat();
+}
+function mpfSyncFloat(){const el=document.getElementById("mpFloat");if(!el)return;
+ el.classList.toggle("playing",mpPlaying);
+ const tg=el.querySelector("#mpfTog");if(tg)tg.innerHTML=mpPlaying?MP_ICO.pause:MP_ICO.play;
+ const t=MP_TRACKS[mpIdx];const ti=el.querySelector("#mpfTtl");if(ti)ti.textContent=t.name;
+ const su=el.querySelector("#mpfSub");if(su)su.textContent=t.sub||"";
+}
 function renderHome(){
  const st=jerseyOf(user),s=myStats(user),ci=cdInfo(),g=ci&&ci.g,R=ROSTERS[user];
+ const tt=teamTotal(user);const cv=[],cl=[];
+ tt.hist.forEach((v,i)=>{if(v!=null){cv.push(v);cl.push("G"+(GIORNATE[i]?GIORNATE[i].id:i+1))}});
+ const chart=cv.length?lineChart(cv,cl):`<div class="fmInfo"><div class="ic">📈</div><div class="tx">Il grafico mostrerà l'andamento dei tuoi punteggi appena giocherai la 1ª giornata.</div></div>`;
  view.innerHTML=`
- <div class="top"><div class="brand"><img class="hlogo" src="${LOGO}" alt="">Fanta Mundial<b>26</b></div><span class="topbtns"><button class="gear" id="goSettings">⚙</button><button class="out" id="logout">Esci</button></span></div>
- <div class="hero fade"><div class="hi">Bentornato</div><div class="me">${user}</div></div>
- <div class="jersey-wrap fade"><button class="j-edit" id="editJersey">✎ Personalizza</button>
-   <div class="jersey-stage"><svg id="homeJersey" viewBox="0 0 200 220"></svg></div><div class="j-name">La tua maglia</div></div>
- ${mpBarHTML()}
+ <div class="top topbar"><button class="gear menu-btn" id="goMenu" aria-label="Menu">☰</button><div class="brand"><img class="hlogo" src="${LOGO}" alt="">Fanta Mundial<b>26</b></div><button class="out" id="logout">Esci</button></div>
+ <div class="drawer-ov" id="drawerOv"></div>
+ <aside class="drawer" id="drawer"><div class="drawer-h">Menù</div>
+   <button class="drawer-item" data-go="svincolati"><span>🆓</span>Svincolati</button>
+   <button class="drawer-item" data-go="astina"><span>🔨</span>Astina</button>
+   <button class="drawer-item" data-go="porceddu"><span>🐷</span>Porceddu</button>
+   <button class="drawer-item" data-go="regolamento"><span>📖</span>Regolamento</button></aside>
+ <div class="jersey-wrap fade"><div class="j-team">${R?R.club:user}</div>
+   <button class="j-edit" id="editJersey">✎ Personalizza</button>
+   <div class="jersey-stage"><svg id="homeJersey" viewBox="0 0 200 220"></svg></div></div>
+ <button class="rankbar fade" id="rankBar"><div class="rk-pos"><span>${s.pos}</span><small>º</small></div>
+   <div class="rk-mid"><div class="rk-lab">La tua posizione in classifica</div><div class="rk-sub">${s.gp>0?s.gp+" turni giocati":"in attesa dei primi voti"}</div></div>
+   <div class="rk-pts">${s.pts}<small>PUNTI</small></div></button>
  <a class="banner fade" id="banner"><div class="b26">26</div><div class="inner">
    <div class="bt">${ci&&ci.mode==="open"?"Finestra chiusa 🔒":"Inserisci formazione →"}</div>
    <div class="bs">${g?g.label:"Torneo concluso"}${ci?(ci.mode==="lock"?" · chiude "+fdt(new Date(ci.target)):" · apre "+fdt(new Date(ci.target))):""}</div>
@@ -1557,32 +1639,22 @@ function renderHome(){
  ${newsBannerHTML()}
  ${homeGamesHTML()}
  ${homeLineupPreviewHTML()}
- <div class="dash fade"><h3>La tua stagione</h3>
-   <div class="stats">
-    <div class="stat"><span class="edge e-pos"></span><div class="lab">Posizione</div><div class="val">${s.pos}<small>/ 9</small></div><div class="hint">in classifica</div></div>
-    <div class="stat"><span class="edge e-pts"></span><div class="lab">Punti</div><div class="val">${s.pts}</div><div class="hint">classifica</div></div>
-    <div class="stat"><span class="edge e-gp"></span><div class="lab">Partite</div><div class="val">${s.gp}</div><div class="hint">giocate</div></div>
-    <div class="stat"><span class="edge e-tot"></span><div class="lab">Miglior turno</div><div class="val">${s.best||0}</div><div class="hint">record</div></div>
-   </div>
-   <div class="season">${s.gp>0?`Dopo ${s.gp} turni · <b>${s.pts}</b> FantaPunti totali`:"Stagione non ancora iniziata · i dati si aggiorneranno dopo la 1ª giornata"}</div></div>
- ${R?`<div class="dash fade"><h3>La tua rosa · ${R.club}</h3><div class="stats">
-   <div class="stat"><span class="edge e-tot"></span><div class="lab">Spesa</div><div class="val">${R.spent}</div><div class="hint">su ${R.spent+R.credits} crediti</div></div>
-   <div class="stat"><span class="edge e-pts"></span><div class="lab">Valore rosa</div><div class="val">${R.value}</div><div class="hint">listino</div></div>
-   <div class="stat"><span class="edge e-pos"></span><div class="lab">Crediti</div><div class="val">${R.credits}</div><div class="hint">residui</div></div>
-   <div class="stat"><span class="edge e-gp"></span><div class="lab">Giocatori</div><div class="val">${R.n}</div><div class="hint">${R.counts.P}P ${R.counts.D}D ${R.counts.C}C ${R.counts.A}A</div></div></div>
-   <button class="rosabtn" id="goRosa">Vedi la tua rosa completa →</button></div>`:""}`;
+ <div class="dash fade"><h3>Andamento giornate</h3>${chart}</div>`;
  paint(document.getElementById("homeJersey"),st);
  document.getElementById("logout").onclick=logout;
- const _gs=document.getElementById("goSettings");if(_gs)_gs.onclick=()=>go("settings");
+ const dr=document.getElementById("drawer"),ov=document.getElementById("drawerOv");
+ const openDr=o=>{dr.classList.toggle("open",o);ov.classList.toggle("open",o)};
+ document.getElementById("goMenu").onclick=()=>openDr(true);
+ ov.onclick=()=>openDr(false);
+ dr.querySelectorAll(".drawer-item").forEach(b=>b.onclick=()=>{openDr(false);go(b.dataset.go)});
  const _nb=document.getElementById("newsBand");if(_nb)_nb.onclick=()=>{newsView=+_nb.dataset.i;go("news")};
  const _cw=document.getElementById("cwPlay");if(_cw)_cw.onclick=()=>go("cruciverba");
  const _hm=document.getElementById("hmPlay");if(_hm)_hm.onclick=()=>go("impiccato");
  const _t10=document.getElementById("t10Play");if(_t10)_t10.onclick=()=>go("top10");
  document.getElementById("editJersey").onclick=e=>{e.preventDefault();e.stopPropagation();openSheet()};
  document.getElementById("banner").onclick=()=>go("formazione");
- mpWire();
- const gr=document.getElementById("goRosa");
- if(gr)gr.onclick=()=>openRoster(user);
+ document.getElementById("rankBar").onclick=()=>go("classifica");
+ ensureFloatPlayer();
  const _hp=document.getElementById("hlPrev");if(_hp)_hp.onclick=()=>{vgTeam=user;vgGid=currentGiornata().id;go("votigiornata")};
  fillFmHome();
  const _ft=document.getElementById("fmToggle");if(_ft)_ft.onclick=()=>{const p=document.getElementById("fmPanel"),ar=document.getElementById("fmTgAr");const op=p.style.display==="none";p.style.display=op?"block":"none";if(ar)ar.classList.toggle("open",op)};
@@ -1719,9 +1791,7 @@ function renderSquadre(){
      <div class="stat" style="min-height:84px"><span class="edge e-pts"></span><div class="lab">Spesi</div><div class="val" style="font-size:32px">${spLega}</div></div>
      <div class="stat" style="min-height:84px"><span class="edge e-pos"></span><div class="lab">Residui</div><div class="val" style="font-size:32px">${crLega}</div></div>
    </div>
-   <button class="rosabtn alt" id="goSvinc2">Listone svincolati (${SVINC.length}) →</button>
    <div id="teamList" style="display:flex;flex-direction:column;gap:10px;margin-top:12px"></div></div>`;
- const sv2=document.getElementById("goSvinc2");if(sv2)sv2.onclick=()=>go("svincolati");
  const list=document.getElementById("teamList");
  TEAMS.forEach(t=>{const R=ROSTERS[t];const c=document.createElement("button");c.className="teamrow";
   const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("class","tj");paint(svg,jerseyOf(t),false);c.appendChild(svg);
@@ -1969,7 +2039,7 @@ function renderClassifica(){
  arr.forEach((x,i)=>{const b=document.createElement("button");b.className="crow";
    const pos=document.createElement("div");pos.className="pos";pos.textContent=i+1;b.appendChild(pos);
    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("class","cj");paint(svg,jerseyOf(x.t),false);b.appendChild(svg);
-   const info=document.createElement("div");info.className="cinfo";info.innerHTML=`<div class="cn">${x.R.club}</div><div class="csub">${x.gp>0?x.gp+" turni · best "+(x.best!=null?x.best:0):x.R.n+" gioc · valore "+x.R.value}</div>`;b.appendChild(info);
+   const info=document.createElement("div");info.className="cinfo";const _ev=teamEvents(x.t);info.innerHTML=`<div class="cn">${x.R.club}</div><div class="csub">${x.gp>0?x.gp+" turni · best "+(x.best!=null?x.best:0):x.R.n+" gioc · valore "+x.R.value}</div>${x.gp>0?`<div class="cstats"><span>⚽ ${_ev.gol}</span><span class="as">A ${_ev.ast}</span><span class="ya">■ ${_ev.amm}</span><span class="ra">■ ${_ev.esp}</span></div>`:""}`;b.appendChild(info);
    const pts=document.createElement("div");pts.className="cpts";pts.innerHTML=`${anyPts?x.pts:0}<small>PUNTI</small>`;b.appendChild(pts);
    b.onclick=()=>openInfo(x.t,"classifica");ct.appendChild(b)});
 }
@@ -2082,6 +2152,10 @@ function teamTotal(team){let pts=0,gp=0,best=null;const hist=[];
  GIORNATE.forEach(g=>{const tg=teamGiornata(team,g.id);
    if(tg&&tg.played){pts+=tg.tot;gp++;best=best==null?tg.tot:Math.max(best,tg.tot);hist.push(Math.round(tg.tot*10)/10)}else hist.push(null)});
  return{pts:Math.round(pts*10)/10,gp,best:best==null?null:Math.round(best*10)/10,hist}}
+function teamEvents(team){let gol=0,ast=0,amm=0,esp=0;
+ GIORNATE.forEach(g=>{const tg=teamGiornata(team,g.id);
+   if(tg&&tg.played&&tg.det)tg.det.forEach(d=>{const r=d.rec;if(!r)return;gol+=(r.g||0)+(r.rs||0);ast+=(r.a||0);amm+=(r.amm||0);esp+=(r.esp||0)})});
+ return{gol,ast,amm,esp}}
 function standings(){const arr=TEAMS.filter(t=>ROSTERS[t]).map(t=>Object.assign({t,R:ROSTERS[t]},teamTotal(t)));
  const anyPts=arr.some(x=>x.gp>0);
  if(anyPts)arr.sort((a,b)=>b.pts-a.pts||((b.best||0)-(a.best||0))||a.R.club.localeCompare(b.R.club,"it"));
@@ -2198,6 +2272,13 @@ document.getElementById("btnSave").onclick=()=>{store.set("fm26_jersey_"+user,dr
 document.getElementById("btnReset").onclick=()=>{draft=Object.assign({number:10,name:user.toUpperCase()},PRESET[user]);buildSw("swPrimary","primary");buildSw("swSecondary","secondary");buildSw("swDetail","detail");buildPat();document.getElementById("inNumber").value=draft.number;document.getElementById("inName").value=draft.name;upd()};
 
 /* ===== IMPOSTAZIONI ===== */
+function renderAstina(){setNav("home");
+ view.innerHTML=`<div class="top"><button class="back" id="bk">‹ Home</button><div class="brand">Astina</div><span style="width:64px"></span></div>
+ <div class="dash fade"><h3>Aste di riparazione</h3>
+ <div class="fmInfo" style="margin:0 0 12px"><div class="ic">🔨</div><div class="tx">Sezione in arrivo. Qui gestiremo le <b>astine di riparazione</b> previste dal regolamento. Le meccaniche verranno attivate appena definite le regole.</div></div>
+ <div class="card"><div class="ct">Cosa ci sarà</div><p class="lead" style="opacity:.7;font-size:13px;line-height:1.5;margin:6px 0 0">Rilancio a turni sui giocatori svincolati, budget residuo per squadra, scadenze e assegnazione al miglior offerente.</p></div></div>`;
+ document.getElementById("bk").onclick=()=>go("home");
+}
 function renderSettings(){setNav("home");
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand">Impostazioni</div><span style="width:46px"></span></div>
  <div class="setlist fade">
