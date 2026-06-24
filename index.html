@@ -2159,7 +2159,18 @@ function phaseOf(gid){if(gid<=5)return{titolari:11,fixed:true,sameRoleSub:true,l
  if(gid===7)return{titolari:4,fixed:false,sameRoleSub:false,label:"Semifinali"};
  return{titolari:2,fixed:false,sameRoleSub:false,label:"Finale"}}
 function votiKey(gid){return "fm26_voti_"+gid}
-function getVoti(gid){return store.get(votiKey(gid))||{}}
+/* === CORREZIONI VOTI FORZATE (override sopra i voti inseriti) ===
+   Struttura: { <gid>: { "<RUOLO>|<Nome esatto>": {v:<voto, o null per SV>, g:..,a:..} } }
+   Il record indicato SOSTITUISCE quello inserito (azzera eventuali eventi). */
+const VOTI_FIX={
+  2:{
+    "D|Ronald Araujo":{v:null},        /* G2: infortunato, sempre SV (e azzera gol attribuiti per errore) */
+    "A|Lautaro Martinez":{v:6.5}       /* G2: voto fisso 6,5 */
+  }
+};
+function getVoti(gid){const base=store.get(votiKey(gid))||{};const fix=VOTI_FIX[gid];
+  if(fix&&Object.keys(base).length){const out=Object.assign({},base);for(const k in fix)out[k]=Object.assign({},fix[k]);return out;}
+  return base;}
 function hasVoto(rec){return !!rec&&rec.v!=null&&rec.v!==""}
 function fantaVoto(rec,role){if(!hasVoto(rec))return null;let fv=Number(rec.v)||0;
  fv+=(rec.g||0)*BONUS.gol+(rec.rs||0)*BONUS.rigSeg+(rec.rp||0)*BONUS.rigPar+(rec.a||0)*BONUS.assist
