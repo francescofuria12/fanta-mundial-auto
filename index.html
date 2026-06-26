@@ -815,6 +815,16 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .elx{color:#FF8A8A}
 .msec{margin:16px 4px 8px;font-size:13px;text-transform:uppercase;opacity:.82}
 .mempty{font-size:12px;opacity:.5;padding:8px 4px}
+.cw-blank{background:#06070b;border-radius:2px}
+.cw-grid{width:100%;max-width:360px;gap:3px}
+.cw-cell{width:100%;height:auto;aspect-ratio:1}
+.cw-in{width:100%;height:100%;font-size:15px}
+.cw-gridwrap{overflow:visible}
+.cw-in.cw-given{background:#16332a;color:#7BE0B0;border-color:#2f6b52;font-weight:800;opacity:1}
+.cw-actions{display:flex;gap:8px;margin-top:12px}
+.cw-actions .cw-check{margin-top:0;width:auto;flex:1}
+.cw-help{flex:0 0 auto;padding:11px 14px;border:1px solid #2c3f6e;background:#0f1c3d;color:#cfd8ee;font-weight:700;font-size:14px;border-radius:12px;cursor:pointer}
+.cw-fun{margin:8px 0 2px;padding:9px 12px;border-radius:11px;background:rgba(255,194,30,.1);border:1px solid rgba(255,194,30,.22);color:#F4E2B8;font-size:12.5px;line-height:1.45;font-weight:600}
 </style>
 </head>
 <body>
@@ -1284,20 +1294,24 @@ function cwBuild(pool,seedStr,maxWords){
         const cr=canPlace(word.a,r,c,dir);
         if(cr===false||cr<1)continue;
         const nR0=Math.min(bb.minR,r),nC0=Math.min(bb.minC,c),nR1=Math.max(bb.maxR,r+dr*(word.a.length-1)),nC1=Math.max(bb.maxC,c+dc*(word.a.length-1));
-        const w2=nC1-nC0+1,h2=nR1-nR0+1;
+        const w2=nC1-nC0+1,h2=nR1-nR0+1;if(w2>10||h2>10)continue;
         const score=cr*12-Math.max(w2,h2)*2-Math.abs(w2-h2);
         if(score>bestScore){bestScore=score;best={r,c,dir};}}}}
     if(best)place(word,best.r,best.c,best.dir);}
-  const minR=bb.minR,minC=bb.minC,H=bb.maxR-bb.minR+1,W=bb.maxC-bb.minC+1;
-  const cells=[];for(let r=0;r<H;r++){cells.push([]);for(let c=0;c<W;c++)cells[r].push(grid[key(r+minR,c+minC)]||null);}
-  const ents=placed.map(p=>({a:p.a,q:p.q,nat:p.nat,r:p.r-minR,c:p.c-minC,dir:p.dir}));
+  const minR=bb.minR,minC=bb.minC,H0=bb.maxR-bb.minR+1,W0=bb.maxC-bb.minC+1,SZ=10;
+  const offR=Math.max(0,Math.floor((SZ-H0)/2)),offC=Math.max(0,Math.floor((SZ-W0)/2));
+  const cells=[];for(let r=0;r<SZ;r++){cells.push([]);for(let c=0;c<SZ;c++){const sr=r-offR,sc=c-offC;cells[r].push((sr>=0&&sc>=0&&sr<H0&&sc<W0)?(grid[key(sr+minR,sc+minC)]||null):null);}}
+  const ents=placed.map(p=>({a:p.a,q:p.q,nat:p.nat,r:p.r-minR+offR,c:p.c-minC+offC,dir:p.dir}));
   const num={};let n=0;
-  for(let r=0;r<H;r++)for(let c=0;c<W;c++){if(!cells[r][c])continue;
-    const sA=(c===0||!cells[r][c-1])&&(c+1<W&&cells[r][c+1]);
-    const sD=(r===0||!cells[r-1][c])&&(r+1<H&&cells[r+1][c]);
+  for(let r=0;r<SZ;r++)for(let c=0;c<SZ;c++){if(!cells[r][c])continue;
+    const sA=(c===0||!cells[r][c-1])&&(c+1<SZ&&cells[r][c+1]);
+    const sD=(r===0||!cells[r-1][c])&&(r+1<SZ&&cells[r+1][c]);
     if(sA||sD)num[key(r,c)]=++n;}
   ents.forEach(e=>e.n=num[key(e.r,e.c)]);
-  return{W,H,cells,ents:ents.sort((a,b)=>(a.n-b.n)||a.dir-b.dir)};
+  const letterCells=[];for(let r=0;r<SZ;r++)for(let c=0;c<SZ;c++)if(cells[r][c])letterCells.push(r+","+c);
+  const given=[],lc=letterCells.slice(),ng=Math.min(4,lc.length);
+  for(let i=0;i<ng&&lc.length;i++){const j=Math.floor(rnd()*lc.length);given.push(lc.splice(j,1)[0]);}
+  return{W:SZ,H:SZ,cells,ents:ents.sort((a,b)=>(a.n-b.n)||a.dir-b.dir),given};
 }
 function cwDateKey(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
 function cwToday(){
@@ -1311,8 +1325,39 @@ function cwToday(){
   const nats=[...new Set([].concat(...day.map(m=>[m.t1,m.t2])))];
   let pool=[];nats.forEach(en=>{(CWDATA[en]||[]).forEach(s=>{const p=s.split("|");pool.push({a:p[0],q:p[1],nat:natIT(en)});});});
   if(pool.length<6){Object.keys(CWDATA).forEach(en=>CWDATA[en].forEach(s=>{const p=s.split("|");pool.push({a:p[0],q:p[1],nat:natIT(en)});}));}
-  return {key,nats,cw:cwBuild(pool,key,10)};
+  return {key,nats,cw:cwBuild(pool,key,16)};
 }
+/* ===== Fatti divertenti sulle nazionali di giornata ===== */
+const CWFUN={
+ "Argentina":["In Argentina esiste una vera 'Chiesa Maradoniana': il loro calendario parte dal 1960, anno di nascita di Diego.","Qui il pallone è religione: a Rosario nascono più dieci che ingegneri."],
+ "Brazil":["Il Brasile ha cinque stelle sul petto e zero modestia: campioni del mondo di gioia (e di carnevale).","In Brasile il calcio si gioca scalzi in spiaggia e si vince lo stesso."],
+ "France":["In Francia il pallone è serissimo, ma la baguette resta l'unica cosa che non si passa mai indietro.","I Galletti: capaci di vincere il Mondiale e perderlo ai rigori nello stesso decennio."],
+ "Spain":["La Spagna ha inventato il tiki-taka: 900 passaggi e, forse, alla fine un gol.","In Spagna la siesta è sacra, tranne quando gioca la Roja."],
+ "Germany":["I tedeschi 'non perdono ai rigori': pare sia scritto in un regolamento, da qualche parte.","Efficienza tedesca: segnano e poi controllano pure lo scontrino."],
+ "England":["L'Inghilterra ha inventato il calcio e poi ha passato 60 anni a guardarlo vincere agli altri.","'It's coming home' dal 1966. Sta ancora cercando l'indirizzo."],
+ "Portugal":["In Portogallo CR7 ha più statue che semafori funzionanti.","Qui anche il pastel de nata fa un'esultanza prima di essere mangiato."],
+ "Netherlands":["L'Olanda è arrivata in finale tre volte senza mai vincere: maestri assoluti del 'quasi'.","Calcio totale e biciclette totali: anche in area si va in bici."],
+ "Italy":["L'Italia non si è qualificata, ma il caffè resta imbattuto a tutti i Mondiali.","Maestri di catenaccio: l'unico popolo che esulta per uno 0-0."],
+ "United States":["Negli USA lo chiamano 'soccer' per non confonderlo con lo sport dove i piedi non si usano.","Qui il calcio cresce: ormai sanno cos'è il fuorigioco (quasi)."],
+ "Mexico":["Il Messico agli ottavi ci arriva sempre. Poi scatta la maledizione del 'quinto partido'.","La 'ola' allo stadio l'hanno lanciata loro: l'unico assist messicano garantito."],
+ "Canada":["Il Canada al Mondiale dice 'sorry' anche dopo aver segnato.","Tra hockey e calcio, qui l'unico ghiaccio in campo è nel gelato."],
+ "Japan":["In Giappone i tifosi puliscono lo stadio dopo la partita. Anche dopo aver perso.","Disciplina samurai: arrivano in orario pure ai supplementari."],
+ "Croatia":["La Croazia ha quattro milioni di abitanti e una finale mondiale: resa ottimizzata.","A scacchi sulla maglia e nel gioco: muovono il pallone come pedine."],
+ "Morocco":["Il Marocco nel 2022 ha fermato mezza Europa, mamme in tribuna comprese.","Leoni dell'Atlante: ruggiscono in difesa e segnano di testa."],
+ "Uruguay":["L'Uruguay ha tre milioni di abitanti e due Mondiali: statisticamente imbarazzante per gli altri.","Qui il mate si passa più del pallone, e con più precisione."],
+ "Belgium":["Il Belgio è la 'generazione d'oro' più premiata senza trofei della storia.","Patria di cioccolato e patatine: l'attacco più goloso del torneo."]
+};
+const CWFUN_GEN=[
+ "Regola d'oro: chi esulta troppo presto, poi piange ai rigori.",
+ "Il fuorigioco è l'unica cosa che nemmeno il VAR riesce a spiegare alla nonna.",
+ "Ogni Mondiale ha la sua sorpresa: di solito è la nazionale che hai scartato al fanta.",
+ "La 'partita perfetta' esiste solo nei sogni e nel Football Manager.",
+ "Il portiere tocca il pallone coi piedi solo per allungare il brodo."
+];
+function cwFunFact(nats,seedStr){const rnd=cwRng(cwStrSeed("fun"+(seedStr||"")));
+  const opts=[];(nats||[]).forEach(en=>{(CWFUN[en]||[]).forEach(f=>opts.push(f));});
+  const pool=opts.length?opts:CWFUN_GEN;
+  return pool[Math.floor(rnd()*pool.length)]||CWFUN_GEN[0];}
 function cwLeaderboard(key){const d=store.get("fm26_cw_"+key)||{};return Object.keys(d).map(t=>({team:t,t:d[t].t})).sort((a,b)=>a.t-b.t);}
 function cwFmt(s){s=Math.round(s);const m=Math.floor(s/60),x=s%60;return m+":"+pad(x);}
 function homeCWHTML(){
@@ -1350,21 +1395,25 @@ function renderCruciverba(){
   cwState={key:day.key,nats:day.nats,cw:day.cw,won:false};
   const _meDone=cwLeaderboard(day.key).find(e=>e.team===user);cwState.locked=!!_meDone;cwState.won=cwState.locked;
   const cw=day.cw,num={};cw.ents.forEach(e=>{num[e.r+","+e.c]=e.n;});
-  let grid=`<div class="cw-grid" style="grid-template-columns:repeat(${cw.W},22px)">`;
+  const gset=new Set((cw.given)||[]);
+  let grid=`<div class="cw-grid" style="grid-template-columns:repeat(${cw.W},1fr)">`;
   for(let r=0;r<cw.H;r++)for(let c=0;c<cw.W;c++){const ch=cw.cells[r][c];
     if(!ch){grid+=`<div class="cw-cell cw-blank"></div>`;continue;}
     const n=num[r+","+c];
-    grid+=`<div class="cw-cell">${n?`<span class="cw-n">${n}</span>`:""}<input class="cw-in" data-r="${r}" data-c="${c}" maxlength="1" autocomplete="off" inputmode="latin"${cwState.locked?` value="${ch}" disabled`:""}></div>`;}
+    const gv=gset.has(r+","+c);
+    grid+=`<div class="cw-cell">${n?`<span class="cw-n">${n}</span>`:""}<input class="cw-in${gv?" cw-given":""}" data-r="${r}" data-c="${c}" maxlength="1" autocomplete="off" inputmode="latin"${(cwState.locked||gv)?` value="${ch}" disabled`:""}></div>`;}
   grid+=`</div>`;
   const acr=cw.ents.filter(e=>e.dir===0).map(e=>`<li><b>${e.n}.</b> <i class="cw-nat">${e.nat}</i> ${e.q}</li>`).join("");
   const dwn=cw.ents.filter(e=>e.dir===1).map(e=>`<li><b>${e.n}.</b> <i class="cw-nat">${e.nat}</i> ${e.q}</li>`).join("");
   const theme=day.nats.slice(0,5).map(n=>natIT(n)).join(" · ");
+  const fun=cwFunFact(day.nats,day.key);
   view.innerHTML=`
   <div class="top"><div class="brand"><img class="hlogo" src="${LOGO}" alt="">Cruciverba</div><span class="topbtns"><button class="out" id="cwBack">Home</button></span></div>
   <div class="dash fade"><div class="cw-theme">Tema: <b>${theme}</b></div>
+    <div class="cw-fun">😄 ${fun}</div>
     <div class="cw-head">${cwState.locked?`<div class="cw-timer">✓ ${cwFmt(_meDone.t)}</div>`:`<div class="cw-timer" id="cwTimer">0:00</div><button class="cw-dir" id="cwDirBtn">↔ direzione</button>`}<div class="cw-msg" id="cwMsg">${cwState.locked?"Già completato oggi":""}</div></div>
     <div class="cw-gridwrap">${grid}</div>
-    ${cwState.locked?"":`<button class="cw-check" id="cwCheck">Controlla</button>`}</div>
+    ${cwState.locked?"":`<div class="cw-actions"><button class="cw-help" id="cwReveal">💡 Rivela</button><button class="cw-check" id="cwCheck">Controlla</button></div>`}</div>
   <div class="dash fade"><h3>Orizzontali</h3><ul class="cw-clues">${acr}</ul>
     <h3>Verticali</h3><ul class="cw-clues">${dwn}</ul></div>
   <div class="dash fade"><h3><svg class="h3ic" viewBox="0 0 24 24"><path d="M6 4h12v5a6 6 0 0 1-12 0z" fill="#F7F3E8"/><path d="M6 6H3.2v1a3 3 0 0 0 3 3M18 6h2.8v1a3 3 0 0 1-3 3" fill="none" stroke="#F7F3E8" stroke-width="2"/><path d="M12 14.5v3M8.5 20.5h7M10 20.5l.4-3h3.2l.4 3" fill="none" stroke="#F7F3E8" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="8" r="2.2" fill="#C6FF3D"/></svg>Classifica del giorno</h3><div id="cwLb"></div></div>`;
@@ -1375,6 +1424,10 @@ function renderCruciverba(){
   if(cwTimer)clearInterval(cwTimer);
   cwTimer=setInterval(()=>{const el=document.getElementById("cwTimer");if(!el){clearInterval(cwTimer);return;}el.textContent=cwFmt((Date.now()-cwStart)/1000);},1000);
   const ck=document.getElementById("cwCheck");if(ck)ck.onclick=cwVerify;
+  const rv=document.getElementById("cwReveal");if(rv)rv.onclick=()=>{const cw=cwState.cw;let tr=-1,tc=-1;
+    if(cwCur&&cwIsLetter(cwCur.r,cwCur.c)){const e0=cwCellEl(cwCur.r,cwCur.c);if(e0&&!e0.disabled&&!e0.value){tr=cwCur.r;tc=cwCur.c;}}
+    if(tr<0){for(let r=0;r<cw.H&&tr<0;r++)for(let c=0;c<cw.W;c++){if(cw.cells[r][c]){const e=cwCellEl(r,c);if(e&&!e.disabled&&!e.value){tr=r;tc=c;break;}}}}
+    if(tr<0)return;const el=cwCellEl(tr,tc);el.value=cw.cells[tr][tc];el.classList.remove("cw-bad");if(cwSolved())cwWin();else cwFocus(tr,tc);};
   cwDir=0;cwCur=null;cwActive=null;
   const db=document.getElementById("cwDirBtn");if(db)db.onclick=()=>{cwDir=cwDir?0:1;if(cwCur){cwFocus(cwCur.r,cwCur.c);cwHL(cwCur.r,cwCur.c);}};
   view.querySelectorAll(".cw-in").forEach(inp=>{
