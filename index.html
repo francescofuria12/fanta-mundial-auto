@@ -1303,11 +1303,11 @@ function votoBadge(p,voti){const rec=voti[pid(p)];if(!hasVoto(rec))return '<span
 function pitchVotiHTML(lineup,map,voti){const rows=["A","C","D","P"].map(r=>`<div class="preparto">${(lineup[r]||[]).map(id=>{const p=map[id];return p?tileVoto(p,votoBadge(p,voti)):""}).join("")}</div>`).join("");return `<div class="pitchwrap"><div class="pitch">${rows}</div></div>`}
 function homeLineupPreviewHTML(){
  const cg=currentGiornata();if(!cg)return"";
- const saved=store.get("fm26_lineup_"+user+"_"+cg.id);
+ const saved=getLineupFor(user,cg.id);
  if(!saved||!saved.lineup)
    return `<div class="dash fade hlprev" id="hlPrev"><h3>Formazione · turno corrente <span class="hl-go">apri ›</span></h3><div class="fmInfo" style="margin:0"><div class="ic">📋</div><div class="tx">Non hai una formazione salvata per <b>${cg.label}</b>.</div></div></div>`;
  const map=rosterMap(user),tg=teamGiornata(user,cg.id),played=tg&&tg.played;
- const head=`<div class="fmInfo" style="margin:0 0 12px"><div class="ic">📋</div><div class="tx">Modulo <b>${saved.module}</b> · <b>${cg.label}</b>${played?` · FantaPunti: <b>${tg.tot}</b>`:' · <span style="color:var(--yellow)">voti non ancora inseriti</span>'}</div></div>`;
+ const head=`<div class="fmInfo" style="margin:0 0 12px"><div class="ic">📋</div><div class="tx">Modulo <b>${saved.module}</b> · <b>${cg.label}</b>${saved.inherited?' \u00b7 <span style="color:var(--yellow)">ereditata</span>':''}${played?` · FantaPunti: <b>${tg.tot}</b>`:' · <span style="color:var(--yellow)">voti non ancora inseriti</span>'}</div></div>`;
  const pitch=played?pitchVotiHTML(saved.lineup,map,getVoti(cg.id)):pitchView(saved.lineup,map);
  return `<div class="dash fade hlprev" id="hlPrev"><h3>Formazione · turno corrente <span class="hl-go">apri ›</span></h3>${head}${pitch}</div>`;
 }
@@ -1942,7 +1942,7 @@ function rosterMap(t){t=t||user;const m={};((ROSTERS[t]||{}).players||[]).forEac
 function fmAutofill(){const R=ROSTERS[user];if(!R)return;const req=reqOf(fmState.module);
  ["P","D","C","A"].forEach(r=>{const placed=new Set(fmState.lineup[r]);
   R.players.filter(p=>p.role===r).sort((a,b)=>b.q-a.q).forEach(p=>{if(fmState.lineup[r].length<req[r]&&!placed.has(pid(p))){fmState.lineup[r].push(pid(p));placed.add(pid(p))}})})}
-function fmInit(){const saved=store.get(fmKey());
+function fmInit(){const _g=submissionGiornata();const saved=_g?getLineupFor(user,_g.id):store.get(fmKey());
  if(saved&&saved.module&&saved.lineup){fmState={module:saved.module,lineup:{P:saved.lineup.P||[],D:saved.lineup.D||[],C:saved.lineup.C||[],A:saved.lineup.A||[]},order:reconcileOrder(user,saved.order)}}
  else{fmState={module:"3-4-3",lineup:{P:[],D:[],C:[],A:[]},order:defaultOrder(user)};fmAutofill()}}
 function fmCount(){return ["P","D","C","A"].reduce((s,r)=>s+fmState.lineup[r].length,0)}
@@ -2397,11 +2397,11 @@ function fillFmHome(){const el=document.getElementById("fmHome");if(!el)return;c
 function openFormView(t){viewTeam=t;go("formview")}
 function pitchView(lineup,map){const rows=["A","C","D","P"].map(r=>`<div class="preparto">${(lineup[r]||[]).map(id=>map[id]?tile(map[id]):"").join("")}</div>`).join("");return `<div class="pitchwrap"><div class="pitch">${rows}</div></div>`}
 function benchView(t,lineup,map,order){const inUse=new Set(["P","D","C","A"].flatMap(r=>lineup[r]||[]));const R=ROSTERS[t];return benchSorted((R?R.players:[]).filter(p=>!inUse.has(pid(p))),order).map(p=>tile(p)).join("")}
-function renderFormView(t){setNav("home");const R=ROSTERS[t],g=nextGiornata(),saved=store.get("fm26_lineup_"+t+"_"+(g?g.id:"x")),map=rosterMap(t);
+function renderFormView(t){setNav("home");const R=ROSTERS[t],g=nextGiornata(),saved=getLineupFor(t,g?g.id:0),map=rosterMap(t);
  let body;
  if(saved&&saved.lineup){const tg=g?teamGiornata(t,g.id):null;
    const pag=tg&&tg.played?pagelleHTML(tg):"";
-   body=`<div class="fmInfo fade"><div class="ic">📋</div><div class="tx">Modulo <b>${saved.module}</b>${g?" · "+g.label:""}. Formazione di <b>${R.club}</b>.${tg&&tg.played?` FantaPunti turno: <b>${tg.tot}</b>.`:""}</div></div>${pitchView(saved.lineup,map)}${pag}<div class="bench fade"><h4>Riserve <span class="bcount">ordine subentri</span></h4><div class="benchgrid">${benchView(t,saved.lineup,map,saved.order)}</div></div>`}
+   body=`<div class="fmInfo fade"><div class="ic">📋</div><div class="tx">Modulo <b>${saved.module}</b>${g?" · "+g.label:""}. Formazione di <b>${R.club}</b>.${saved.inherited?" Ereditata dal turno precedente.":""}${tg&&tg.played?` FantaPunti turno: <b>${tg.tot}</b>.`:""}</div></div>${pitchView(saved.lineup,map)}${pag}<div class="bench fade"><h4>Riserve <span class="bcount">ordine subentri</span></h4><div class="benchgrid">${benchView(t,saved.lineup,map,saved.order)}</div></div>`}
  else body=`<div class="stub fade"><div class="em">⏳</div><h2>Non ancora<br>schierata</h2><p><b>${R.club}</b> non ha ancora inserito la formazione${g?(" per <b>"+g.label+"</b>"):""}.</p></div>`;
  view.innerHTML=`<div class="top"><button class="back" id="bk">‹ Home</button><div class="brand">${R.club}</div><span style="width:46px"></span></div>${body}`;
  document.getElementById("bk").onclick=()=>go("home");
@@ -2434,7 +2434,11 @@ function fantaVoto(rec,role){if(!hasVoto(rec))return null;let fv=Number(rec.v)||
    +(rec.rsb||0)*BONUS.rigSb+(rec.og||0)*BONUS.autorete+(rec.esp||0)*BONUS.esp+(rec.amm||0)*BONUS.amm;
  if(role==="P"){fv+=(rec.gs||0)*BONUS.golSub;if((rec.gs||0)===0)fv+=BONUS.cleanSheet}
  return Math.round(fv*100)/100}
-function teamGiornata(team,gid){const sub=store.get("fm26_lineup_"+team+"_"+gid);if(!sub||!sub.lineup)return null;
+function getLineupFor(team,gid){if(!gid)return null;
+ const direct=store.get("fm26_lineup_"+team+"_"+gid);if(direct&&direct.lineup)return direct;
+ for(let g=gid-1;g>=1;g--){const prev=store.get("fm26_lineup_"+team+"_"+g);if(prev&&prev.lineup)return Object.assign({},prev,{inherited:true,fromGid:g});}
+ return null;}
+function teamGiornata(team,gid){const sub=getLineupFor(team,gid);if(!sub||!sub.lineup)return null;
  const voti=getVoti(gid);if(Object.keys(voti).length===0)return{played:false};
  const map=rosterMap(team),sameRole=phaseOf(gid).sameRoleSub;
  const concluded=roundConcluded(gid);
@@ -2562,7 +2566,7 @@ function renderVotiGiornata(){
  setNav("votigiornata");
  const g0=currentGiornata(),gid=vgGid||(g0?g0.id:1);vgGid=gid;
  const team=vgTeam||user||TEAMS[0];vgTeam=team;const R=ROSTERS[team];
- const saved=store.get("fm26_lineup_"+team+"_"+gid),voti=getVoti(gid),map=rosterMap(team),tg=teamGiornata(team,gid);
+ const saved=getLineupFor(team,gid),voti=getVoti(gid),map=rosterMap(team),tg=teamGiornata(team,gid);
  const subFor={},subbedIn=new Set();
  if(tg&&tg.det)tg.det.forEach(d=>{if(d.viaSub){subFor[pid(d.starter)]=d.player;subbedIn.add(pid(d.player))}});
  const turni=GIORNATE.map(x=>`<button class="modbtn${x.id===gid?" sel":""}" data-g="${x.id}">${phaseOf(x.id).label.replace("Gironi \u00b7 ","G")}</button>`).join("");
