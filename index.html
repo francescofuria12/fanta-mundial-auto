@@ -843,6 +843,35 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .rspw{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-2px 0 12px;font-size:11px;color:#9fb0d8}
 .rspw .pwb{padding:5px 9px;border-radius:8px;border:1px solid #2c3f6e;background:#0f1c3d;color:#cfd8ee;font-weight:700;font-size:11px;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rspw .pwb.on{background:var(--yellow,#FFC21E);color:#11214a;border-color:var(--yellow,#FFC21E)}
+.kotabs{display:flex;gap:6px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none}
+.kotabs::-webkit-scrollbar{display:none}
+.kotab{flex:0 0 auto;padding:8px 15px;border-radius:999px;background:#0e1f47;border:1px solid #26366a;color:#9fb0d8;font-weight:700;font-size:12.5px}
+.kotab.on{background:#fff;color:#0a1430;border-color:#fff}
+.kbracket{padding:0 14px 24px}
+.kpair{display:flex;align-items:center;margin:12px 0}
+.kpcol{flex:1;display:flex;flex-direction:column;gap:16px;min-width:0}
+.kpconn{flex:0 0 20px;align-self:stretch;position:relative;margin:16px 0}
+.kpconn::before{content:"";position:absolute;left:0;top:25%;bottom:25%;width:10px;border:2px solid #2c3f6e;border-left:0;border-radius:0 7px 7px 0}
+.kpconn::after{content:"";position:absolute;left:10px;top:50%;width:10px;border-top:2px solid #2c3f6e}
+.kpnext{flex:0 0 108px;min-width:0}
+.knb{background:#0b1838;border:1px solid #243463;border-radius:10px;padding:7px 8px;display:flex;flex-direction:column;gap:7px}
+.knr{display:flex;align-items:center;gap:6px;font-size:12px;color:#cfd8ee;font-weight:700;min-width:0}
+.knr span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.knr .fl,.kfx{width:18px;height:12px;border-radius:2px;flex:none}
+.kfx{display:inline-block;background:#1a2a55;border:1px solid #2c3f6e}
+.kmini{background:#0e1f47;border:1px solid #26366a;border-radius:11px;padding:8px 10px}
+.kmini.big{border-color:#FFC21E;background:#16224d}
+.kmwhen{font-size:9.5px;color:#7f90b8;margin-bottom:5px;font-weight:600}
+.kmt{display:flex;align-items:center;gap:8px;padding:2px 0}
+.kmt .fl{width:20px;height:14px;border-radius:2px;flex:none}
+.kmn{flex:1;font-size:13px;font-weight:700;color:#cfd8ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kms{font-weight:800;font-size:14px;color:#8fa0c8;min-width:14px;text-align:right}
+.kmt.kw .kmn{color:#fff}
+.kmt.kw .kms{color:var(--yellow,#FFC21E)}
+.kthird{margin-top:20px}
+.kthlab{font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#bcd0ff;margin:0 2px 8px}
+.oppd{opacity:.62;font-size:9.5px;font-weight:600;white-space:nowrap}
+.bnopp{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -983,20 +1012,20 @@ const KO=[
  {key:"final",label:"Finale",dt:shiftTZ("2026-07-19T14:00")}];
 /* ===== TABELLONE · fase a eliminazione diretta (incroci dal tabellone ufficiale) ===== */
 const KOM=[
- {n:73,rd:"r32",t1:"South Africa",t2:"Canada",dt:shiftTZ("2026-06-28T12:00"),city:"Inglewood",stad:"SoFi Stadium"},
- {n:74,rd:"r32",t1:"Germany",t2:"Paraguay",dt:shiftTZ("2026-06-29T16:30"),city:"Foxborough",stad:"Gillette Stadium"},
- {n:75,rd:"r32",t1:"Netherlands",t2:"Morocco",dt:shiftTZ("2026-06-29T19:00"),city:"Monterrey",stad:"Stadio BBVA"},
+ {n:73,rd:"r32",t1:"South Africa",t2:"Canada",dt:shiftTZ("2026-06-28T14:00"),city:"Inglewood",stad:"SoFi Stadium"},
+ {n:74,rd:"r32",t1:"Germany",t2:"Paraguay",dt:shiftTZ("2026-06-29T15:30"),city:"Foxborough",stad:"Gillette Stadium"},
+ {n:75,rd:"r32",t1:"Netherlands",t2:"Morocco",dt:shiftTZ("2026-06-29T20:00"),city:"Monterrey",stad:"Stadio BBVA"},
  {n:76,rd:"r32",t1:"Brazil",t2:"Japan",dt:shiftTZ("2026-06-29T12:00"),city:"Houston",stad:"NRG Stadium"},
- {n:77,rd:"r32",t1:"France",t2:"Sweden",dt:shiftTZ("2026-06-30T17:00"),city:"East Rutherford",stad:"MetLife Stadium"},
+ {n:77,rd:"r32",t1:"France",t2:"Sweden",dt:shiftTZ("2026-06-30T16:00"),city:"East Rutherford",stad:"MetLife Stadium"},
  {n:78,rd:"r32",t1:"Ivory Coast",t2:"Norway",dt:shiftTZ("2026-06-30T12:00"),city:"Arlington",stad:"AT&T Stadium"},
- {n:79,rd:"r32",t1:"Mexico",t2:"Ecuador",dt:shiftTZ("2026-06-30T19:00"),city:"Citt\u00e0 del Messico",stad:"Stadio Azteca"},
- {n:80,rd:"r32",t1:"England",t2:"DR Congo",dt:shiftTZ("2026-07-01T12:00"),city:"Atlanta",stad:"Mercedes-Benz Stadium"},
- {n:81,rd:"r32",t1:"United States",t2:"Bosnia and Herzegovina",dt:shiftTZ("2026-07-01T17:00"),city:"Santa Clara",stad:"Levi's Stadium"},
- {n:82,rd:"r32",t1:"Belgium",t2:"Senegal",dt:shiftTZ("2026-07-01T13:00"),city:"Seattle",stad:"Lumen Field"},
- {n:83,rd:"r32",t1:"Portugal",t2:"Croatia",dt:shiftTZ("2026-07-02T19:00"),city:"Toronto",stad:"BMO Field"},
- {n:84,rd:"r32",t1:"Spain",t2:"Austria",dt:shiftTZ("2026-07-02T12:00"),city:"Inglewood",stad:"SoFi Stadium"},
- {n:85,rd:"r32",t1:"Switzerland",t2:"Algeria",dt:shiftTZ("2026-07-02T20:00"),city:"Vancouver",stad:"BC Place"},
- {n:86,rd:"r32",t1:"Argentina",t2:"Cape Verde",dt:shiftTZ("2026-07-03T18:00"),city:"Miami Gardens",stad:"Hard Rock Stadium"},
+ {n:79,rd:"r32",t1:"Mexico",t2:"Ecuador",dt:shiftTZ("2026-06-30T20:00"),city:"Citt\u00e0 del Messico",stad:"Stadio Azteca"},
+ {n:80,rd:"r32",t1:"England",t2:"DR Congo",dt:shiftTZ("2026-07-01T11:00"),city:"Atlanta",stad:"Mercedes-Benz Stadium"},
+ {n:81,rd:"r32",t1:"United States",t2:"Bosnia and Herzegovina",dt:shiftTZ("2026-07-01T19:00"),city:"Santa Clara",stad:"Levi's Stadium"},
+ {n:82,rd:"r32",t1:"Belgium",t2:"Senegal",dt:shiftTZ("2026-07-01T15:00"),city:"Seattle",stad:"Lumen Field"},
+ {n:83,rd:"r32",t1:"Portugal",t2:"Croatia",dt:shiftTZ("2026-07-02T18:00"),city:"Toronto",stad:"BMO Field"},
+ {n:84,rd:"r32",t1:"Spain",t2:"Austria",dt:shiftTZ("2026-07-02T14:00"),city:"Inglewood",stad:"SoFi Stadium"},
+ {n:85,rd:"r32",t1:"Switzerland",t2:"Algeria",dt:shiftTZ("2026-07-02T22:00"),city:"Vancouver",stad:"BC Place"},
+ {n:86,rd:"r32",t1:"Argentina",t2:"Cape Verde",dt:shiftTZ("2026-07-03T17:00"),city:"Miami Gardens",stad:"Hard Rock Stadium"},
  {n:87,rd:"r32",t1:"Colombia",t2:"Ghana",dt:shiftTZ("2026-07-03T20:30"),city:"Kansas City",stad:"Arrowhead Stadium"},
  {n:88,rd:"r32",t1:"Australia",t2:"Egypt",dt:shiftTZ("2026-07-03T13:00"),city:"Arlington",stad:"AT&T Stadium"},
  {n:89,rd:"r16",t1:{w:74},t2:{w:77},dt:shiftTZ("2026-07-04T17:00"),city:"Filadelfia",stad:"Lincoln Financial Field"},
@@ -1063,7 +1092,15 @@ function cdInfo(){const e=submissionGiornata();
   return null}
 /* nazioni EN->IT + avversario di giornata letto dinamicamente dal Calendario */
 const EN2IT={"Mexico":"Messico","South Africa":"Sudafrica","Korea Republic":"Corea del Sud","Czech Republic":"Repubblica Ceca","Canada":"Canada","Bosnia and Herzegovina":"Bosnia ed Erzegovina","United States":"Stati Uniti","Paraguay":"Paraguay","Haiti":"Haiti","Scotland":"Scozia","Australia":"Australia","Turkey":"Turchia","Brazil":"Brasile","Morocco":"Marocco","Qatar":"Qatar","Switzerland":"Svizzera","Ivory Coast":"Costa d'Avorio","Ecuador":"Ecuador","Germany":"Germania","Cura\u00e7ao":"Cura\u00e7ao","Netherlands":"Paesi Bassi","Japan":"Giappone","Sweden":"Svezia","Tunisia":"Tunisia","Saudi Arabia":"Arabia Saudita","Uruguay":"Uruguay","Spain":"Spagna","Cape Verde":"Capo Verde","Iran":"Iran","New Zealand":"Nuova Zelanda","Belgium":"Belgio","Egypt":"Egitto","France":"Francia","Senegal":"Senegal","Iraq":"Iraq","Norway":"Norvegia","Argentina":"Argentina","Algeria":"Algeria","Austria":"Austria","Jordan":"Giordania","Ghana":"Ghana","Panama":"Panama","England":"Inghilterra","Croatia":"Croazia","Portugal":"Portogallo","DR Congo":"Repubblica Democratica del Congo","Uzbekistan":"Uzbekistan","Colombia":"Colombia"};
-function oppOf(itaNat,gid){if(!gid||gid>3)return null;const m=MATCHES.find(x=>x.round===gid&&(EN2IT[x.t1]===itaNat||EN2IT[x.t2]===itaNat));if(!m)return null;return EN2IT[m.t1]===itaNat?EN2IT[m.t2]:EN2IT[m.t1]}
+const GID2RK={4:"r32",5:"r16",6:"qf",7:"sf",8:"final"};
+function koMatchForNat(itaNat,gid){const RK=GID2RK[gid];if(!RK)return null;return KOM.find(x=>x.rd===RK&&((koTeam(x.t1)&&EN2IT[koTeam(x.t1)]===itaNat)||(koTeam(x.t2)&&EN2IT[koTeam(x.t2)]===itaNat)))||null;}
+function oppOf(itaNat,gid){if(!gid)return null;
+ if(gid<=3){const m=MATCHES.find(x=>x.round===gid&&(EN2IT[x.t1]===itaNat||EN2IT[x.t2]===itaNat));if(!m)return null;return EN2IT[m.t1]===itaNat?EN2IT[m.t2]:EN2IT[m.t1];}
+ const m=koMatchForNat(itaNat,gid);if(!m)return null;const a=koTeam(m.t1),b=koTeam(m.t2);const oppEn=(a&&EN2IT[a]===itaNat)?b:a;return oppEn?EN2IT[oppEn]:null;}
+function matchDtOf(itaNat,gid){if(!gid)return null;
+ if(gid<=3){const m=MATCHES.find(x=>x.round===gid&&(EN2IT[x.t1]===itaNat||EN2IT[x.t2]===itaNat));return m?m.dt:null;}
+ const m=koMatchForNat(itaNat,gid);return m?m.dt:null;}
+function oppWhen(itaNat,gid){const d=matchDtOf(itaNat,gid);return d?` <span class="oppd">${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}</span>`:"";}
 function oppHTML(itaNat,gid){const o=oppOf(itaNat,gid);return o?fimg(o,"flsm")+" "+(SIGLA[o]||o):'<span style="opacity:.45">vs ?</span>'}
 
 /* ===== persistenza ===== */
@@ -1126,7 +1163,7 @@ function fdt(d){return `${pad(d.getDate())}/${pad(d.getMonth()+1)} · ${pad(d.ge
 function dayKey(d){return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`}
 
 /* ===== STATO ===== */
-let user=store.get("fm26_user"),draft=null,cdTimer=null,viewTeam=null,curView="home",cloudReady=false,_suppress=false,leagueRef=null,calTab="tabellone",resRound=1;
+let user=store.get("fm26_user"),draft=null,cdTimer=null,viewTeam=null,curView="home",cloudReady=false,_suppress=false,leagueRef=null,calTab="tabellone",resRound=1,koTab="r32";
 let svF={q:"",role:"all"};
 let mercTab="svincola",mercF={q:"",role:"all"};
 function openRoster(t){viewTeam=t;go("roster")}
@@ -1926,7 +1963,7 @@ function flag(nat){return FLAGSVG[nat]||"data:image/svg+xml;base64,PHN2ZyB4bWxuc
 function fimg(nat,cls){return `<img class="${cls||'pfl'}" src="${flag(nat)}" alt="">`}
 function tile(p){return `<button class="ptile" data-id="${pid(p)}" data-role="${p.role}"><div class="pimg ${RBG[p.role]}"><img class="pfl" src="${flag(p.nat)}" alt=""></div><div class="plabel">${dispName(p.name)}</div></button>`}
 function oppTag(nat,gid){const o=oppOf(nat,gid);return o?`${fimg(o,"oppmini")}${SIGLA[o]||o}`:'<span class="dim">?</span>'}
-function tileF(p,gid){return `<button class="ptile" data-id="${pid(p)}" data-role="${p.role}"><div class="pimg ${RBG[p.role]}"><img class="pfl" src="${flag(p.nat)}" alt=""></div><div class="plabel">${dispName(p.name)}</div><div class="popp">vs ${oppTag(p.nat,gid)}</div></button>`}
+function tileF(p,gid){return `<button class="ptile" data-id="${pid(p)}" data-role="${p.role}"><div class="pimg ${RBG[p.role]}"><img class="pfl" src="${flag(p.nat)}" alt=""></div><div class="plabel">${dispName(p.name)}</div><div class="popp">vs ${oppTag(p.nat,gid)}${oppWhen(p.nat,gid)}</div></button>`}
 function emptyTile(role){return `<button class="ptile empty" data-role="${role}"><div class="pimg empty">+</div><div class="plabel">${RLABEL[role]}</div><div class="popp ph">vs</div></button>`}
 function fmExit(){document.getElementById("fmActions").style.display="none";document.getElementById("nav").style.display="flex";fmState=null;go("home")}
 
@@ -1946,7 +1983,7 @@ function renderFormazione(){
  const pitch=`<div class="pitchwrap"><div class="pitch">${repHtml("A")}${repHtml("C")}${repHtml("D")}${repHtml("P")}</div></div>`;
  const inUse=new Set(["P","D","C","A"].flatMap(r=>fmState.lineup[r]));
  const bench=benchSorted((R?R.players:[]).filter(p=>!inUse.has(pid(p))),fmState.order);
- const benchHtml=bench.map((p,i)=>`<div class="bnrow"><span class="bnpos">${i+1}</span><button class="bnmain" data-add="${pid(p)}"><span class="pimg ${RBG[p.role]}"><img class="pfl" src="${flag(p.nat)}" alt=""></span><span class="bnmid"><span class="bnname">${dispName(p.name)}</span><span class="bnopp">vs ${oppTag(p.nat,g.id)}</span></span><span class="rb r-${p.role.toLowerCase()} bnrole">${p.role}</span></button><span class="bnctrl"><button class="bnbtn" data-up="${pid(p)}"${i===0?" disabled":""}>\u25b2</button><button class="bnbtn" data-down="${pid(p)}"${i===bench.length-1?" disabled":""}>\u25bc</button></span></div>`).join("");
+ const benchHtml=bench.map((p,i)=>`<div class="bnrow"><span class="bnpos">${i+1}</span><button class="bnmain" data-add="${pid(p)}"><span class="pimg ${RBG[p.role]}"><img class="pfl" src="${flag(p.nat)}" alt=""></span><span class="bnmid"><span class="bnname">${dispName(p.name)}</span><span class="bnopp">vs ${oppTag(p.nat,g.id)}${oppWhen(p.nat,g.id)}</span></span><span class="rb r-${p.role.toLowerCase()} bnrole">${p.role}</span></button><span class="bnctrl"><button class="bnbtn" data-up="${pid(p)}"${i===0?" disabled":""}>\u25b2</button><button class="bnbtn" data-down="${pid(p)}"${i===bench.length-1?" disabled":""}>\u25bc</button></span></div>`).join("");
  const mods=MODULES.map(m=>`<button class="modbtn${m===fmState.module?" sel":""}" data-m="${m}">${m}</button>`).join("");
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand">Formazione</div><span style="width:46px"></span></div>
  <div class="fmInfo fade"><div class="ic">\ud83d\udccb</div><div class="tx">${g?`Giornata: <b>${g.label}</b> \u00b7 <b>chiusura ${fdt(lockTime(g.id))}</b>.`:"Torneo concluso."} Schiera <b>11 titolari</b> nel modulo scelto \u2014 hai inserito <b>${cnt}/11</b>. Tocca uno slot vuoto per scegliere, tocca un titolare per rimandarlo in panchina.</div></div>
@@ -2178,6 +2215,32 @@ function koCard(m){
  const pen=(r&&r.pw)?`<div class="kpen">\ud83e\udd45 ai rigori passa ${r.pw===1?koSlotName(m.t1):koSlotName(m.t2)}</div>`:"";
  return `<div class="komatch"><div class="kmrows">${row(m.t1,r?r.h:"",w1)}${row(m.t2,r?r.a:"",w2)}</div>${pen}<div class="kmf">#${m.n} \u00b7 ${fdate(m.dt)} \u00b7 ${m.city} \u00b7 ${m.stad}</div></div>`;
 }
+function koMiniCard(m,big){
+ if(!m)return "";
+ const r=koResultOf(m.n),win=r?koWinner(m.n):null,a=koTeam(m.t1),b=koTeam(m.t2);
+ const w1=!!(win&&a&&win===a),w2=!!(win&&b&&win===b);
+ const side=(slot,sc,wn)=>{const fl=koSlotFlag(slot);return `<div class="kmt${wn?" kw":""}">${fl?`<img class="fl" src="${fl}" alt="">`:`<span class="kfx"></span>`}<span class="kmn">${koSlotName(slot)}</span><span class="kms">${sc}</span></div>`;};
+ const when=r?"Finita":`${pad(m.dt.getDate())}/${pad(m.dt.getMonth()+1)} \u00b7 ${pad(m.dt.getHours())}:${pad(m.dt.getMinutes())}`;
+ return `<div class="kmini${big?" big":""}"><div class="kmwhen">#${m.n} \u00b7 ${when}</div>${side(m.t1,r?r.h:"",w1)}${side(m.t2,r?r.a:"",w2)}</div>`;
+}
+function koNextBox(nm){
+ const r=(s)=>{const fl=koSlotFlag(s);return `<div class="knr">${fl?`<img class="fl" src="${fl}" alt="">`:`<span class="kfx"></span>`}<span>${koSlotName(s)}</span></div>`;};
+ return `<div class="knb">${r(nm.t1)}${r(nm.t2)}</div>`;
+}
+function koBracketHTML(rk){
+ const NEXT={r32:"r16",r16:"qf",qf:"sf",sf:"final"};const nk=NEXT[rk];let h="";
+ if(nk){
+   KOM.filter(m=>m.rd===nk).forEach(nm=>{
+     const a=nm.t1&&nm.t1.w,b=nm.t2&&nm.t2.w;
+     h+=`<div class="kpair"><div class="kpcol">${koMiniCard(koMatch(a))}${koMiniCard(koMatch(b))}</div><div class="kpconn"></div><div class="kpnext">${koNextBox(nm)}</div></div>`;
+   });
+ } else {
+   h+=`<div class="kfinalwrap">${koMiniCard(koMatch(104),true)}`;
+   const t=koMatch(103);if(t)h+=`<div class="kthird"><div class="kthlab">Finale 3\u00b0 posto</div>${koMiniCard(t)}</div>`;
+   h+=`</div>`;
+ }
+ return h;
+}
 function renderCalendario(){
  setNav("calendario");if(cdTimer){clearInterval(cdTimer);cdTimer=null}
  const ci=cdInfo(),g=ci&&ci.g;
@@ -2191,12 +2254,9 @@ function renderCalendario(){
  html+=`<div class="calseg"><button data-tab="tabellone" class="${calTab==='tabellone'?'on':''}">Tabellone</button><button data-tab="partite" class="${calTab==='partite'?'on':''}">Partite</button><button data-tab="gironi" class="${calTab==='gironi'?'on':''}">Gironi</button></div>`;
  html+=`<div style="padding:0 16px 10px"><button class="rosabtn alt" id="goRis" style="margin-top:0">\ud83d\udcdd Inserisci risultati (admin) \u2192</button></div>`;
  if(calTab==="tabellone"){
-   html+=`<div class="kbracket">`;
-   KO_RD.forEach(rdp=>{const ms=KOM.filter(m=>m.rd===rdp[0]);if(!ms.length)return;
-     html+=`<div class="kround"><div class="krh">${rdp[1]}</div>`;
-     ms.forEach(m=>html+=koCard(m));
-     html+=`</div>`;});
-   html+=`</div>`;
+   const ktabs=[["r32","1/16"],["r16","1/8"],["qf","1/4"],["sf","Semifinali"],["final","Finale"]];
+   html+=`<div class="kotabs">${ktabs.map(t=>`<button class="kotab ${koTab===t[0]?'on':''}" data-ko="${t[0]}">${t[1]}</button>`).join("")}</div>`;
+   html+=`<div class="kbracket">${koBracketHTML(koTab)}</div>`;
  } else if(calTab==="partite"){
    const sorted=[...MATCHES].sort((a,b)=>a.dt-b.dt);const days=[];const idx={};
    sorted.forEach(m=>{const k=dayKey(m.dt);if(!(k in idx)){idx[k]=days.length;days.push({d:m.dt,items:[]})}days[idx[k]].items.push(m)});
@@ -2220,6 +2280,7 @@ function renderCalendario(){
  html+=`<div class="season">Calendario Mondiali 2026 \u00b7 orari in ora italiana</div></div>`;
  view.innerHTML=html;
  view.querySelectorAll(".calseg button").forEach(b=>b.onclick=()=>{calTab=b.dataset.tab;renderCalendario()});
+ view.querySelectorAll(".kotab").forEach(b=>b.onclick=()=>{koTab=b.dataset.ko;renderCalendario()});
  const gr=document.getElementById("goRis");if(gr)gr.onclick=()=>go("risultati");
  if(ci)startCountdown(ci.target,{D:"cD",H:"cH",M:"cM",S:"cS"});
 }
