@@ -812,6 +812,7 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .mbtn{padding:7px 12px;border-radius:9px;background:#4FD6A0;color:#06231a;font-weight:800;font-size:12px;border:none;white-space:nowrap;cursor:pointer}
 .mbtn.undo{background:rgba(255,255,255,.12);color:#fff}
 .mbtn.buy{background:#7A3FF2;color:#fff}
+.mbtn.locked{background:#141a2e;color:#54608a;border:1px solid #2c3d72;cursor:not-allowed}
 .elx{color:#FF8A8A}
 .msec{margin:16px 4px 8px;font-size:13px;text-transform:uppercase;opacity:.82}
 .mempty{font-size:12px;opacity:.5;padding:8px 4px}
@@ -840,6 +841,18 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .kteam.kw .ksc{color:var(--yellow,#FFC21E)}
 .kmf{margin-top:7px;font-size:10px;color:#7f90b8;border-top:1px solid #1c2c54;padding-top:6px}
 .kpen{font-size:11px;color:var(--yellow,#FFC21E);margin-top:5px;font-weight:700}
+.cpwrap{padding:0 16px 20px}
+.cprd{font-weight:900;font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.6;margin:16px 2px 8px}
+.cpmatch{background:#0e1c3f;border:1px solid #21315f;border-radius:14px;padding:8px;margin-bottom:9px}
+.cpwhen{font-size:11px;opacity:.5;font-weight:700;margin:2px 4px 7px}
+.cpteam{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#11214a;border:1.5px solid #2c3d72;border-radius:11px;padding:11px 12px;margin-top:6px;color:#fff;font-family:inherit;font-weight:700;font-size:14.5px;cursor:pointer}
+.cpteam:first-of-type{margin-top:0}
+.cpteam .fl{width:26px;height:18px;object-fit:cover;border-radius:3px;flex:0 0 auto}
+.cpteam .cpn{flex:1}
+.cpteam .cpck{flex:0 0 auto;font-weight:900;color:#4FD6A0}
+.cpteam.adv{background:#123a2e;border-color:#4FD6A0;color:#eafff6}
+.cpteam.out{opacity:.45}
+.cpteam[disabled]{opacity:.4;cursor:default}
 .rspw{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-2px 0 12px;font-size:11px;color:#9fb0d8}
 .rspw .pwb{padding:5px 9px;border-radius:8px;border:1px solid #2c3f6e;background:#0f1c3d;color:#cfd8ee;font-weight:700;font-size:11px;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rspw .pwb.on{background:var(--yellow,#FFC21E);color:#11214a;border-color:var(--yellow,#FFC21E)}
@@ -1047,12 +1060,56 @@ const KOM=[
 ];
 const KO_RD=[["r32","Sedicesimi"],["r16","Ottavi di finale"],["qf","Quarti di finale"],["sf","Semifinali"],["third","Finale 3\u00b0 posto"],["final","Finale"]];
 function koMatch(n){return KOM.find(x=>x.n===n);}
-function koResultOf(n){const r=getResults()[n];return (r&&r.h!=null&&r.a!=null)?r:null;}
+// Esiti reali Sedicesimi 2026 (chi passa). Fallback: un risultato registrato nella lega ha la precedenza.
+// 86 Argentina-Capo Verde, 87 Colombia-Ghana, 88 Australia-Egitto: da segnare in "Chi passa".
+const KO_SEED={73:{adv:2},74:{adv:2},75:{adv:2},76:{adv:1},77:{adv:1},78:{adv:2},79:{adv:1},80:{adv:1},81:{adv:1},82:{adv:1},83:{adv:1},84:{adv:1},85:{adv:1}};
+function koRaw(n){return getResults()[n]||KO_SEED[n]||null;}
+function koResultOf(n){const r=koRaw(n);if(!r)return null;if(r.adv===1||r.adv===2)return r;return (r.h!=null&&r.a!=null)?r:null;}
 function koTeam(slot){if(slot==null)return null;if(typeof slot==="string")return slot;if(slot.w!=null)return koWinner(slot.w);if(slot.l!=null)return koLoser(slot.l);return null;}
-function koWinner(n){const m=koMatch(n),r=koResultOf(n);if(!m||!r)return null;const a=koTeam(m.t1),b=koTeam(m.t2);if(!a||!b)return null;if(r.h>r.a)return a;if(r.a>r.h)return b;if(r.pw===1)return a;if(r.pw===2)return b;return null;}
-function koLoser(n){const m=koMatch(n),r=koResultOf(n);if(!m||!r)return null;const a=koTeam(m.t1),b=koTeam(m.t2);if(!a||!b)return null;if(r.h>r.a)return b;if(r.a>r.h)return a;if(r.pw===1)return b;if(r.pw===2)return a;return null;}
+function koWinner(n){const m=koMatch(n),r=koResultOf(n);if(!m||!r)return null;const a=koTeam(m.t1),b=koTeam(m.t2);if(!a||!b)return null;if(r.adv===1)return a;if(r.adv===2)return b;if(r.h>r.a)return a;if(r.a>r.h)return b;if(r.pw===1)return a;if(r.pw===2)return b;return null;}
+function koLoser(n){const m=koMatch(n),r=koResultOf(n);if(!m||!r)return null;const a=koTeam(m.t1),b=koTeam(m.t2);if(!a||!b)return null;if(r.adv===1)return b;if(r.adv===2)return a;if(r.h>r.a)return b;if(r.a>r.h)return a;if(r.pw===1)return b;if(r.pw===2)return a;return null;}
+// segna chi passa (slot 1|2) senza punteggio; ritocca = azzera. Conserva l'eventuale risultato inserito.
+function koSetAdv(n,slot){const cur=getResults();const r=Object.assign({},cur[n]||{});if(r.adv===slot)delete r.adv;else r.adv=slot;if(r.adv==null&&r.h==null&&r.a==null)delete cur[n];else cur[n]=r;store.set("fm26_results",cur);}
 function koSlotName(slot){const t=koTeam(slot);if(t)return natIT(t);if(slot&&slot.w!=null)return "Vincente "+slot.w;if(slot&&slot.l!=null)return "Perdente "+slot.l;return "Da definire";}
 function koSlotFlag(slot){const t=koTeam(slot);return t?flag(natIT(t)):"";}
+/* ===== NAZIONALI ELIMINATE (dinamico, aggiornato su base giornaliera) =====
+   Derivato dal tabellone, non da una lista fissa:
+   - una volta iniziati i Sedicesimi (KO[0].dt), ogni nazione NON tra le 32 qualificate è fuori (eliminata ai gironi);
+   - in più, i perdenti dei turni a eliminazione con risultato registrato (koLoser).
+   Ricalcolato quando cambia il giorno o quando cambiano i risultati KO, così ogni giorno la lista
+   perde le nazionali via via eliminate senza interventi manuali. */
+function koParticipantsR32(){const s=new Set();KOM.forEach(m=>{if(m.rd!=="r32")return;[m.t1,m.t2].forEach(t=>{if(typeof t==="string")s.add(natIT(t))})});return s;}
+function knownNations(){const s=new Set();SVINC.forEach(p=>s.add(p.nat));Object.keys(ROSTERS_BASE).forEach(t=>(ROSTERS_BASE[t].players||[]).forEach(p=>s.add(p.nat)));return s;}
+let _elimCache={day:null,sig:null,set:null};
+function eliminatedSet(){
+  const day=new Date().toDateString(),res=getResults();
+  let sig="";KOM.forEach(m=>{const r=koRaw(m.n);if(r&&(r.adv||(r.h!=null&&r.a!=null)))sig+=m.n+":"+(r.adv||0)+":"+r.h+"-"+r.a+"/"+(r.pw||0)+"|"});
+  if(_elimCache.set&&_elimCache.day===day&&_elimCache.sig===sig)return _elimCache.set;
+  const s=new Set();
+  if(Date.now()>=+KO[0].dt){const alive=koParticipantsR32();knownNations().forEach(n=>{if(!alive.has(n))s.add(n)});}
+  else NAZ_ELIM.forEach(n=>s.add(n)); /* prima dei Sedicesimi: solo eliminate note ai gironi */
+  KOM.forEach(m=>{const l=koLoser(m.n);if(l)s.add(natIT(l))});
+  _elimCache={day,sig,set:s};return s;}
+function isElim(nat){return eliminatedSet().has(nat)}
+/* elenco eliminate con la fase di eliminazione (per la vista "Squadre eliminate") */
+function eliminationList(){
+  const koStarted=Date.now()>=+KO[0].dt,alive=koParticipantsR32();
+  const rdLabel={r32:"Sedicesimi",r16:"Ottavi",qf:"Quarti",sf:"Semifinali",third:"Finale 3\u00b0 posto",final:"Finale"};
+  const ord={"Gironi":0,"Sedicesimi":1,"Ottavi":2,"Quarti":3,"Semifinali":4,"Finale 3\u00b0 posto":5,"Finale":6};
+  const map={};
+  KOM.forEach(m=>{const l=koLoser(m.n);if(l){const it=natIT(l),st=rdLabel[m.rd]||"KO";if(map[it]==null||ord[st]>ord[map[it]])map[it]=st;}});
+  if(koStarted)knownNations().forEach(n=>{if(!alive.has(n)&&map[n]==null)map[n]="Gironi"});
+  else NAZ_ELIM.forEach(n=>{if(map[n]==null)map[n]="Gironi"});
+  return Object.keys(map).map(n=>({nat:n,stage:map[n],ord:ord[map[n]]!=null?ord[map[n]]:9}))
+    .sort((a,b)=>a.ord-b.ord||a.nat.localeCompare(b.nat,"it"));
+}
+/* fase d'asta che governa il roster del turno in gestione (per la sezione svincoli) */
+function activeMercPhase(){const gid=currentRosterGid();let pick=MERC_ORDER[0];MERC_PHASES.forEach(p=>{if(p[4]<=gid)pick=p[0]});return pick;}
+function mercToggleOutPhase(t,id,phase){const m=getMercato();let tm=m.teams[t];
+  if(!tm){tm={};MERC_ORDER.forEach(ph=>tm[ph]=emptyPhase());m.teams[t]=tm;}
+  if(!tm[phase])tm[phase]=emptyPhase();tm[phase].out=tm[phase].out||[];
+  const i=tm[phase].out.indexOf(id);if(i>=0)tm[phase].out.splice(i,1);else tm[phase].out.push(id);saveMercato(m)}
+
 
 // GIORNATE del fanta-torneo (dedotte dal calendario)
 const GIORNATE=[
@@ -1164,7 +1221,7 @@ function dayKey(d){return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`}
 
 /* ===== STATO ===== */
 let user=store.get("fm26_user"),draft=null,cdTimer=null,viewTeam=null,curView="home",cloudReady=false,_suppress=false,leagueRef=null,calTab="tabellone",resRound=1,koTab="r32";
-let svF={q:"",role:"all"};
+let svF={q:"",role:"all",sort:"q"};
 let mercTab="svincola",mercF={q:"",role:"all"};
 function openRoster(t){viewTeam=t;go("roster")}
 
@@ -1281,7 +1338,7 @@ function rotateBg(){let i;do{i=Math.floor(Math.random()*BGS.length)}while(i===_l
 function go(v){curView=v;document.body.dataset.view=v;rotateBg();if(typeof applyMercato==="function")applyMercato();if(cdTimer){clearInterval(cdTimer);cdTimer=null}setNav(["home","squadre","calendario","votigiornata","classifica"].includes(v)?v:"home");view.scrollTop=0;document.getElementById("nav").style.display="flex";document.getElementById("fmActions").style.display="none";var _vf=document.getElementById("vgFoot");if(_vf&&v!=="votigiornata")_vf.style.display="none";
  if(v==="home")renderHome();else if(v==="cruciverba")renderCruciverba();else if(v==="impiccato")renderImpiccato();else if(v==="top10")renderTop10();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
  else if(v==="classifica")renderClassifica();else if(v==="formazione")renderFormazione();
- else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="mercato")renderMercato();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="astina")renderAstina();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
+ else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="svincola")renderSvincola();else if(v==="eliminate")renderEliminate();else if(v==="chipassa")renderChipassa();else if(v==="mercato")renderMercato();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="astina")renderAstina();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
 
 /* ===== HOME ===== */
@@ -1851,7 +1908,10 @@ function renderHome(){
  <div class="top topbar"><button class="gear menu-btn" id="goMenu" aria-label="Menu">☰</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><button class="out" id="logout">Esci</button></div>
  <div class="drawer-ov" id="drawerOv"></div>
  <aside class="drawer" id="drawer"><div class="drawer-h">Menù</div>
+   <button class="drawer-item" data-go="svincola"><span>✂️</span>Svincola</button>
    <button class="drawer-item" data-go="svincolati"><span>🆓</span>Svincolati</button>
+   <button class="drawer-item" data-go="eliminate"><span>❌</span>Squadre eliminate</button>
+   <button class="drawer-item" data-go="chipassa"><span>➡️</span>Chi passa</button>
    <button class="drawer-item" data-go="astina"><span>🔨</span>Astina</button>
    <button class="drawer-item" data-go="mercato"><span>🔄</span>Mercato</button>
    <button class="drawer-item" data-go="porceddu"><span>🐷</span>Porceddu</button>
@@ -2065,19 +2125,94 @@ function renderRoster(t){
 function renderSvincolati(){
  setNav("home");
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
- <div class="svwrap fade"><h2 class="svh">Svincolati</h2><div class="svsub">${SVINC.filter(p=>!NAZ_ELIM.includes(p.nat)).length} giocatori liberi · valore di listino</div>
+ <div class="svwrap fade"><h2 class="svh">Listone svincolati</h2><div class="svsub">${SVINC.filter(p=>!isElim(p.nat)).length} giocatori liberi · valore di listino</div>
   <input id="svSearch" class="svsearch" placeholder="Cerca giocatore o nazione…">
   <div class="opts" id="svRole" style="margin:12px 0"></div>
+  <div class="opts" id="svSort" style="margin:0 0 12px"></div>
   <div class="plist" id="svList"></div></div>`;
  const roles=[["all","Tutti"],["P","Portieri"],["D","Difensori"],["C","Centrocampisti"],["A","Attaccanti"]];
  const rc=document.getElementById("svRole");
  roles.forEach(([id,l])=>{const o=document.createElement("button");o.className="opt"+(svF.role===id?" sel":"");o.textContent=l;o.onclick=()=>{svF.role=id;[...rc.children].forEach((x,i)=>x.classList.toggle("sel",roles[i][0]===id));renderSvList()};rc.appendChild(o)});
+ const sorts=[["q","Valore"],["nat","Squadra"]];
+ const sc=document.getElementById("svSort");
+ sorts.forEach(([id,l])=>{const o=document.createElement("button");o.className="opt"+(svF.sort===id?" sel":"");o.textContent="\u2193 "+l;o.onclick=()=>{svF.sort=id;[...sc.children].forEach((x,i)=>x.classList.toggle("sel",sorts[i][0]===id));renderSvList()};sc.appendChild(o)});
  const inp=document.getElementById("svSearch");inp.value=svF.q;inp.oninput=e=>{svF.q=e.target.value.toLowerCase();renderSvList()};
- document.getElementById("bk").onclick=()=>go("home");renderSvList();
+ document.getElementById("bk").onclick=()=>go("home");
+ renderSvList();
+}
+function renderSvincola(){
+ setNav("home");applyMercato();
+ const t=user,R=ROSTERS[t];
+ view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
+ ${R?`<div class="svwrap fade"><h2 class="svh">Svincola i tuoi giocatori</h2>
+   <div class="svsub" id="svRelSub"></div>
+   <div class="mnote">Svincolo al <b>valore di listino</b>, con effetto <b>dal turno successivo</b>: i turni gi\u00e0 giocati restano invariati. Precedenza obbligatoria agli <b class="elx">eliminati</b>.</div>
+   <div id="svRelease"></div></div>`
+  :`<div class="dash fade"><div class="fmInfo"><div class="ic">\u2702\ufe0f</div><div class="tx">Accedi come una delle squadre per svincolare i tuoi giocatori.</div></div></div>`}`;
+ document.getElementById("bk").onclick=()=>go("home");
+ if(R)renderSvRelease();
+}
+function renderEliminate(){
+ setNav("home");
+ const list=eliminationList();
+ const today=new Date().toLocaleDateString("it-IT",{day:"2-digit",month:"long"});
+ const res=getResults(),now=Date.now();
+ const pendingKO=KOM.filter(m=>+m.dt<=now&&!koResultOf(m.n)).length;
+ const hint=pendingKO?`<div class="mnote">Le eliminate dei turni a eliminazione compaiono man mano che segni chi passa. ${pendingKO} ${pendingKO===1?"partita gi\u00e0 giocata \u00e8":"partite gi\u00e0 giocate sono"} senza esito: segnalo in <b>Chi passa</b> (dal menu) o inserisci i punteggi in Calendario \u2192 Risultati.</div>`:"";
+ const rows=list.length?list.map(e=>`<div class="prow"><span class="pn" style="flex-direction:row;align-items:center;gap:12px">${fimg(e.nat,"flsm")}<span>${e.nat}</span></span><span class="pq" style="width:auto;white-space:nowrap;opacity:.6">${e.stage}</span></div>`).join("")
+   :`<div class="fmInfo"><div class="ic">✅</div><div class="tx">Nessuna nazionale ancora eliminata.</div></div>`;
+ view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
+ <div class="svwrap fade"><h2 class="svh">Squadre eliminate</h2>
+  <div class="svsub">${list.length} nazionali fuori dal torneo · aggiornato al ${today}</div>
+  ${hint}
+  <div class="plist">${rows}</div></div>`;
+ document.getElementById("bk").onclick=()=>go("home");
+}
+function renderChipassa(){
+ setNav("calendario");if(cdTimer){clearInterval(cdTimer);cdTimer=null}
+ let body="";
+ KO_RD.forEach(rd=>{
+   const rk=rd[0],ms=KOM.filter(m=>m.rd===rk).sort((a,b)=>a.dt-b.dt);
+   if(!ms.length)return;
+   let rows="";
+   ms.forEach(m=>{
+     const a=koTeam(m.t1),b=koTeam(m.t2),ready=!!(a&&b),r=koResultOf(m.n),win=r?koWinner(m.n):null;
+     let adv=0;if(r){if(r.adv)adv=r.adv;else if(win)adv=(win===a?1:(win===b?2:0));}
+     const cls=s=>adv===s?"cpteam adv":(adv&&adv!==s?"cpteam out":"cpteam");
+     const dis=ready?"":"disabled";
+     const side=(slot,s)=>{const fl=koSlotFlag(slot);return `<button class="${cls(s)}" data-adv="${m.n}_${s}" ${dis}>${fl?`<img class="fl" src="${fl}" alt="">`:`<span class="kfx"></span>`}<span class="cpn">${koSlotName(slot)}</span>${adv===s?'<span class="cpck">\u2713</span>':""}</button>`;};
+     rows+=`<div class="cpmatch"><div class="cpwhen">#${m.n} \u00b7 ${pad(m.dt.getDate())}/${pad(m.dt.getMonth()+1)}${ready?"":" \u00b7 in attesa"}</div>${side(m.t1,1)}${side(m.t2,2)}</div>`;
+   });
+   body+=`<div class="cprd">${rd[1]}</div>${rows}`;
+ });
+ view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
+ <div class="svwrap fade"><h2 class="svh">Chi passa</h2>
+  <div class="svsub">Tocca la squadra che passa il turno: aggiorna eliminate e tabellone per tutta la lega. Ritocca per annullare.</div>
+  <div class="cpwrap">${body}</div></div>`;
+ document.getElementById("bk").onclick=()=>go("home");
+ view.querySelectorAll("[data-adv]").forEach(btn=>btn.onclick=()=>{
+   if(btn.hasAttribute("disabled"))return;
+   const p=btn.dataset.adv.split("_");koSetAdv(+p[0],+p[1]);renderChipassa();toast("Salvato \u2713");
+ });
+}
+function renderSvRelease(){
+ const t=user,R=ROSTERS[t],box=document.getElementById("svRelease");if(!box||!R)return;
+ const phase=activeMercPhase(),meta=mercPhaseMeta(phase),effGid=meta[4],maxOut=meta[2];
+ const outSet=new Set(teamMerc(t,phase).out||[]),RC={P:"r-p",D:"r-d",C:"r-c",A:"r-a"},ord={P:0,D:1,C:2,A:3};
+ let arr=rosterEnteringPhase(t,phase).map(pl=>({p:pl,id:pid(pl),elim:isElim(pl.nat)}));
+ arr.sort((a,b)=>(b.elim-a.elim)||ord[a.p.role]-ord[b.p.role]||b.p.q-a.p.q);
+ let rec=0;arr.forEach(o=>{if(outSet.has(o.id))rec+=(o.p.q||0)});
+ const pendingElim=arr.some(o=>o.elim&&!outSet.has(o.id));
+ const sub=document.getElementById("svRelSub");
+ if(sub)sub.innerHTML=`${R.club} · asta ${meta[1]} · svincoli <b>${outSet.size}/${maxOut}</b> · +${rec} crediti · effetto da <b>${phaseOf(effGid).label}</b>${pendingElim?' · <b class="elx">prima gli eliminati</b>':""}`;
+ box.innerHTML=arr.map(o=>{const out=outSet.has(o.id),locked=!o.elim&&!out&&pendingElim,cls=out?"mbtn undo":(locked?"mbtn locked":"mbtn");return `<div class="mrow${out?" rel":""}"><span class="rb ${RC[o.p.role]}">${o.p.role}</span><span class="pn">${dispName(o.p.name)}<small>${fimg(o.p.nat,"flsm")} ${o.p.nat}${o.elim?' \u00b7 <b class="elx">ELIMINATO</b>':""}</small></span><span class="pq">${o.p.q}</span><button class="${cls}" data-id="${o.id}" data-lock="${locked?1:0}">${out?"Annulla":"Svincola"}</button></div>`}).join("");
+ box.querySelectorAll(".mbtn").forEach(b=>b.onclick=()=>{if(b.dataset.lock==="1"){toast("Prima svincola i giocatori eliminati");return;}mercToggleOutPhase(t,b.dataset.id,phase);renderSvRelease()});
 }
 function renderSvList(){
  const RC={P:"r-p",D:"r-d",C:"r-c",A:"r-a"};
- let arr=SVINC.filter(p=>!NAZ_ELIM.includes(p.nat)&&(svF.role==="all"||p.role===svF.role)&&(p.name.toLowerCase().includes(svF.q)||p.nat.toLowerCase().includes(svF.q))).sort((a,b)=>b.q-a.q);
+ let arr=SVINC.filter(p=>!isElim(p.nat)&&(svF.role==="all"||p.role===svF.role)&&(p.name.toLowerCase().includes(svF.q)||p.nat.toLowerCase().includes(svF.q)));
+ if(svF.sort==="nat")arr.sort((a,b)=>a.nat.localeCompare(b.nat,"it")||b.q-a.q||a.name.localeCompare(b.name,"it"));
+ else arr.sort((a,b)=>b.q-a.q||a.nat.localeCompare(b.nat,"it"));
  const html=arr.slice(0,400).map(p=>`<div class="prow"><span class="rb ${RC[p.role]}">${p.role}</span><span class="pn">${p.name}<small>${fimg(p.nat,"flsm")} ${p.nat}</small></span><span class="pq">${p.q}</span></div>`).join("");
  document.getElementById("svList").innerHTML=html+(arr.length>400?`<div class="season">Primi 400 di ${arr.length} · affina la ricerca</div>`:`<div class="season">${arr.length} giocatori</div>`);
 }
@@ -2108,7 +2243,7 @@ function derivedMatchEvents(m){
   const voti=getVoti(gid); if(!voti||!Object.keys(voti).length)return null;
   const itHome=natIT(m.t1),itAway=natIT(m.t2);
   const out=[];
-  ownedPlayers().forEach(p=>{
+  ownedPlayersAt(gid).forEach(p=>{
     if(p.nat!==itHome&&p.nat!==itAway)return;
     const rec=voti[pid(p)]; if(!rec)return;
     const team=p.nat===itAway?m.t2:m.t1;
@@ -2221,7 +2356,8 @@ function koMiniCard(m,big){
  const w1=!!(win&&a&&win===a),w2=!!(win&&b&&win===b);
  const side=(slot,sc,wn)=>{const fl=koSlotFlag(slot);return `<div class="kmt${wn?" kw":""}">${fl?`<img class="fl" src="${fl}" alt="">`:`<span class="kfx"></span>`}<span class="kmn">${koSlotName(slot)}</span><span class="kms">${sc}</span></div>`;};
  const when=r?"Finita":`${pad(m.dt.getDate())}/${pad(m.dt.getMonth()+1)} \u00b7 ${pad(m.dt.getHours())}:${pad(m.dt.getMinutes())}`;
- return `<div class="kmini${big?" big":""}"><div class="kmwhen">#${m.n} \u00b7 ${when}</div>${side(m.t1,r?r.h:"",w1)}${side(m.t2,r?r.a:"",w2)}</div>`;
+ const sc1=r?(r.h!=null?r.h:(w1?"\u2713":"")):"",sc2=r?(r.a!=null?r.a:(w2?"\u2713":"")):"";
+ return `<div class="kmini${big?" big":""}"><div class="kmwhen">#${m.n} \u00b7 ${when}</div>${side(m.t1,sc1,w1)}${side(m.t2,sc2,w2)}</div>`;
 }
 function koNextBox(nm){
  const r=(s)=>{const fl=koSlotFlag(s);return `<div class="knr">${fl?`<img class="fl" src="${fl}" alt="">`:`<span class="kfx"></span>`}<span>${koSlotName(s)}</span></div>`;};
@@ -2440,11 +2576,11 @@ function getLineupFor(team,gid){if(!gid)return null;
  return null;}
 function teamGiornata(team,gid){const sub=getLineupFor(team,gid);if(!sub||!sub.lineup)return null;
  const voti=getVoti(gid);if(Object.keys(voti).length===0)return{played:false};
- const map=rosterMap(team),sameRole=phaseOf(gid).sameRoleSub;
+ const map=rosterMapAt(team,gid),sameRole=phaseOf(gid).sameRoleSub;
  const concluded=roundConcluded(gid);
  const starters=[];["P","D","C","A"].forEach(r=>(sub.lineup[r]||[]).forEach(id=>{if(map[id])starters.push(map[id])}));
  const inUse=new Set(starters.map(pid));
- const bench=benchSorted((ROSTERS[team]?ROSTERS[team].players:[]).filter(p=>!inUse.has(pid(p))),sub.order);
+ const bench=benchSorted(effPlayersAt(team,gid).filter(p=>!inUse.has(pid(p))),sub.order);
  const usedBench=new Set();let tot=0;const det=[];
  starters.forEach(p=>{let rec=voti[pid(p)],fv=fantaVoto(rec,p.role),player=p,viaSub=false;
    if(fv==null){
@@ -2479,38 +2615,86 @@ let votiGid=null,votiDraft={};
 const EVALL=[["g","Gol"],["a","Assist"],["rs","Rig+"],["rsb","Rig\u2717"],["amm","Amm"],["esp","Esp"],["og","Autog"]];
 const EVP=[["rp","Rig parato"],["gs","Gol sub."]];
 function ownedPlayers(){const seen={};TEAMS.forEach(t=>{(ROSTERS[t]?ROSTERS[t].players:[]).forEach(p=>{seen[pid(p)]=p})});return Object.values(seen)}
-/* ===== MERCATO (aste di riparazione) ===== */
+/* ===== MERCATO (aste di riparazione, per turno/fase) =====
+   Ogni fase (asta) si tiene AL TERMINE del suo turno e ha effetto DAL turno successivo.
+   Struttura salvata: { phase:"s16", teams:{ <team>:{ s16:{out:[pid],in:[{..,price}]}, ott:{..}, qf:{..} } } }
+   Gli svincoli/acquisti di una fase modificano il roster SOLO dal suo effGid in avanti:
+   i turni precedenti restano congelati (i giocatori restano di quella squadra fino a lì). */
 const MERC_KEY="fm26_mercato";
-const MERC_PHASES=[["s16","Sedicesimi",8,5],["ott","Ottavi",12,5],["qf","Quarti",8,3]];
-function getMercato(){const m=store.get(MERC_KEY);return (m&&m.teams)?m:{phase:"s16",teams:{}}}
-function teamMerc(t){const m=getMercato();return (m.teams&&m.teams[t])||{out:[],in:[]}}
+/* [chiave, etichetta, max svincoli, max riprese, effGid = 1o turno in cui ha effetto]
+   Sedicesimi (turno 4) -> vale da Ottavi (5); Ottavi (5) -> Quarti (6); Quarti (6) -> Semifinali (7). */
+const MERC_PHASES=[["s16","Sedicesimi",8,5,5],["ott","Ottavi",12,5,6],["qf","Quarti",8,3,7]];
+const MERC_ORDER=MERC_PHASES.map(p=>p[0]);
+function mercPhaseMeta(ph){return MERC_PHASES.find(x=>x[0]===ph)||MERC_PHASES[0]}
+function mercEffGid(ph){return mercPhaseMeta(ph)[4]}
+function emptyPhase(){return{out:[],in:[]}}
+function getMercato(){
+  let m=store.get(MERC_KEY);
+  if(!m||!m.teams)m={phase:MERC_ORDER[0],teams:{}};
+  if(!m.phase)m.phase=MERC_ORDER[0];
+  for(const t in m.teams){let tm=m.teams[t]||{};
+    if(Array.isArray(tm.out)||Array.isArray(tm.in)){ /* migra vecchio formato piatto nella fase corrente */
+      const legacy={out:tm.out||[],in:tm.in||[]},buckets={};
+      MERC_ORDER.forEach(ph=>buckets[ph]=emptyPhase());buckets[m.phase]=legacy;m.teams[t]=buckets;
+    } else {
+      MERC_ORDER.forEach(ph=>{if(!tm[ph])tm[ph]=emptyPhase();tm[ph].out=tm[ph].out||[];tm[ph].in=tm[ph].in||[]});
+      m.teams[t]=tm;
+    }
+  }
+  return m;
+}
+function teamMerc(t,ph){const m=getMercato(),tm=m.teams[t]||{};return (tm[ph]||emptyPhase())}
 function basePlayerByPid(t,id){return (ROSTERS_BASE[t]?ROSTERS_BASE[t].players:[]).find(p=>pid(p)===id)}
+/* risolve ruolo/nome/nat/q dal roster base o da un acquisto precedente della stessa squadra */
+function mercPlayerByPid(t,id){const b=basePlayerByPid(t,id);if(b)return b;
+  const m=getMercato(),tm=m.teams[t]||{};
+  for(const ph of MERC_ORDER){const hit=((tm[ph]&&tm[ph].in)||[]).find(x=>(x.role+"|"+x.name)===id);
+    if(hit)return{role:hit.role,name:hit.name,nat:hit.nat,q:hit.q};}
+  return null;}
 function baseCredits(t){const R=ROSTERS_BASE[t];return R?(300-R.players.reduce((s,p)=>s+(p.acq||0),0)):0}
-function mercRecovered(t){const tm=teamMerc(t);let r=0;(tm.out||[]).forEach(id=>{const p=basePlayerByPid(t,id);if(p)r+=(p.q||0)});return r}
-function mercSpent(t){const tm=teamMerc(t);let s=0;(tm.in||[]).forEach(x=>s+=(x.price||0));return s}
+/* crediti recuperati/spesi: cumulativi su tutte le fasi (svincoli al valore di listino) */
+function mercRecovered(t){const m=getMercato(),tm=m.teams[t]||{};let r=0;
+  MERC_ORDER.forEach(ph=>(((tm[ph]&&tm[ph].out)||[])).forEach(id=>{const p=mercPlayerByPid(t,id);if(p)r+=(p.q||0)}));return r}
+function mercSpent(t){const m=getMercato(),tm=m.teams[t]||{};let s=0;
+  MERC_ORDER.forEach(ph=>(((tm[ph]&&tm[ph].in)||[])).forEach(x=>s+=(x.price||0)));return s}
 function mercBudget(t){return baseCredits(t)+mercRecovered(t)-mercSpent(t)}
-function effPlayers(t){const tm=teamMerc(t);const outSet=new Set(tm.out||[]);
-  let pl=(ROSTERS_BASE[t]?ROSTERS_BASE[t].players:[]).filter(p=>!outSet.has(pid(p)));
-  (tm.in||[]).forEach(x=>pl.push({role:x.role,name:x.name,nat:x.nat,q:x.q,acq:x.price}));return pl}
-function applyMercato(){const m=getMercato();Object.keys(ROSTERS).forEach(t=>{
-  const players=effPlayers(t);const R=ROSTERS[t];if(!R)return;R.players=players;
+/* roster effettivo AL TURNO gid: base + tutte le fasi con effGid<=gid, applicate in ordine */
+function effPlayersAt(t,gid){const m=getMercato(),tm=m.teams[t]||{};
+  let pl=(ROSTERS_BASE[t]?ROSTERS_BASE[t].players:[]).slice();
+  MERC_ORDER.forEach(ph=>{if(mercEffGid(ph)>gid)return;const b=tm[ph]||emptyPhase();
+    const outSet=new Set(b.out||[]);pl=pl.filter(p=>!outSet.has(pid(p)));
+    (b.in||[]).forEach(x=>pl.push({role:x.role,name:x.name,nat:x.nat,q:x.q,acq:x.price}));});
+  return pl;}
+function effPlayers(t){return effPlayersAt(t,9999)}
+/* roster "in ingresso" a una fase (per la lista degli svincolabili): base + fasi precedenti */
+function rosterEnteringPhase(t,ph){return effPlayersAt(t,mercEffGid(ph)-1)}
+/* mappa e roster gid-aware: usati dallo scoring per congelare la storia */
+function rosterMapAt(t,gid){const m={};effPlayersAt(t,gid).forEach(p=>m[pid(p)]=p);return m}
+function ownedPlayersAt(gid){const seen={};TEAMS.forEach(t=>{effPlayersAt(t,gid).forEach(p=>{seen[pid(p)]=p})});return Object.values(seen)}
+/* turno "in gestione" per le viste al presente (roster/formazione): quello che si sta schierando */
+function currentRosterGid(){const s=submissionGiornata();if(s)return s.id;const n=nextGiornata();if(n)return n.id;const c=currentGiornata();return c?c.id:9999;}
+function applyMercato(){const gid=currentRosterGid();Object.keys(ROSTERS).forEach(t=>{
+  const players=effPlayersAt(t,gid);const R=ROSTERS[t];if(!R)return;R.players=players;
   R.spent=players.reduce((s,p)=>s+(p.acq||0),0);R.value=players.reduce((s,p)=>s+(p.q||0),0);
   R.n=players.length;R.counts={P:0,D:0,C:0,A:0};players.forEach(p=>{if(R.counts[p.role]!=null)R.counts[p.role]++});
   R.credits=mercBudget(t);});}
 function freeAgents(){const m=getMercato();const bought=new Set();const released=[];
   Object.keys(m.teams||{}).forEach(t=>{const tm=m.teams[t]||{};
-    (tm.in||[]).forEach(x=>bought.add(x.role+"|"+x.name));
-    (tm.out||[]).forEach(id=>{const p=basePlayerByPid(t,id);if(p)released.push({role:p.role,name:p.name,nat:p.nat,q:p.q})})});
-  const all=SVINC.filter(p=>!NAZ_ELIM.includes(p.nat)).concat(released);
+    MERC_ORDER.forEach(ph=>{const b=tm[ph]||emptyPhase();
+      (b.in||[]).forEach(x=>bought.add(x.role+"|"+x.name));
+      (b.out||[]).forEach(id=>{const p=mercPlayerByPid(t,id);if(p)released.push({role:p.role,name:p.name,nat:p.nat,q:p.q})})})});
+  const all=SVINC.concat(released);
   const seen=new Set();const out=[];
-  all.forEach(p=>{const id=p.role+"|"+p.name;if(bought.has(id)||seen.has(id))return;seen.add(id);out.push(p)});
+  all.forEach(p=>{const id=p.role+"|"+p.name;if(bought.has(id)||seen.has(id)||isElim(p.nat))return;seen.add(id);out.push(p)});
   return out;}
 function saveMercato(m){store.set(MERC_KEY,m);applyMercato()}
-function mercToggleOut(t,id){const m=getMercato();const tm=m.teams[t]||(m.teams[t]={out:[],in:[]});tm.out=tm.out||[];
-  const i=tm.out.indexOf(id);if(i>=0)tm.out.splice(i,1);else tm.out.push(id);saveMercato(m)}
-function mercBuy(t,player,price){const m=getMercato();const tm=m.teams[t]||(m.teams[t]={out:[],in:[]});tm.in=tm.in||[];
-  tm.in.push({role:player.role,name:player.name,nat:player.nat,q:player.q,price:price});saveMercato(m)}
-function mercUndoBuy(t,idx){const m=getMercato();const tm=m.teams[t];if(!tm||!tm.in)return;tm.in.splice(idx,1);saveMercato(m)}
+function curPhaseBucket(m,t){let tm=m.teams[t];if(!tm){tm={};MERC_ORDER.forEach(ph=>tm[ph]=emptyPhase());m.teams[t]=tm;}
+  const ph=m.phase||MERC_ORDER[0];if(!tm[ph])tm[ph]=emptyPhase();tm[ph].out=tm[ph].out||[];tm[ph].in=tm[ph].in||[];return tm[ph];}
+function mercToggleOut(t,id){const m=getMercato();const b=curPhaseBucket(m,t);
+  const i=b.out.indexOf(id);if(i>=0)b.out.splice(i,1);else b.out.push(id);saveMercato(m)}
+function mercBuy(t,player,price){const m=getMercato();const b=curPhaseBucket(m,t);
+  b.in.push({role:player.role,name:player.name,nat:player.nat,q:player.q,price:price});saveMercato(m)}
+function mercUndoBuy(t,idx){const m=getMercato();const tm=m.teams[t];if(!tm)return;const b=tm[m.phase||MERC_ORDER[0]];if(!b||!b.in)return;b.in.splice(idx,1);saveMercato(m)}
 function openVoti(gid){votiGid=gid||(nextGiornata()||{id:1}).id;go("voti")}
 function buildVrows(list,container){list.sort((a,b)=>(RORD[a.role]-RORD[b.role])||(b.q-a.q));
  list.forEach(p=>{const id=pid(p),rec=votiDraft[id]=votiDraft[id]||{};const evs=EVALL.concat(p.role==="P"?EVP:[]);
@@ -2523,7 +2707,7 @@ function buildVrows(list,container){list.sort((a,b)=>(RORD[a.role]-RORD[b.role])
    container.appendChild(row)})}
 function renderVoti(gid){gid=gid||votiGid||(nextGiornata()||{id:1}).id;votiGid=gid;setNav("classifica");
  votiDraft=JSON.parse(JSON.stringify(getVoti(gid)));
- const players=ownedPlayers(),byNat={};players.forEach(p=>{(byNat[p.nat]=byNat[p.nat]||[]).push(p)});
+ const players=ownedPlayersAt(gid),byNat={};players.forEach(p=>{(byNat[p.nat]=byNat[p.nat]||[]).push(p)});
  const nats=Object.keys(byNat).sort((a,b)=>a.localeCompare(b,"it"));
  const gsel=GIORNATE.map(g=>`<button class="modbtn${g.id===gid?" sel":""}" data-g="${g.id}">${phaseOf(g.id).label.replace("Gironi \u00b7 ","G")}</button>`).join("");
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Voti</button><div class="brand">Inserisci voti</div><span style="width:64px"></span></div>
@@ -2566,7 +2750,7 @@ function renderVotiGiornata(){
  setNav("votigiornata");
  const g0=currentGiornata(),gid=vgGid||(g0?g0.id:1);vgGid=gid;
  const team=vgTeam||user||TEAMS[0];vgTeam=team;const R=ROSTERS[team];
- const saved=getLineupFor(team,gid),voti=getVoti(gid),map=rosterMap(team),tg=teamGiornata(team,gid);
+ const saved=getLineupFor(team,gid),voti=getVoti(gid),map=rosterMapAt(team,gid),tg=teamGiornata(team,gid);
  const subFor={},subbedIn=new Set();
  if(tg&&tg.det)tg.det.forEach(d=>{if(d.viaSub){subFor[pid(d.starter)]=d.player;subbedIn.add(pid(d.player))}});
  const turni=GIORNATE.map(x=>`<button class="modbtn${x.id===gid?" sel":""}" data-g="${x.id}">${phaseOf(x.id).label.replace("Gironi \u00b7 ","G")}</button>`).join("");
@@ -2575,7 +2759,7 @@ function renderVotiGiornata(){
  if(saved&&saved.lineup){
    ["P","D","C","A"].forEach(r=>(saved.lineup[r]||[]).forEach(id=>{const p=map[id];if(p)titolari+=vgRow(p,voti[id],subFor[id],false)}));
    const inUse=new Set(["P","D","C","A"].flatMap(r=>saved.lineup[r]||[]));
-   benchSorted((R?R.players:[]).filter(p=>!inUse.has(pid(p))),saved.order).forEach(p=>{bench+=vgRow(p,voti[pid(p)],null,subbedIn.has(pid(p)))});
+   benchSorted(effPlayersAt(team,gid).filter(p=>!inUse.has(pid(p))),saved.order).forEach(p=>{bench+=vgRow(p,voti[pid(p)],null,subbedIn.has(pid(p)))});
  }
  const played=tg&&tg.played,totTxt=played?tg.tot:"\u2013";
  view.innerHTML=`<div class="top"><div class="brand"><svg class="brandic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#F7F3E8"/><circle cx="12" cy="12" r="5.4" fill="#0B0B10"/><circle cx="12" cy="12" r="2.2" fill="#E11D48"/></svg>Voti giornata</div></div>
@@ -2611,7 +2795,7 @@ document.getElementById("btnReset").onclick=()=>{draft=Object.assign({number:10,
 
 /* ===== IMPOSTAZIONI ===== */
 function renderAstina(){setNav("home");
- const disp=SVINC.filter(p=>!NAZ_ELIM.includes(p.nat));const byR=r=>disp.filter(p=>p.role===r).length;
+ const disp=SVINC.filter(p=>!isElim(p.nat));const byR=r=>disp.filter(p=>p.role===r).length;
  view.innerHTML=`<div class="top"><button class="back" id="bk">‹ Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
  <div class="doc fade">
   <p class="lead">Astine di riparazione · FantaMondiale 2026.<br>Queste regole integrano il regolamento ufficiale.</p>
@@ -2642,8 +2826,8 @@ function renderAstina(){setNav("home");
 function renderMercato(){setNav("home");applyMercato();
  const t=user,R=ROSTERS[t],RB=ROSTERS_BASE[t];
  if(!R||!RB){view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand">Mercato</div><span style="width:60px"></span></div><div class="dash fade"><div class="fmInfo"><div class="ic">\U0001F504</div><div class="tx">Accedi come una delle squadre per gestire il mercato.</div></div></div>`;const b=document.getElementById("bk");if(b)b.onclick=()=>go("home");return;}
- const m=getMercato(),tm=teamMerc(t),phase=m.phase||"s16",ph=MERC_PHASES.find(x=>x[0]===phase)||MERC_PHASES[0];
- const budget=mercBudget(t),nOut=(tm.out||[]).length,nIn=(tm.in||[]).length,TARGET={P:3,D:7,C:7,A:5};
+ const m=getMercato(),phase=m.phase||MERC_ORDER[0],tm=teamMerc(t,phase),ph=mercPhaseMeta(phase);
+ const budget=mercBudget(t),nOut=(tm.out||[]).length,nIn=(tm.in||[]).length,TARGET={P:3,D:7,C:7,A:5},SIZE={s16:22,ott:15,qf:10};
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
  <div class="merc fade">
   <div class="mhead"><div class="mclub">${R.club}</div><div class="mbud"><span class="mb-n">${budget}</span><span class="mb-l">crediti disponibili</span></div></div>
@@ -2658,7 +2842,7 @@ function renderMercato(){setNav("home");applyMercato();
   <div id="mbody"></div>
  </div>`;
  const comp=R.counts;
- document.getElementById("mcomp").innerHTML=["P","D","C","A"].map(r=>{const c=comp[r]||0,tg=TARGET[r],cl=c===tg?"ok":(c>tg?"over":"");return `<span class="mc ${cl}">${r} ${c}<i>/${tg}</i></span>`}).join("")+`<span class="mc tot">Tot ${R.n}<i>/22</i></span>`;
+ document.getElementById("mcomp").innerHTML=["P","D","C","A"].map(r=>{const c=comp[r]||0,tg=TARGET[r],cl=c===tg?"ok":(c>tg?"over":"");return `<span class="mc ${cl}">${r} ${c}<i>/${tg}</i></span>`}).join("")+`<span class="mc tot">Tot ${R.n}<i>/${SIZE[phase]||R.n}</i></span>`;
  document.getElementById("mphase").innerHTML=`<div class="mph-row">${MERC_PHASES.map(x=>`<button class="mph${x[0]===phase?" on":""}" data-ph="${x[0]}">${x[1]}<i>\u2212${x[2]}/+${x[3]}</i></button>`).join("")}</div><div class="mph-cnt">Svincoli ${nOut}/${ph[2]} \u00b7 Acquisti ${nIn}/${ph[3]}${phase==="s16"?" \u00b7 vincoli ruolo 3-7-7-5":" \u00b7 ruoli liberi"}</div>`;
  document.getElementById("bk").onclick=()=>go("home");
  document.querySelectorAll(".mtab").forEach(b=>b.onclick=()=>{mercTab=b.dataset.tab;renderMercato()});
@@ -2666,13 +2850,15 @@ function renderMercato(){setNav("home");applyMercato();
  mercBody();
 }
 function mercBody(){const t=user,body=document.getElementById("mbody");if(!body)return;
- const RC={P:"r-p",D:"r-d",C:"r-c",A:"r-a"},tm=teamMerc(t),outSet=new Set(tm.out||[]);
+ const phase=getMercato().phase||MERC_ORDER[0];
+ const RC={P:"r-p",D:"r-d",C:"r-c",A:"r-a"},tm=teamMerc(t,phase),outSet=new Set(tm.out||[]);
  if(mercTab==="svincola"){
    const ord={P:0,D:1,C:2,A:3};
-   let arr=ROSTERS_BASE[t].players.slice().map(pl=>({p:pl,id:pid(pl),elim:NAZ_ELIM.includes(pl.nat)}));
+   let arr=rosterEnteringPhase(t,phase).map(pl=>({p:pl,id:pid(pl),elim:isElim(pl.nat)}));
    arr.sort((a,b)=>(b.elim-a.elim)||ord[a.p.role]-ord[b.p.role]||b.p.q-a.p.q);
-   body.innerHTML=`<div class="mnote">Svincolo al valore di listino. Precedenza obbligatoria agli <b class="elx">eliminati</b>.</div>`+arr.map(o=>{const out=outSet.has(o.id);return `<div class="mrow${out?" rel":""}"><span class="rb ${RC[o.p.role]}">${o.p.role}</span><span class="pn">${dispName(o.p.name)}<small>${fimg(o.p.nat,"flsm")} ${o.p.nat}${o.elim?' \u00b7 <b class="elx">ELIMINATO</b>':""}</small></span><span class="pq">${o.p.q}</span><button class="mbtn${out?" undo":""}" data-id="${o.id}">${out?"Annulla":"Svincola"}</button></div>`}).join("");
-   body.querySelectorAll(".mbtn").forEach(b=>b.onclick=()=>{mercToggleOut(t,b.dataset.id);renderMercato()});
+   const pendingElim=arr.some(o=>o.elim&&!outSet.has(o.id));
+   body.innerHTML=`<div class="mnote">Svincolo al valore di listino, valido dal turno successivo. Precedenza obbligatoria agli <b class="elx">eliminati</b>.</div>`+arr.map(o=>{const out=outSet.has(o.id),locked=!o.elim&&!out&&pendingElim,cls=out?"mbtn undo":(locked?"mbtn locked":"mbtn");return `<div class="mrow${out?" rel":""}"><span class="rb ${RC[o.p.role]}">${o.p.role}</span><span class="pn">${dispName(o.p.name)}<small>${fimg(o.p.nat,"flsm")} ${o.p.nat}${o.elim?' \u00b7 <b class="elx">ELIMINATO</b>':""}</small></span><span class="pq">${o.p.q}</span><button class="${cls}" data-id="${o.id}" data-lock="${locked?1:0}">${out?"Annulla":"Svincola"}</button></div>`}).join("");
+   body.querySelectorAll(".mbtn").forEach(b=>b.onclick=()=>{if(b.dataset.lock==="1"){toast("Prima svincola i giocatori eliminati");return;}mercToggleOut(t,b.dataset.id);renderMercato()});
  } else if(mercTab==="compra"){
    body.innerHTML=`<input id="mSearch" class="svsearch" placeholder="Cerca giocatore o nazione\u2026"><div class="opts" id="mRole" style="margin:10px 0"></div><div class="mnote">Asta a voce, poi inserisci il prezzo finale (min 1).</div><div id="mList"></div>`;
    const roles=[["all","Tutti"],["P","Portieri"],["D","Difensori"],["C","Centrocampisti"],["A","Attaccanti"]],rc=document.getElementById("mRole");
@@ -2680,7 +2866,7 @@ function mercBody(){const t=user,body=document.getElementById("mbody");if(!body)
    const inp=document.getElementById("mSearch");inp.value=mercF.q;inp.oninput=e=>{mercF.q=e.target.value.toLowerCase();mercListBuy()};
    mercListBuy();
  } else {
-   const outRows=(tm.out||[]).map(id=>{const pl=basePlayerByPid(t,id);if(!pl)return"";return `<div class="mrow"><span class="rb ${RC[pl.role]}">${pl.role}</span><span class="pn">${dispName(pl.name)}<small>svincolato \u00b7 +${pl.q} cr</small></span><button class="mbtn undo" data-uid="${id}">Annulla</button></div>`}).join("");
+   const outRows=(tm.out||[]).map(id=>{const pl=mercPlayerByPid(t,id);if(!pl)return"";return `<div class="mrow"><span class="rb ${RC[pl.role]}">${pl.role}</span><span class="pn">${dispName(pl.name)}<small>svincolato \u00b7 +${pl.q} cr</small></span><button class="mbtn undo" data-uid="${id}">Annulla</button></div>`}).join("");
    const inRows=(tm.in||[]).map((x,i)=>`<div class="mrow"><span class="rb ${RC[x.role]}">${x.role}</span><span class="pn">${dispName(x.name)}<small>${fimg(x.nat,"flsm")} ${x.nat} \u00b7 \u2212${x.price} cr</small></span><button class="mbtn undo" data-bi="${i}">Annulla</button></div>`).join("");
    body.innerHTML=`<h4 class="msec">Svincolati (${(tm.out||[]).length})</h4>${outRows||'<div class="mempty">Nessuno svincolo</div>'}<h4 class="msec">Acquistati (${(tm.in||[]).length})</h4>${inRows||'<div class="mempty">Nessun acquisto</div>'}`;
    body.querySelectorAll("[data-uid]").forEach(b=>b.onclick=()=>{mercToggleOut(t,b.dataset.uid);renderMercato()});
