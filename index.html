@@ -895,6 +895,15 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .lgchip{background:#0d1f47;border:1px solid #2c3f6e;border-radius:8px;padding:3px 8px;font-weight:700;font-size:11.5px}
 .lgchip.out{color:#ff9a9a;border-color:#5a2c2c}.lgchip.inn{color:#8ff0bd;border-color:#2f6b52}
 .lgnone{opacity:.5;font-size:11.5px}
+.pwbox{text-align:center;padding:22px 16px}
+.pwic{font-size:40px;margin-bottom:8px}
+.pronchamp{background:#123a2e;border:1px solid #2f6b52;border-radius:12px;padding:11px 13px;margin:0 0 12px;font-size:14px;color:#eafff6}
+.prcard{background:#11214a;border:1px solid #2c3d72;border-radius:13px;padding:11px 13px;margin-bottom:9px}
+.prh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.prclub{font-weight:800;font-size:15px}
+.prcnt{font-size:11px;color:#9fb0d8;font-weight:700}
+.prline{font-size:14px;color:#fff;margin:2px 0}
+.prfin{font-size:12px;color:#9fb0d8;margin-top:2px}
 </style>
 </head>
 <body>
@@ -1230,7 +1239,7 @@ function fdt(d){return `${pad(d.getDate())}/${pad(d.getMonth()+1)} · ${pad(d.ge
 function dayKey(d){return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`}
 
 /* ===== STATO ===== */
-let user=store.get("fm26_user"),draft=null,cdTimer=null,viewTeam=null,curView="home",cloudReady=false,_suppress=false,leagueRef=null,calTab="tabellone",resRound=1,koTab="r32";
+let user=store.get("fm26_user"),draft=null,cdTimer=null,viewTeam=null,curView="home",cloudReady=false,_suppress=false,leagueRef=null,calTab="tabellone",resRound=1,koTab="r32",chipassaAuth=false,pronTab="mine";
 let svF={q:"",role:"all",sort:"q"};
 let mercTab="svincola",mercF={q:"",role:"all"};
 function openRoster(t){viewTeam=t;go("roster")}
@@ -1348,7 +1357,7 @@ function rotateBg(){let i;do{i=Math.floor(Math.random()*BGS.length)}while(i===_l
 function go(v){curView=v;document.body.dataset.view=v;rotateBg();if(typeof applyMercato==="function")applyMercato();if(cdTimer){clearInterval(cdTimer);cdTimer=null}setNav(["home","squadre","calendario","votigiornata","classifica"].includes(v)?v:"home");view.scrollTop=0;document.getElementById("nav").style.display="flex";document.getElementById("fmActions").style.display="none";var _vf=document.getElementById("vgFoot");if(_vf&&v!=="votigiornata")_vf.style.display="none";
  if(v==="home")renderHome();else if(v==="cruciverba")renderCruciverba();else if(v==="impiccato")renderImpiccato();else if(v==="top10")renderTop10();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
  else if(v==="classifica")renderClassifica();else if(v==="formazione")renderFormazione();
- else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="eliminate")renderEliminate();else if(v==="chipassa")renderChipassa();else if(v==="mercato")renderMercato();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
+ else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="eliminate")renderEliminate();else if(v==="chipassa")renderChipassa();else if(v==="pronostici")renderPronostici();else if(v==="mercato")renderMercato();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
 
 /* ===== HOME ===== */
@@ -1921,6 +1930,7 @@ function renderHome(){
    <button class="drawer-item" data-go="mercato" style="--mc:#27C46A"><span>🔄</span>Mercato</button>
    <button class="drawer-item" data-go="svincolati" style="--mc:#16D6D6"><span>🆓</span>Svincolati</button>
    <button class="drawer-item" data-go="chipassa" style="--mc:#1A52F5"><span>➡️</span>Chi passa</button>
+   <button class="drawer-item" data-go="pronostici" style="--mc:#E11C8E"><span>🔮</span>Pronostici</button>
    <button class="drawer-item" data-go="eliminate" style="--mc:#FF4D4D"><span>❌</span>Squadre eliminate</button>
    <button class="drawer-item" data-go="regolamento" style="--mc:#7A3FF2"><span>📖</span>Regolamento</button>
    <button class="drawer-item" data-go="porceddu" style="--mc:#FF7A00"><span>🐷</span>Porceddu</button></aside>
@@ -2176,8 +2186,64 @@ function renderEliminate(){
   <div class="plist">${rows}</div></div>`;
  document.getElementById("bk").onclick=()=>go("home");
 }
+/* ===== PRONOSTICI (bracket personale per utente, visibile a tutti) ===== */
+function getPronosFor(t){return store.get("fm26_pronos_"+t)||{picks:{}};}
+function savePronos(t,o){store.set("fm26_pronos_"+t,o);}
+function predPick(t,n){const p=getPronosFor(t);return (p.picks&&p.picks[n])||0;}
+function predTeam(t,slot){if(slot==null)return null;if(typeof slot==="string")return slot;if(slot.w!=null)return predWinner(t,slot.w);if(slot.l!=null)return predLoser(t,slot.l);return null;}
+function predWinner(t,n){const m=koMatch(n);if(!m)return null;const pk=predPick(t,n);if(!pk)return null;const a=predTeam(t,m.t1),b=predTeam(t,m.t2);return pk===1?a:(pk===2?b:null);}
+function predLoser(t,n){const m=koMatch(n);if(!m)return null;const pk=predPick(t,n);if(!pk)return null;const a=predTeam(t,m.t1),b=predTeam(t,m.t2);return pk===1?b:(pk===2?a:null);}
+function setPred(t,n,slot){const o=getPronosFor(t);o.picks=o.picks||{};if(o.picks[n]===slot)delete o.picks[n];else o.picks[n]=slot;savePronos(t,o);}
+function renderPronostici(){
+ setNav("calendario");if(cdTimer){clearInterval(cdTimer);cdTimer=null}
+ let inner;
+ if(pronTab==="mine"&&!user){
+   inner=`<div class="fmInfo"><div class="ic">\ud83d\udd2e</div><div class="tx">Accedi come una squadra per compilare i tuoi pronostici.</div></div>`;
+ } else if(pronTab==="mine"){
+   let body="";
+   KO_RD.forEach(rd=>{const rk=rd[0],ms=KOM.filter(m=>m.rd===rk).sort((a,b)=>a.dt-b.dt);if(!ms.length)return;
+     let rows="";ms.forEach(m=>{
+       const ta=predTeam(user,m.t1),tb=predTeam(user,m.t2),ready=!!(ta&&tb),pk=predPick(user,m.n);
+       const cls=x=>pk===x?"cpteam adv":(pk&&pk!==x?"cpteam out":"cpteam");
+       const side=(slot,x)=>{const tm=predTeam(user,slot),nm=tm?natIT(tm):koSlotName(slot),fl=tm?flag(natIT(tm)):"";
+         return `<button class="${cls(x)}" data-pred="${m.n}_${x}" ${ready?"":"disabled"}>${fl?`<img class="fl" src="${fl}" alt="">`:`<span class="kfx"></span>`}<span class="cpn">${nm}</span>${pk===x?'<span class="cpck">\u2713</span>':""}</button>`;};
+       rows+=`<div class="cpmatch"><div class="cpwhen">#${m.n} \u00b7 ${pad(m.dt.getDate())}/${pad(m.dt.getMonth()+1)}${ready?"":" \u00b7 in attesa"}</div>${side(m.t1,1)}${side(m.t2,2)}</div>`;
+     });
+     body+=`<div class="cprd">${rd[1]}</div>${rows}`;
+   });
+   const champ=predWinner(user,104),done=Object.keys(getPronosFor(user).picks||{}).length;
+   inner=`<div class="pronchamp">${champ?`\ud83c\udfc6 Il tuo campione: <b>${natIT(champ)}</b>`:`Compila il tabellone fino alla finale \u00b7 ${done}/32 scelte`}</div><div class="cpwrap">${body}</div>`;
+ } else {
+   inner=`<div class="cpwrap">`+TEAMS.map(tt=>{const R=ROSTERS[tt];if(!R)return "";
+     const champ=predWinner(tt,104),f1=predWinner(tt,101),f2=predWinner(tt,102),done=Object.keys(getPronosFor(tt).picks||{}).length;
+     return `<div class="prcard"><div class="prh"><span class="prclub">${R.club}</span><span class="prcnt">${done}/32</span></div>
+       <div class="prline">\ud83c\udfc6 Campione: <b>${champ?natIT(champ):"\u2014"}</b></div>
+       <div class="prfin">Finalisti: ${f1?natIT(f1):"\u2014"} \u00b7 ${f2?natIT(f2):"\u2014"}</div></div>`;
+   }).join("")+`</div>`;
+ }
+ view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
+  <div class="svwrap fade"><h2 class="svh">Pronostici</h2>
+   <div class="svsub">Chi vincer\u00e0 il Mondiale? Compila il tuo tabellone \u00b7 tutti vedono i pronostici di tutti.</div>
+   <div class="calseg"><button class="${pronTab==='mine'?'on':''}" data-pt="mine">I miei</button><button class="${pronTab==='all'?'on':''}" data-pt="all">Tutti</button></div>
+   ${inner}</div>`;
+ document.getElementById("bk").onclick=()=>go("home");
+ view.querySelectorAll("[data-pt]").forEach(b=>b.onclick=()=>{pronTab=b.dataset.pt;renderPronostici();});
+ view.querySelectorAll("[data-pred]").forEach(b=>b.onclick=()=>{if(b.hasAttribute("disabled"))return;const q=b.dataset.pred.split("_");setPred(user,+q[0],+q[1]);renderPronostici();});
+}
 function renderChipassa(){
  setNav("calendario");if(cdTimer){clearInterval(cdTimer);cdTimer=null}
+ if(!chipassaAuth){
+   view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand">Chi passa</div><span style="width:46px"></span></div>
+    <div class="svwrap fade"><div class="pwbox"><div class="pwic">\ud83d\udd12</div><h2 class="svh" style="margin:6px 0">Sezione riservata</h2>
+     <p class="svsub" style="margin-bottom:14px">Solo l'admin pu\u00f2 segnare chi passa il turno. Inserisci la password.</p>
+     <input type="password" id="pwIn" class="svsearch" placeholder="Password\u2026" autocomplete="off">
+     <button class="rosabtn" id="pwGo" style="margin-top:12px">Sblocca</button></div></div>`;
+   document.getElementById("bk").onclick=()=>go("home");
+   const tryPw=()=>{if((document.getElementById("pwIn").value||"")==="MangiGanri"){chipassaAuth=true;renderChipassa();}else toast("Password errata");};
+   document.getElementById("pwGo").onclick=tryPw;
+   document.getElementById("pwIn").addEventListener("keydown",e=>{if(e.key==="Enter")tryPw();});
+   return;
+ }
  let body="";
  KO_RD.forEach(rd=>{
    const rk=rd[0],ms=KOM.filter(m=>m.rd===rk).sort((a,b)=>a.dt-b.dt);
@@ -2999,6 +3065,7 @@ function cloudPathFor(key){
  if(key.indexOf("fm26_cw_")===0)return{sec:"cw",sub:key.slice(8)};
  if(key.indexOf("fm26_hm_")===0)return{sec:"hm",sub:key.slice(8)};
  if(key.indexOf("fm26_t10_")===0)return{sec:"t10",sub:key.slice(9)};
+ if(key.indexOf("fm26_pronos_")===0)return{sec:"pronostici",sub:key.slice(12)};
  if(key==="fm26_mercato")return{sec:"mercato",sub:null};
  return null}
 function cloudPush(key,val){if(!cloudReady||_suppress||!leagueRef)return;const p=cloudPathFor(key);if(!p)return;
@@ -3016,6 +3083,7 @@ function applyCloud(d){_suppress=true;try{
    if(d.hm)for(const k in d.hm)store.set("fm26_hm_"+k,d.hm[k]);
    if(d.t10)for(const k in d.t10)store.set("fm26_t10_"+k,d.t10[k]);
    if(d.live)store.set("fm26_live",d.live);
+   if(d.pronostici)for(const t in d.pronostici)store.set("fm26_pronos_"+t,d.pronostici[t]);
    if(d.mercato){const inc=d.mercato||{teams:{}},cur=store.get("fm26_mercato")||{teams:{}};
      const merged={phase:inc.phase||cur.phase||MERC_ORDER[0],teams:{}};
      const allT=new Set([...Object.keys(cur.teams||{}),...Object.keys(inc.teams||{})]);
