@@ -736,7 +736,8 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .drawer.open{transform:none}
 .drawer-h{font-family:var(--font-display);font-weight:900;font-size:26px;letter-spacing:-.02em;margin:4px 4px 12px}
 .drawer-item{display:flex;align-items:center;gap:13px;padding:15px;border-radius:15px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#fff;font-family:inherit;font-weight:800;font-size:15.5px;text-align:left;transition:background .15s,transform .1s}
-.drawer-item span{font-size:19px;width:24px;text-align:center}
+.drawer-item{border-left:3px solid var(--mc,transparent)}
+.drawer-item span{font-size:18px;width:34px;height:34px;line-height:34px;text-align:center;border-radius:10px;background:var(--mc,rgba(255,255,255,.08));box-shadow:0 6px 14px -6px var(--mc,transparent)}
 .drawer-item:active{background:rgba(255,255,255,.13);transform:scale(.98)}
 .j-team{font-family:var(--font-display);font-weight:900;font-size:26px;letter-spacing:-.02em;text-align:center;margin:2px 0 -2px;line-height:1;color:#fff}
 .rankbar{display:flex;align-items:center;gap:14px;width:calc(100% - 32px);margin:14px 16px 4px;padding:14px 16px;border-radius:20px;
@@ -885,6 +886,15 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .kthlab{font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#bcd0ff;margin:0 2px 8px}
 .oppd{opacity:.62;font-size:9.5px;font-weight:600;white-space:nowrap}
 .bnopp{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.lgteam{background:#11214a;border:1px solid #2c3d72;border-radius:13px;padding:11px 12px;margin:8px 0}
+.lgh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.lgclub{font-weight:800;font-size:15px}
+.lgcr{font-weight:800;color:var(--yellow,#FFC21E)}.lgcr i{font-style:normal;font-size:10px;opacity:.7;margin-left:2px}
+.lgln{font-size:12.5px;color:#cfd8ee;margin:4px 0;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.lgln b{opacity:.55;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+.lgchip{background:#0d1f47;border:1px solid #2c3f6e;border-radius:8px;padding:3px 8px;font-weight:700;font-size:11.5px}
+.lgchip.out{color:#ff9a9a;border-color:#5a2c2c}.lgchip.inn{color:#8ff0bd;border-color:#2f6b52}
+.lgnone{opacity:.5;font-size:11.5px}
 </style>
 </head>
 <body>
@@ -1108,7 +1118,7 @@ function activeMercPhase(){const gid=currentRosterGid();let pick=MERC_ORDER[0];M
 function mercToggleOutPhase(t,id,phase){const m=getMercato();let tm=m.teams[t];
   if(!tm){tm={};MERC_ORDER.forEach(ph=>tm[ph]=emptyPhase());m.teams[t]=tm;}
   if(!tm[phase])tm[phase]=emptyPhase();tm[phase].out=tm[phase].out||[];
-  const i=tm[phase].out.indexOf(id);if(i>=0)tm[phase].out.splice(i,1);else tm[phase].out.push(id);saveMercato(m)}
+  const i=tm[phase].out.indexOf(id);if(i>=0)tm[phase].out.splice(i,1);else tm[phase].out.push(id);if(m.teams[t])m.teams[t]._ts=Date.now();saveMercato(m)}
 
 
 // GIORNATE del fanta-torneo (dedotte dal calendario)
@@ -1338,7 +1348,7 @@ function rotateBg(){let i;do{i=Math.floor(Math.random()*BGS.length)}while(i===_l
 function go(v){curView=v;document.body.dataset.view=v;rotateBg();if(typeof applyMercato==="function")applyMercato();if(cdTimer){clearInterval(cdTimer);cdTimer=null}setNav(["home","squadre","calendario","votigiornata","classifica"].includes(v)?v:"home");view.scrollTop=0;document.getElementById("nav").style.display="flex";document.getElementById("fmActions").style.display="none";var _vf=document.getElementById("vgFoot");if(_vf&&v!=="votigiornata")_vf.style.display="none";
  if(v==="home")renderHome();else if(v==="cruciverba")renderCruciverba();else if(v==="impiccato")renderImpiccato();else if(v==="top10")renderTop10();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
  else if(v==="classifica")renderClassifica();else if(v==="formazione")renderFormazione();
- else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="svincola")renderSvincola();else if(v==="eliminate")renderEliminate();else if(v==="chipassa")renderChipassa();else if(v==="mercato")renderMercato();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="astina")renderAstina();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
+ else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="eliminate")renderEliminate();else if(v==="chipassa")renderChipassa();else if(v==="mercato")renderMercato();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
 
 /* ===== HOME ===== */
@@ -1908,14 +1918,12 @@ function renderHome(){
  <div class="top topbar"><button class="gear menu-btn" id="goMenu" aria-label="Menu">☰</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><button class="out" id="logout">Esci</button></div>
  <div class="drawer-ov" id="drawerOv"></div>
  <aside class="drawer" id="drawer"><div class="drawer-h">Menù</div>
-   <button class="drawer-item" data-go="svincola"><span>✂️</span>Svincola</button>
-   <button class="drawer-item" data-go="svincolati"><span>🆓</span>Svincolati</button>
-   <button class="drawer-item" data-go="eliminate"><span>❌</span>Squadre eliminate</button>
-   <button class="drawer-item" data-go="chipassa"><span>➡️</span>Chi passa</button>
-   <button class="drawer-item" data-go="astina"><span>🔨</span>Astina</button>
-   <button class="drawer-item" data-go="mercato"><span>🔄</span>Mercato</button>
-   <button class="drawer-item" data-go="porceddu"><span>🐷</span>Porceddu</button>
-   <button class="drawer-item" data-go="regolamento"><span>📖</span>Regolamento</button></aside>
+   <button class="drawer-item" data-go="mercato" style="--mc:#27C46A"><span>🔄</span>Mercato</button>
+   <button class="drawer-item" data-go="svincolati" style="--mc:#16D6D6"><span>🆓</span>Svincolati</button>
+   <button class="drawer-item" data-go="chipassa" style="--mc:#1A52F5"><span>➡️</span>Chi passa</button>
+   <button class="drawer-item" data-go="eliminate" style="--mc:#FF4D4D"><span>❌</span>Squadre eliminate</button>
+   <button class="drawer-item" data-go="regolamento" style="--mc:#7A3FF2"><span>📖</span>Regolamento</button>
+   <button class="drawer-item" data-go="porceddu" style="--mc:#FF7A00"><span>🐷</span>Porceddu</button></aside>
  <div class="jersey-wrap fade"><div class="jersey-ribbon"></div><div class="j-team">${R?R.club:user}</div>
    <div class="jersey-stage"><svg id="homeJersey" viewBox="0 0 200 220"></svg><button class="j-edit" id="editJersey" aria-label="Personalizza maglia">✎</button></div></div>
  <button class="rankbar fade" id="rankBar"><div class="rk-pos"><span>${s.pos}</span><small>º</small></div>
@@ -2691,10 +2699,10 @@ function saveMercato(m){store.set(MERC_KEY,m);applyMercato()}
 function curPhaseBucket(m,t){let tm=m.teams[t];if(!tm){tm={};MERC_ORDER.forEach(ph=>tm[ph]=emptyPhase());m.teams[t]=tm;}
   const ph=m.phase||MERC_ORDER[0];if(!tm[ph])tm[ph]=emptyPhase();tm[ph].out=tm[ph].out||[];tm[ph].in=tm[ph].in||[];return tm[ph];}
 function mercToggleOut(t,id){const m=getMercato();const b=curPhaseBucket(m,t);
-  const i=b.out.indexOf(id);if(i>=0)b.out.splice(i,1);else b.out.push(id);saveMercato(m)}
+  const i=b.out.indexOf(id);if(i>=0)b.out.splice(i,1);else b.out.push(id);if(m.teams[t])m.teams[t]._ts=Date.now();saveMercato(m)}
 function mercBuy(t,player,price){const m=getMercato();const b=curPhaseBucket(m,t);
-  b.in.push({role:player.role,name:player.name,nat:player.nat,q:player.q,price:price});saveMercato(m)}
-function mercUndoBuy(t,idx){const m=getMercato();const tm=m.teams[t];if(!tm)return;const b=tm[m.phase||MERC_ORDER[0]];if(!b||!b.in)return;b.in.splice(idx,1);saveMercato(m)}
+  b.in.push({role:player.role,name:player.name,nat:player.nat,q:player.q,price:price});if(m.teams[t])m.teams[t]._ts=Date.now();saveMercato(m)}
+function mercUndoBuy(t,idx){const m=getMercato();const tm=m.teams[t];if(!tm)return;const b=tm[m.phase||MERC_ORDER[0]];if(!b||!b.in)return;b.in.splice(idx,1);if(m.teams[t])m.teams[t]._ts=Date.now();saveMercato(m)}
 function openVoti(gid){votiGid=gid||(nextGiornata()||{id:1}).id;go("voti")}
 function buildVrows(list,container){list.sort((a,b)=>(RORD[a.role]-RORD[b.role])||(b.q-a.q));
  list.forEach(p=>{const id=pid(p),rec=votiDraft[id]=votiDraft[id]||{};const evs=EVALL.concat(p.role==="P"?EVP:[]);
@@ -2725,7 +2733,7 @@ function renderVoti(gid){gid=gid||votiGid||(nextGiornata()||{id:1}).id;votiGid=g
    const bd=document.createElement("div");bd.className="natbd";bd.style.display="none";let built=false;
    hd.onclick=()=>{const op=bd.style.display==="none";bd.style.display=op?"block":"none";hd.classList.toggle("open",op);if(op&&!built){buildVrows(byNat[nat],bd);built=true}};
    sec.appendChild(hd);sec.appendChild(bd);nl.appendChild(sec)});
- document.getElementById("saveVoti").onclick=()=>{Object.keys(votiDraft).forEach(k=>{if(!hasVoto(votiDraft[k]))delete votiDraft[k]});store.set(votiKey(gid),votiDraft);toast("Voti salvati \u2713 "+phaseOf(gid).label)};
+ document.getElementById("saveVoti").onclick=()=>{Object.keys(votiDraft).forEach(k=>{const r=votiDraft[k];if(!hasVoto(r))delete votiDraft[k];else r.lk=1;});store.set(votiKey(gid),votiDraft);toast("Voti salvati \u2713 "+phaseOf(gid).label)};
 }
 
 /* ===== VOTI GIORNATA (vista) ===== */
@@ -2838,6 +2846,7 @@ function renderMercato(){setNav("home");applyMercato();
     <button class="mtab${mercTab==="svincola"?" on":""}" data-tab="svincola">Svincola</button>
     <button class="mtab${mercTab==="compra"?" on":""}" data-tab="compra">Compra</button>
     <button class="mtab${mercTab==="mov"?" on":""}" data-tab="mov">Movimenti</button>
+    <button class="mtab${mercTab==="lega"?" on":""}" data-tab="lega">Lega</button>
   </div>
   <div id="mbody"></div>
  </div>`;
@@ -2865,6 +2874,14 @@ function mercBody(){const t=user,body=document.getElementById("mbody");if(!body)
    roles.forEach(([id,l])=>{const o=document.createElement("button");o.className="opt"+(mercF.role===id?" sel":"");o.textContent=l;o.onclick=()=>{mercF.role=id;[...rc.children].forEach((x,i)=>x.classList.toggle("sel",roles[i][0]===id));mercListBuy()};rc.appendChild(o)});
    const inp=document.getElementById("mSearch");inp.value=mercF.q;inp.oninput=e=>{mercF.q=e.target.value.toLowerCase();mercListBuy()};
    mercListBuy();
+ } else if(mercTab==="lega"){
+   const mm=getMercato();
+   body.innerHTML=`<div class="mnote">Movimenti e crediti di tutta la lega \u00b7 aggiornati in tempo reale.</div>`+TEAMS.map(tt=>{const Rt=ROSTERS[tt];if(!Rt)return "";const tmm=mm.teams[tt]||{};
+     const outs=[],ins=[];MERC_ORDER.forEach(ph=>{(((tmm[ph]&&tmm[ph].out)||[])).forEach(id=>{const pl=mercPlayerByPid(tt,id);if(pl)outs.push(pl)});(((tmm[ph]&&tmm[ph].in)||[])).forEach(x=>ins.push(x))});
+     const oH=outs.length?outs.map(pl=>`<span class="lgchip out">${dispName(pl.name)}</span>`).join(""):`<span class="lgnone">nessuno</span>`;
+     const iH=ins.length?ins.map(x=>`<span class="lgchip inn">${dispName(x.name)} \u00b7 ${x.price}</span>`).join(""):"";
+     return `<div class="lgteam"><div class="lgh"><span class="lgclub">${Rt.club}</span><span class="lgcr">${mercBudget(tt)}<i>cr</i></span></div><div class="lgln"><b>Svincolati</b> ${oH}</div>${ins.length?`<div class="lgln"><b>Acquistati</b> ${iH}</div>`:""}</div>`;
+   }).join("");
  } else {
    const outRows=(tm.out||[]).map(id=>{const pl=mercPlayerByPid(t,id);if(!pl)return"";return `<div class="mrow"><span class="rb ${RC[pl.role]}">${pl.role}</span><span class="pn">${dispName(pl.name)}<small>svincolato \u00b7 +${pl.q} cr</small></span><button class="mbtn undo" data-uid="${id}">Annulla</button></div>`}).join("");
    const inRows=(tm.in||[]).map((x,i)=>`<div class="mrow"><span class="rb ${RC[x.role]}">${x.role}</span><span class="pn">${dispName(x.name)}<small>${fimg(x.nat,"flsm")} ${x.nat} \u00b7 \u2212${x.price} cr</small></span><button class="mbtn undo" data-bi="${i}">Annulla</button></div>`).join("");
@@ -2910,6 +2927,14 @@ function renderRegolamento(){setNav("home");
    <li>Quarti: 15 (nessun vincolo di ruolo)</li>
    <li>Semifinali: 10 (nessun vincolo)</li>
    <li>Finale: 5 (nessun vincolo)</li></ul>
+   <h2>2 bis \u00b7 Aste di riparazione</h2>
+   <p>Al termine di ogni turno a eliminazione diretta si svincola per ripescare:</p>
+   <div class="aphase"><b>Dopo i Sedicesimi</b><span class="av"><span class="sv">\u22128 svincoli</span><span class="rp">+5 riprese</span></span></div>
+   <div class="aphase"><b>Dopo gli Ottavi</b><span class="av"><span class="sv">\u221212 svincoli</span><span class="rp">+5 riprese</span></span></div>
+   <div class="aphase"><b>Dopo i Quarti</b><span class="av"><span class="sv">\u22128 svincoli</span><span class="rp">+3 riprese</span></span></div>
+   <ul><li><b>Come si svincola:</b> a scelta, con <b>precedenza obbligatoria ai giocatori eliminati</b> (nazionale fuori dal torneo), al <b>prezzo di listone iniziale</b> del giocatore.</li>
+   <li><b>Come si compra:</b> con <b>asta partendo da 1</b> credito, pescando dal listone svincolati (nazionali eliminate escluse).</li>
+   <li><b>Vincoli di ruolo:</b> l'asta <b>dopo i Sedicesimi</b> \u00e8 l'unica con vincoli di ruolo (rose di <b>22</b>: 3 P \u00b7 7 D \u00b7 7 C \u00b7 5 A). Dalle aste successive <b>decadono</b> i vincoli di ruolo e di modulo.</li></ul>
    <h2>3 \u00b7 Formazioni, moduli e sostituzioni</h2>
    <ul><li><b>Gironi, Sedicesimi, Ottavi</b> \u2014 11 titolari \u00b7 moduli: 3-4-3, 3-5-2, 4-3-3, 4-4-2, 4-5-1, 5-3-2, 5-4-1.</li>
    <li><b>Quarti</b> 7 titolari \u00b7 <b>Semifinali</b> 4 \u00b7 <b>Finale</b> 2: qualsiasi modulo.</li></ul>
@@ -2984,14 +3009,19 @@ function applyCloud(d){_suppress=true;try{
    if(d.bonus)store.set("fm26_bonus",d.bonus);
    if(d.jerseys)for(const t in d.jerseys)store.set("fm26_jersey_"+t,d.jerseys[t]);
    if(d.lineups)for(const k in d.lineups)store.set("fm26_lineup_"+k,d.lineups[k]);
-   if(d.voti)for(const g in d.voti)store.set("fm26_voti_"+g,d.voti[g]);
+   if(d.voti)for(const g in d.voti){const inc=d.voti[g]||{},cur=store.get("fm26_voti_"+g)||{},mg=Object.assign({},inc);for(const k in cur){if(cur[k]&&cur[k].lk&&!(inc[k]&&inc[k].lk))mg[k]=cur[k];}store.set("fm26_voti_"+g,mg);}
    if(d.results)store.set("fm26_results",d.results);
    if(d.events)store.set("fm26_events",d.events);
    if(d.cw)for(const k in d.cw)store.set("fm26_cw_"+k,d.cw[k]);
    if(d.hm)for(const k in d.hm)store.set("fm26_hm_"+k,d.hm[k]);
    if(d.t10)for(const k in d.t10)store.set("fm26_t10_"+k,d.t10[k]);
    if(d.live)store.set("fm26_live",d.live);
-   if(d.mercato){store.set("fm26_mercato",d.mercato);if(typeof applyMercato==="function")applyMercato();}
+   if(d.mercato){const inc=d.mercato||{teams:{}},cur=store.get("fm26_mercato")||{teams:{}};
+     const merged={phase:inc.phase||cur.phase||MERC_ORDER[0],teams:{}};
+     const allT=new Set([...Object.keys(cur.teams||{}),...Object.keys(inc.teams||{})]);
+     allT.forEach(tt=>{const ct=(cur.teams||{})[tt],it=(inc.teams||{})[tt];
+       merged.teams[tt]=!ct?it:(!it?ct:(((ct._ts||0)>(it._ts||0))?ct:it));});
+     store.set("fm26_mercato",merged);if(typeof applyMercato==="function")applyMercato();}
    if(d.members)MEMBERS=d.members;
  }finally{_suppress=false}}
 function refreshView(){const login=document.getElementById("login");
