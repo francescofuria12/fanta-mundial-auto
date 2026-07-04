@@ -1072,7 +1072,7 @@ const KO_RD=[["r32","Sedicesimi"],["r16","Ottavi di finale"],["qf","Quarti di fi
 function koMatch(n){return KOM.find(x=>x.n===n);}
 // Esiti reali Sedicesimi 2026 (chi passa). Fallback: un risultato registrato nella lega ha la precedenza.
 // 86 Argentina-Capo Verde, 87 Colombia-Ghana, 88 Australia-Egitto: da segnare in "Chi passa".
-const KO_SEED={73:{adv:2},74:{adv:2},75:{adv:2},76:{adv:1},77:{adv:1},78:{adv:2},79:{adv:1},80:{adv:1},81:{adv:1},82:{adv:1},83:{adv:1},84:{adv:1},85:{adv:1}};
+const KO_SEED={};
 function koRaw(n){return getResults()[n]||KO_SEED[n]||null;}
 function koResultOf(n){const r=koRaw(n);if(!r)return null;if(r.adv===1||r.adv===2)return r;return (r.h!=null&&r.a!=null)?r:null;}
 function koTeam(slot){if(slot==null)return null;if(typeof slot==="string")return slot;if(slot.w!=null)return koWinner(slot.w);if(slot.l!=null)return koLoser(slot.l);return null;}
@@ -2865,8 +2865,8 @@ function mercBody(){const t=user,body=document.getElementById("mbody");if(!body)
    const ord={P:0,D:1,C:2,A:3};
    let arr=rosterEnteringPhase(t,phase).map(pl=>({p:pl,id:pid(pl),elim:isElim(pl.nat)}));
    arr.sort((a,b)=>(b.elim-a.elim)||ord[a.p.role]-ord[b.p.role]||b.p.q-a.p.q);
-   const pendingElim=arr.some(o=>o.elim&&!outSet.has(o.id));
-   body.innerHTML=`<div class="mnote">Svincolo al valore di listino, valido dal turno successivo. Precedenza obbligatoria agli <b class="elx">eliminati</b>.</div>`+arr.map(o=>{const out=outSet.has(o.id),locked=!o.elim&&!out&&pendingElim,cls=out?"mbtn undo":(locked?"mbtn locked":"mbtn");return `<div class="mrow${out?" rel":""}"><span class="rb ${RC[o.p.role]}">${o.p.role}</span><span class="pn">${dispName(o.p.name)}<small>${fimg(o.p.nat,"flsm")} ${o.p.nat}${o.elim?' \u00b7 <b class="elx">ELIMINATO</b>':""}</small></span><span class="pq">${o.p.q}</span><button class="${cls}" data-id="${o.id}" data-lock="${locked?1:0}">${out?"Annulla":"Svincola"}</button></div>`}).join("");
+   const pendingElim=false; /* svincolo libero: nessun blocco */
+   body.innerHTML=`<div class="mnote">Svincolo al valore di listino, valido dal turno successivo. Consigliato svincolare prima gli <b class="elx">eliminati</b> (in cima).</div>`+arr.map(o=>{const out=outSet.has(o.id),locked=!o.elim&&!out&&pendingElim,cls=out?"mbtn undo":(locked?"mbtn locked":"mbtn");return `<div class="mrow${out?" rel":""}"><span class="rb ${RC[o.p.role]}">${o.p.role}</span><span class="pn">${dispName(o.p.name)}<small>${fimg(o.p.nat,"flsm")} ${o.p.nat}${o.elim?' \u00b7 <b class="elx">ELIMINATO</b>':""}</small></span><span class="pq">${o.p.q}</span><button class="${cls}" data-id="${o.id}" data-lock="${locked?1:0}">${out?"Annulla":"Svincola"}</button></div>`}).join("");
    body.querySelectorAll(".mbtn").forEach(b=>b.onclick=()=>{if(b.dataset.lock==="1"){toast("Prima svincola i giocatori eliminati");return;}mercToggleOut(t,b.dataset.id);renderMercato()});
  } else if(mercTab==="compra"){
    body.innerHTML=`<input id="mSearch" class="svsearch" placeholder="Cerca giocatore o nazione\u2026"><div class="opts" id="mRole" style="margin:10px 0"></div><div class="mnote">Asta a voce, poi inserisci il prezzo finale (min 1).</div><div id="mList"></div>`;
