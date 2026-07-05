@@ -913,6 +913,10 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .prm.on{background:var(--yellow,#FFC21E);color:#11214a;border-color:var(--yellow,#FFC21E)}
 .cprdclr{margin-left:10px;font-family:inherit;font-size:10.5px;font-weight:700;color:#ff9a9a;background:rgba(255,80,80,.12);border:1px solid #5a2c2c;border-radius:7px;padding:3px 9px;cursor:pointer}
 .cprd{display:flex;align-items:center}
+.pitch.pfree{display:flex;flex-wrap:wrap;justify-content:center;align-content:flex-start;gap:12px 10px;padding:16px 10px;min-height:180px}
+.pitch.pfree .ptile{width:78px}
+.pitch.pfree .ptile.empty{display:flex;align-items:center;justify-content:center;min-height:64px;border:2px dashed rgba(255,255,255,.25);border-radius:12px;background:rgba(255,255,255,.04)}
+.pitch.pfree .ptile.empty .eplus{font-size:26px;color:rgba(255,255,255,.35);font-weight:800}
 </style>
 </head>
 <body>
@@ -1157,7 +1161,7 @@ function nextGiornata(){const now=new Date();return GIORNATE.find(g=>g.dt>now)||
 function currentGiornata(){const now=new Date();let cur=GIORNATE[0];GIORNATE.forEach(g=>{if(g.dt<=now)cur=g});return cur;}
 /* ===== blocco/sblocco formazione (parametrico dal calendario) ===== */
 const LOCK_RULE={
-  lockOffsetMin:0,        /* blocco all'inizio della 1a gara del turno (+offset): 0=esatto, -1=1 min prima */
+  lockOffsetMin:-1,       /* blocco 1 minuto PRIMA del calcio d'inizio della 1a gara del turno */
   matchDurationMin:120,   /* durata stimata di una gara, per la fine dell'ultima partita dei gironi */
   unlockBeforeEndMin:0,   /* sblocco finestra successiva: 0=all'inizio del turno precedente; >0=minuti prima */
   koRoundDurationMin:5760 /* durata stimata di un turno a eliminazione (96h) */
@@ -2031,17 +2035,22 @@ function fmBenchMove(id,dir){
  renderFormazione()}
 function fmKey(){const g=submissionGiornata();return "fm26_lineup_"+user+"_"+(g?g.id:"x")}
 function rosterMap(t){t=t||user;const m={};((ROSTERS[t]||{}).players||[]).forEach(p=>m[pid(p)]=p);return m}
-function fmAutofill(){const R=ROSTERS[user];if(!R)return;const req=reqOf(fmState.module);
- ["P","D","C","A"].forEach(r=>{const placed=new Set(fmState.lineup[r]);
-  R.players.filter(p=>p.role===r).sort((a,b)=>b.q-a.q).forEach(p=>{if(fmState.lineup[r].length<req[r]&&!placed.has(pid(p))){fmState.lineup[r].push(pid(p));placed.add(pid(p))}})})}
+function fmPhase(){const g=submissionGiornata();return g?phaseOf(g.id):{titolari:11,fixed:true,sameRoleSub:true};}
+function fmAutofill(){const R=ROSTERS[user];if(!R)return;const ph=fmPhase();
+ if(ph.fixed){const req=reqOf(fmState.module);
+   ["P","D","C","A"].forEach(r=>{const placed=new Set(fmState.lineup[r]);
+    R.players.filter(p=>p.role===r).sort((a,b)=>b.q-a.q).forEach(p=>{if(fmState.lineup[r].length<req[r]&&!placed.has(pid(p))){fmState.lineup[r].push(pid(p));placed.add(pid(p))}})});
+ }else{const placed=new Set(["P","D","C","A"].flatMap(r=>fmState.lineup[r]));
+   R.players.slice().sort((a,b)=>b.q-a.q).forEach(p=>{if(fmCount()<ph.titolari&&!placed.has(pid(p))){fmState.lineup[p.role].push(pid(p));placed.add(pid(p))}});
+ }}
 function fmInit(){const _g=submissionGiornata();const saved=_g?getLineupFor(user,_g.id):store.get(fmKey());
  if(saved&&saved.module&&saved.lineup){fmState={module:saved.module,lineup:{P:saved.lineup.P||[],D:saved.lineup.D||[],C:saved.lineup.C||[],A:saved.lineup.A||[]},order:reconcileOrder(user,saved.order)}}
  else{fmState={module:"3-4-3",lineup:{P:[],D:[],C:[],A:[]},order:defaultOrder(user)};fmAutofill()}}
 function fmCount(){return ["P","D","C","A"].reduce((s,r)=>s+fmState.lineup[r].length,0)}
 function setModule(m){const req=reqOf(m);fmState.module=m;["D","C","A"].forEach(r=>{while(fmState.lineup[r].length>req[r])fmState.lineup[r].pop()});renderFormazione()}
 function fmRemove(role,id){fmState.lineup[role]=fmState.lineup[role].filter(x=>x!==id);renderFormazione()}
-function fmAdd(role,id){const req=reqOf(fmState.module);if(fmState.lineup[role].length>=req[role]){toast("Reparto "+RLABEL[role]+" gia completo");return}if(!fmState.lineup[role].includes(id))fmState.lineup[role].push(id);closePk();renderFormazione()}
-function fmAddAuto(p){if(!p)return;const req=reqOf(fmState.module);if(fmState.lineup[p.role].length>=req[p.role]){toast("Reparto "+RLABEL[p.role]+" pieno: togli un titolare");return}if(!fmState.lineup[p.role].includes(pid(p))){fmState.lineup[p.role].push(pid(p));renderFormazione()}}
+function fmAdd(role,id){const ph=fmPhase();if(ph.fixed){const req=reqOf(fmState.module);if(fmState.lineup[role].length>=req[role]){toast("Reparto "+RLABEL[role]+" gia completo");return}}else if(fmCount()>=ph.titolari){toast("Hai gia\u0027 "+ph.titolari+" titolari");return}if(!fmState.lineup[role].includes(id))fmState.lineup[role].push(id);closePk();renderFormazione()}
+function fmAddAuto(p){if(!p)return;const ph=fmPhase();if(ph.fixed){const req=reqOf(fmState.module);if(fmState.lineup[p.role].length>=req[p.role]){toast("Reparto "+RLABEL[p.role]+" pieno: togli un titolare");return}}else if(fmCount()>=ph.titolari){toast("Hai gia\u0027 "+ph.titolari+" titolari: togline uno");return}if(!fmState.lineup[p.role].includes(pid(p))){fmState.lineup[p.role].push(pid(p));renderFormazione()}}
 function surnameOf(n){return n.replace(/^[A-Z]\.\s*/,"")}
 let _dupSN=null;
 function dupSurnames(){if(_dupSN)return _dupSN;const m={};const all=[];
@@ -2070,30 +2079,34 @@ function renderFormazione(){
    if(ci)startCountdown(ci.target,{D:"cdLD",H:"cdLH",M:"cdLM",S:"cdLS"});
    return;}
  if(!fmState||fmState.user!==user){fmInit();fmState.user=user}
- const R=ROSTERS[user],g=submissionGiornata(),req=reqOf(fmState.module),map=rosterMap(),cnt=fmCount();
+ const R=ROSTERS[user],g=submissionGiornata(),ph=g?phaseOf(g.id):{titolari:11,fixed:true},need=ph.titolari,fixed=ph.fixed,req=fixed?reqOf(fmState.module):{P:0,D:0,C:0,A:0},map=rosterMap(),cnt=fmCount();
  const repHtml=r=>{let t="";fmState.lineup[r].forEach(id=>{if(map[id])t+=tileF(map[id],g.id)});for(let i=fmState.lineup[r].length;i<req[r];i++)t+=emptyTile(r);return `<div class="preparto">${t}</div>`};
- const pitch=`<div class="pitchwrap"><div class="pitch">${repHtml("A")}${repHtml("C")}${repHtml("D")}${repHtml("P")}</div></div>`;
+ let pitch;
+ if(fixed){pitch=`<div class="pitchwrap"><div class="pitch">${repHtml("A")}${repHtml("C")}${repHtml("D")}${repHtml("P")}</div></div>`;}
+ else{const sel=["P","D","C","A"].flatMap(r=>fmState.lineup[r]).map(id=>map[id]).filter(Boolean);
+   let ft=sel.map(pl=>tileF(pl,g.id)).join("");for(let i=sel.length;i<need;i++)ft+=`<div class="ptile empty"><span class="eplus">+</span></div>`;
+   pitch=`<div class="pitchwrap"><div class="pitch pfree">${ft}</div></div>`;}
  const inUse=new Set(["P","D","C","A"].flatMap(r=>fmState.lineup[r]));
  const bench=benchSorted((R?R.players:[]).filter(p=>!inUse.has(pid(p))),fmState.order);
  const benchHtml=bench.map((p,i)=>`<div class="bnrow"><span class="bnpos">${i+1}</span><button class="bnmain" data-add="${pid(p)}"><span class="pimg ${RBG[p.role]}"><img class="pfl" src="${flag(p.nat)}" alt=""></span><span class="bnmid"><span class="bnname">${dispName(p.name)}</span><span class="bnopp">vs ${oppTag(p.nat,g.id)}${oppWhen(p.nat,g.id)}</span></span><span class="rb r-${p.role.toLowerCase()} bnrole">${p.role}</span></button><span class="bnctrl"><button class="bnbtn" data-up="${pid(p)}"${i===0?" disabled":""}>\u25b2</button><button class="bnbtn" data-down="${pid(p)}"${i===bench.length-1?" disabled":""}>\u25bc</button></span></div>`).join("");
  const mods=MODULES.map(m=>`<button class="modbtn${m===fmState.module?" sel":""}" data-m="${m}">${m}</button>`).join("");
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand">Formazione</div><span style="width:46px"></span></div>
- <div class="fmInfo fade"><div class="ic">\ud83d\udccb</div><div class="tx">${g?`Giornata: <b>${g.label}</b> \u00b7 <b>chiusura ${fdt(lockTime(g.id))}</b>.`:"Torneo concluso."} Schiera <b>11 titolari</b> nel modulo scelto \u2014 hai inserito <b>${cnt}/11</b>. Tocca uno slot vuoto per scegliere, tocca un titolare per rimandarlo in panchina.</div></div>
- <div class="fmSelLab">Modulo</div><div class="modrow" id="modRow">${mods}</div>
+ <div class="fmInfo fade"><div class="ic">\ud83d\udccb</div><div class="tx">${g?`Giornata: <b>${g.label}</b> \u00b7 <b>chiusura ${fdt(lockTime(g.id))}</b>.`:"Torneo concluso."} Schiera <b>${need} titolari</b>${fixed?" nel modulo scelto":""} \u2014 hai inserito <b>${cnt}/11</b>. Tocca uno slot vuoto per scegliere, tocca un titolare per rimandarlo in panchina.</div></div>
+ ${fixed?`<div class="fmSelLab">Modulo</div><div class="modrow" id="modRow">${mods}</div>`:`<div class="fmSelLab">Dai Quarti \u00b7 nessun vincolo di modulo \u00b7 scegli ${need} titolari</div>`}
  ${pitch}
  <div class="bench fade"><h4>Panchina <span class="bcount">${bench.length} disponibili \u00b7 ${R?R.club:""}</span></h4><div class="benchhint">L'ordine \u00e8 la gerarchia dei subentri: se un titolare resta senza voto (SV), entra il <b>primo</b> panchinaro dello <b>stesso ruolo</b> in questa lista. Usa \u25b2\u25bc per riordinare \u00b7 tocca un giocatore per schierarlo.</div><div class="benchlist">${benchHtml||'<div class="season">Tutti i giocatori sono schierati</div>'}</div></div>`;
  document.getElementById("bk").onclick=fmExit;
  document.querySelectorAll("#modRow .modbtn").forEach(b=>b.onclick=()=>setModule(b.dataset.m));
  view.querySelectorAll(".ptile").forEach(b=>{
-   if(b.classList.contains("empty"))b.onclick=()=>openPk(b.dataset.role);
+   if(b.classList.contains("empty")){if(b.dataset.role)b.onclick=()=>openPk(b.dataset.role);}
    else{const id=b.dataset.id,role=b.dataset.role,onPitch=!!b.closest(".pitch");
      b.onclick=()=>{onPitch?fmRemove(role,id):fmAddAuto(map[id])}}
  });
  view.querySelectorAll(".bnmain").forEach(b=>b.onclick=()=>fmAddAuto(map[b.dataset.add]));
  view.querySelectorAll(".bnbtn[data-up]").forEach(b=>b.onclick=()=>fmBenchMove(b.dataset.up,-1));
  view.querySelectorAll(".bnbtn[data-down]").forEach(b=>b.onclick=()=>fmBenchMove(b.dataset.down,1));
- const conf=document.getElementById("fmConfirm");conf.disabled=cnt!==11||!g||isLocked(g.id);
- conf.onclick=()=>{if(!g||isLocked(g.id)){toast("Finestra chiusa: la giornata \u00e8 iniziata");renderFormazione();return}if(fmCount()!==11){toast("Devi schierare 11 titolari");return}
+ const conf=document.getElementById("fmConfirm");conf.disabled=cnt!==need||!g||isLocked(g.id);
+ conf.onclick=()=>{if(!g||isLocked(g.id)){toast("Finestra chiusa: la giornata \u00e8 iniziata");renderFormazione();return}if(fmCount()!==need){toast("Devi schierare "+need+" titolari");return}
    store.set(fmKey(),{module:fmState.module,lineup:fmState.lineup,order:fmState.order,ts:Date.now(),snap:rosterSnap(user)});
    toast("Formazione schierata \u2713");document.getElementById("fmActions").style.display="none";document.getElementById("nav").style.display="flex";fmState=null;setTimeout(()=>go("home"),750)};
  document.getElementById("fmCancel").onclick=fmExit;
