@@ -1107,7 +1107,7 @@ function koClearAll(){const cur=getResults();for(let n=73;n<=104;n++)delete cur[
 /* Reset una-tantum del tabellone salvato: rimuove i risultati KO vecchi/simulati.
    Il marcatore _cal viaggia dentro fm26_results (sincronizzato): parte una sola volta in tutta la lega
    e i client che entrano dopo NON cancellano nulla (vedono gia' il marcatore). Poi tutto e' manuale. */
-function koResetOnce(){const r=getResults();if(r&&r._cal==="cal1")return false;for(let n=73;n<=104;n++)delete r[n];r._cal="cal1";store.set("fm26_results",r);return true;}
+function koResetOnce(){const r=getResults();if(r&&r._cal==="cal2")return false;for(let n=73;n<=104;n++)delete r[n];r._cal="cal2";store.set("fm26_results",r);return true;}
 function koClearRound(rk){const cur=getResults();KOM.forEach(m=>{if(m.rd===rk)delete cur[m.n];});store.set("fm26_results",cur);}
 function koSetAdv(n,slot){const cur=getResults();const r=Object.assign({},cur[n]||{});if(r.adv===slot)delete r.adv;else r.adv=slot;if(r.adv==null&&r.h==null&&r.a==null)delete cur[n];else cur[n]=r;store.set("fm26_results",cur);}
 function koSlotName(slot){const t=koTeam(slot);if(t)return natIT(t);if(slot&&slot.w!=null)return "Vincente "+slot.w;if(slot&&slot.l!=null)return "Perdente "+slot.l;return "Da definire";}
@@ -3034,8 +3034,20 @@ function cloudPathFor(key){
  if(key==="fm26_market")return{sec:"market",sub:null};
  return null}
 function cloudPush(key,val){if(!cloudReady||_suppress||!leagueRef)return;const p=cloudPathFor(key);if(!p)return;
- try{const payload=p.sub?{[p.sec]:{[p.sub]:val}}:{[p.sec]:val};
-   leagueRef.set(payload,{merge:true}).catch(e=>console.warn("cloud push",e))}catch(e){console.warn("cloud push",e)}}
+ try{
+   if(p.sub){
+     /* sezione con sotto-chiave (voti_G, lineup_K, jersey_T...): merge sul sotto-elemento */
+     leagueRef.set({[p.sec]:{[p.sub]:val}},{merge:true}).catch(e=>console.warn("cloud push",e));
+   }else if(p.sec==="results"){
+     /* RESULTS: le chiavi sono numeri-partita e servono le CANCELLAZIONI (azzera tabellone, ritocca).
+        update = REPLACE del campo -> le chiavi rimosse spariscono davvero dal cloud.
+        (set merge:true fonderebbe la mappa e non le rimuoverebbe mai: era IL bug del calendario.) */
+     leagueRef.update({[p.sec]:val}).catch(()=>leagueRef.set({[p.sec]:val},{merge:true}).catch(e=>console.warn("cloud push",e)));
+   }else{
+     /* altre mappe intere: merge (comportamento invariato) */
+     leagueRef.set({[p.sec]:val},{merge:true}).catch(e=>console.warn("cloud push",e));
+   }
+ }catch(e){console.warn("cloud push",e)}}
 function applyCloud(d){_suppress=true;try{
    if(d.accounts)store.set("fm26_accounts",d.accounts);
    if(d.bonus)store.set("fm26_bonus",d.bonus);
