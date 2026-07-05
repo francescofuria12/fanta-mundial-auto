@@ -911,6 +911,8 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .prmode{display:flex;gap:6px;margin-top:7px}
 .prm{flex:1;padding:7px 0;border-radius:9px;border:1px solid #2c3d72;background:#0d1f47;color:#9fb0d8;font-weight:700;font-size:11.5px;font-family:inherit;cursor:pointer}
 .prm.on{background:var(--yellow,#FFC21E);color:#11214a;border-color:var(--yellow,#FFC21E)}
+.cprdclr{margin-left:10px;font-family:inherit;font-size:10.5px;font-weight:700;color:#ff9a9a;background:rgba(255,80,80,.12);border:1px solid #5a2c2c;border-radius:7px;padding:3px 9px;cursor:pointer}
+.cprd{display:flex;align-items:center}
 </style>
 </head>
 <body>
@@ -1089,14 +1091,24 @@ const KO_RD=[["r32","Sedicesimi"],["r16","Ottavi di finale"],["qf","Quarti di fi
 function koMatch(n){return KOM.find(x=>x.n===n);}
 // Esiti reali Sedicesimi 2026 (chi passa). Fallback: un risultato registrato nella lega ha la precedenza.
 // 86 Argentina-Capo Verde, 87 Colombia-Ghana, 88 Australia-Egitto: da segnare in "Chi passa".
-const KO_SEED={73:{adv:2},74:{adv:2},75:{adv:2},76:{adv:1},77:{adv:1},78:{adv:2},79:{adv:1},80:{adv:1},81:{adv:1},82:{adv:1},83:{adv:1},84:{adv:1},85:{adv:1},86:{adv:1},87:{adv:1},88:{adv:2}};
-function koRaw(n){return getResults()[n]||KO_SEED[n]||null;}
+/* ===== TABELLONE / CALENDARIO \u2014 100% MANUALE =====
+   Fonte unica: KOM (struttura del tabellone, immutabile) + fm26_results (risultati inseriti a mano).
+   Nessun seed, nessuna simulazione, nessuna cache: una squadra avanza SOLO se esiste il risultato
+   della sua partita. koTeam risolve i riferimenti {w:N}/{l:N} ricorsivamente sui risultati reali,
+   quindi modificare un risultato ricalcola a cascata e toglierlo cancella tutto il percorso a valle. */
+function koRaw(n){return getResults()[n]||null;}
 function koResultOf(n){const r=koRaw(n);if(!r)return null;if(r.adv===1||r.adv===2)return r;return (r.h!=null&&r.a!=null)?r:null;}
+function koWinnerSlot(n){const r=koResultOf(n);if(!r)return 0;if(r.adv===1||r.adv===2)return r.adv;if(r.h>r.a)return 1;if(r.a>r.h)return 2;if(r.pw===1||r.pw===2)return r.pw;return 0;}
 function koTeam(slot){if(slot==null)return null;if(typeof slot==="string")return slot;if(slot.w!=null)return koWinner(slot.w);if(slot.l!=null)return koLoser(slot.l);return null;}
-function koWinner(n){const m=koMatch(n),r=koResultOf(n);if(!m||!r)return null;const a=koTeam(m.t1),b=koTeam(m.t2);if(!a||!b)return null;if(r.adv===1)return a;if(r.adv===2)return b;if(r.h>r.a)return a;if(r.a>r.h)return b;if(r.pw===1)return a;if(r.pw===2)return b;return null;}
-function koLoser(n){const m=koMatch(n),r=koResultOf(n);if(!m||!r)return null;const a=koTeam(m.t1),b=koTeam(m.t2);if(!a||!b)return null;if(r.adv===1)return b;if(r.adv===2)return a;if(r.h>r.a)return b;if(r.a>r.h)return a;if(r.pw===1)return b;if(r.pw===2)return a;return null;}
+function koWinner(n){const m=koMatch(n),sl=koWinnerSlot(n);if(!m||!sl)return null;return koTeam(sl===1?m.t1:m.t2);}
+function koLoser(n){const m=koMatch(n),sl=koWinnerSlot(n);if(!m||!sl)return null;return koTeam(sl===1?m.t2:m.t1);}
 // segna chi passa (slot 1|2) senza punteggio; ritocca = azzera. Conserva l'eventuale risultato inserito.
 function koClearAll(){const cur=getResults();for(let n=73;n<=104;n++)delete cur[n];store.set("fm26_results",cur);}
+/* Reset una-tantum del tabellone salvato: rimuove i risultati KO vecchi/simulati.
+   Il marcatore _cal viaggia dentro fm26_results (sincronizzato): parte una sola volta in tutta la lega
+   e i client che entrano dopo NON cancellano nulla (vedono gia' il marcatore). Poi tutto e' manuale. */
+function koResetOnce(){const r=getResults();if(r&&r._cal==="cal1")return false;for(let n=73;n<=104;n++)delete r[n];r._cal="cal1";store.set("fm26_results",r);return true;}
+function koClearRound(rk){const cur=getResults();KOM.forEach(m=>{if(m.rd===rk)delete cur[m.n];});store.set("fm26_results",cur);}
 function koSetAdv(n,slot){const cur=getResults();const r=Object.assign({},cur[n]||{});if(r.adv===slot)delete r.adv;else r.adv=slot;if(r.adv==null&&r.h==null&&r.a==null)delete cur[n];else cur[n]=r;store.set("fm26_results",cur);}
 function koSlotName(slot){const t=koTeam(slot);if(t)return natIT(t);if(slot&&slot.w!=null)return "Vincente "+slot.w;if(slot&&slot.l!=null)return "Perdente "+slot.l;return "Da definire";}
 function koSlotFlag(slot){const t=koTeam(slot);return t?flag(natIT(t)):"";}
@@ -2251,7 +2263,7 @@ function renderChipassa(){
      const side=(slot,s)=>{const fl=koSlotFlag(slot);return `<button class="${cls(s)}" data-adv="${m.n}_${s}" ${dis}>${fl?`<img class="fl" src="${fl}" alt="">`:`<span class="kfx"></span>`}<span class="cpn">${koSlotName(slot)}</span>${adv===s?'<span class="cpck">\u2713</span>':""}</button>`;};
      rows+=`<div class="cpmatch"><div class="cpwhen">#${m.n} \u00b7 ${pad(m.dt.getDate())}/${pad(m.dt.getMonth()+1)}${ready?"":" \u00b7 in attesa"}</div>${side(m.t1,1)}${side(m.t2,2)}</div>`;
    });
-   body+=`<div class="cprd">${rd[1]}</div>${rows}`;
+   body+=`<div class="cprd">${rd[1]}<button class="cprdclr" data-clrrd="${rk}">azzera turno</button></div>${rows}`;
  });
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
  <div class="svwrap fade"><h2 class="svh">Chi passa</h2>
@@ -2260,6 +2272,7 @@ function renderChipassa(){
   <div class="cpwrap">${body}</div></div>`;
  document.getElementById("bk").onclick=()=>go("home");
  const _cc=document.getElementById("cpClear");if(_cc)_cc.onclick=()=>{if(confirm("Azzerare TUTTI i risultati della fase a eliminazione? (i pronostici degli utenti non vengono toccati)")){koClearAll();renderChipassa();toast("Risultati azzerati");}};
+ view.querySelectorAll("[data-clrrd]").forEach(b=>b.onclick=()=>{if(confirm("Azzerare i risultati di questo turno? I turni successivi che dipendono da questi si svuoteranno.")){const _sc=view.scrollTop;koClearRound(b.dataset.clrrd);renderChipassa();view.scrollTop=_sc;toast("Turno azzerato");}});
  view.querySelectorAll("[data-adv]").forEach(btn=>btn.onclick=()=>{
    if(btn.hasAttribute("disabled"))return;
    const p=btn.dataset.adv.split("_");const _sc=view.scrollTop;koSetAdv(+p[0],+p[1]);renderChipassa();view.scrollTop=_sc;toast("Salvato \u2713");
@@ -3053,7 +3066,7 @@ function refreshView(){const login=document.getElementById("login");
    firebase.initializeApp(FB_CONFIG);
    leagueRef=firebase.firestore().collection("leagues").doc(LEAGUE_ID);
    cloudReady=true;
-   leagueRef.onSnapshot(doc=>{const d=doc.data()||{};applyCloud(d);refreshView()},
+   leagueRef.onSnapshot(doc=>{const d=doc.data()||{};applyCloud(d);koResetOnce();refreshView()},
      err=>console.warn("cloud snapshot",err));
    if(firebase.auth)firebase.auth().onAuthStateChanged(fb=>routeAuth(fb));
  }catch(e){console.warn("cloud init failed",e);cloudReady=false}})();
