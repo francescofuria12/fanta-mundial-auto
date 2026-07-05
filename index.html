@@ -1394,7 +1394,7 @@ function homeLineupPreviewHTML(){
  const saved=getLineupFor(user,cg.id);
  if(!saved||!saved.lineup)
    return `<div class="dash fade hlprev" id="hlPrev"><h3>Formazione · turno corrente <span class="hl-go">apri ›</span></h3><div class="fmInfo" style="margin:0"><div class="ic">📋</div><div class="tx">Non hai una formazione salvata per <b>${cg.label}</b>.</div></div></div>`;
- const map=rosterMap(user),tg=teamGiornata(user,cg.id),played=tg&&tg.played;
+ const map=lineupPlayers(saved,user,cg.id),tg=teamGiornata(user,cg.id),played=tg&&tg.played;
  const head=`<div class="fmInfo" style="margin:0 0 12px"><div class="ic">📋</div><div class="tx">Modulo <b>${saved.module}</b> · <b>${cg.label}</b>${saved.inherited?' \u00b7 <span style="color:var(--yellow)">ereditata</span>':''}${played?` · FantaPunti: <b>${tg.tot}</b>`:' · <span style="color:var(--yellow)">voti non ancora inseriti</span>'}</div></div>`;
  const pitch=played?pitchVotiHTML(saved.lineup,map,getVoti(cg.id)):pitchView(saved.lineup,map);
  return `<div class="dash fade hlprev" id="hlPrev"><h3>Formazione · turno corrente <span class="hl-go">apri ›</span></h3>${head}${pitch}</div>`;
@@ -2094,7 +2094,7 @@ function renderFormazione(){
  view.querySelectorAll(".bnbtn[data-down]").forEach(b=>b.onclick=()=>fmBenchMove(b.dataset.down,1));
  const conf=document.getElementById("fmConfirm");conf.disabled=cnt!==11||!g||isLocked(g.id);
  conf.onclick=()=>{if(!g||isLocked(g.id)){toast("Finestra chiusa: la giornata \u00e8 iniziata");renderFormazione();return}if(fmCount()!==11){toast("Devi schierare 11 titolari");return}
-   store.set(fmKey(),{module:fmState.module,lineup:fmState.lineup,order:fmState.order,ts:Date.now()});
+   store.set(fmKey(),{module:fmState.module,lineup:fmState.lineup,order:fmState.order,ts:Date.now(),snap:rosterSnap(user)});
    toast("Formazione schierata \u2713");document.getElementById("fmActions").style.display="none";document.getElementById("nav").style.display="flex";fmState=null;setTimeout(()=>go("home"),750)};
  document.getElementById("fmCancel").onclick=fmExit;
 }
@@ -2603,7 +2603,7 @@ function fillFmHome(){const el=document.getElementById("fmHome");if(!el)return;c
 function openFormView(t){viewTeam=t;go("formview")}
 function pitchView(lineup,map){const rows=["A","C","D","P"].map(r=>`<div class="preparto">${(lineup[r]||[]).map(id=>map[id]?tile(map[id]):"").join("")}</div>`).join("");return `<div class="pitchwrap"><div class="pitch">${rows}</div></div>`}
 function benchView(t,lineup,map,order){const inUse=new Set(["P","D","C","A"].flatMap(r=>lineup[r]||[]));const R=ROSTERS[t];return benchSorted((R?R.players:[]).filter(p=>!inUse.has(pid(p))),order).map(p=>tile(p)).join("")}
-function renderFormView(t){setNav("home");const R=ROSTERS[t],g=nextGiornata(),saved=getLineupFor(t,g?g.id:0),map=rosterMap(t);
+function renderFormView(t){setNav("home");const R=ROSTERS[t],g=nextGiornata(),saved=getLineupFor(t,g?g.id:0),map=lineupPlayers(saved,t,g?g.id:0);
  let body;
  if(saved&&saved.lineup){const tg=g?teamGiornata(t,g.id):null;
    const pag=tg&&tg.played?pagelleHTML(tg):"";
@@ -2646,11 +2646,11 @@ function getLineupFor(team,gid){if(!gid)return null;
  return null;}
 function teamGiornata(team,gid){const sub=getLineupFor(team,gid);if(!sub||!sub.lineup)return null;
  const voti=getVoti(gid);if(Object.keys(voti).length===0)return{played:false};
- const map=rosterMapAt(team,gid),sameRole=phaseOf(gid).sameRoleSub;
+ const map=lineupPlayers(sub,team,gid),sameRole=phaseOf(gid).sameRoleSub;
  const concluded=roundConcluded(gid);
  const starters=[];["P","D","C","A"].forEach(r=>(sub.lineup[r]||[]).forEach(id=>{if(map[id])starters.push(map[id])}));
  const inUse=new Set(starters.map(pid));
- const bench=benchSorted(effPlayersAt(team,gid).filter(p=>!inUse.has(pid(p))),sub.order);
+ const bench=benchSorted(Object.values(map).filter(p=>!inUse.has(pid(p))),sub.order);
  const usedBench=new Set();let tot=0;const det=[];
  starters.forEach(p=>{let rec=voti[pid(p)],fv=fantaVoto(rec,p.role),player=p,viaSub=false;
    if(fv==null){
@@ -2732,9 +2732,19 @@ function freeAgents(){const owned=new Set();TEAMS.forEach(t=>rosterOf(t).forEach
   pool.forEach(p=>{const id=p.role+"|"+p.name;if(owned.has(id)||seen.has(id)||isElim(p.nat))return;seen.add(id);out.push(p);});
   return out;}
 /* --- accessi puliti usati da scoring/voti/formazione: nessuna fase, nessun gid --- */
-function effPlayersAt(t,gid){return rosterOf(t);}
-function effPlayers(t){return rosterOf(t);}
-function rosterMapAt(t,gid){const m={};registryOf(t).forEach(p=>m[pid(p)]=p);return m;}   /* registry: risolve anche gli svincolati per la storia dei punti */
+/* ===== STORICO IMMUTABILE =====
+   La formazione salva una FOTOGRAFIA (snapshot) della rosa nel momento del salvataggio.
+   - Giornata CONCLUSA: si legge SOLO lo snapshot (o il registry come fallback per le formazioni
+     salvate prima di questo sistema). Mai la rosa attuale -> svincoli/acquisti non toccano il passato.
+   - Giornata in corso/futura: si usa la rosa ATTUALE (per schierare la prossima). */
+function rosterSnap(t){const s={};rosterOf(t).forEach(p=>s[pid(p)]={role:p.role,name:p.name,nat:p.nat,q:p.q});return s;}
+function lineupPlayers(sub,team,gid){
+  if(gid&&roundConcluded(gid)){
+    if(sub&&sub.snap){const m={};for(const id in sub.snap)m[id]=sub.snap[id];return m;}
+    const m={};registryOf(team).forEach(p=>m[pid(p)]=p);return m;
+  }
+  const m={};rosterOf(team).forEach(p=>m[pid(p)]=p);return m;
+}
 function ownedPlayersAt(gid){const seen={};TEAMS.forEach(t=>registryOf(t).forEach(p=>{seen[pid(p)]=p;}));return Object.values(seen);}
 /* alias storici (stessa firma, implementazione pulita) */
 function mercBudget(t){return creditsOf(t);}
@@ -2796,7 +2806,7 @@ function renderVotiGiornata(){
  setNav("votigiornata");
  const g0=currentGiornata(),gid=vgGid||(g0?g0.id:1);vgGid=gid;
  const team=vgTeam||user||TEAMS[0];vgTeam=team;const R=ROSTERS[team];
- const saved=getLineupFor(team,gid),voti=getVoti(gid),map=rosterMapAt(team,gid),tg=teamGiornata(team,gid);
+ const saved=getLineupFor(team,gid),voti=getVoti(gid),map=lineupPlayers(saved,team,gid),tg=teamGiornata(team,gid);
  const subFor={},subbedIn=new Set();
  if(tg&&tg.det)tg.det.forEach(d=>{if(d.viaSub){subFor[pid(d.starter)]=d.player;subbedIn.add(pid(d.player))}});
  const turni=GIORNATE.map(x=>`<button class="modbtn${x.id===gid?" sel":""}" data-g="${x.id}">${phaseOf(x.id).label.replace("Gironi \u00b7 ","G")}</button>`).join("");
@@ -2805,7 +2815,7 @@ function renderVotiGiornata(){
  if(saved&&saved.lineup){
    ["P","D","C","A"].forEach(r=>(saved.lineup[r]||[]).forEach(id=>{const p=map[id];if(p)titolari+=vgRow(p,voti[id],subFor[id],false)}));
    const inUse=new Set(["P","D","C","A"].flatMap(r=>saved.lineup[r]||[]));
-   benchSorted(effPlayersAt(team,gid).filter(p=>!inUse.has(pid(p))),saved.order).forEach(p=>{bench+=vgRow(p,voti[pid(p)],null,subbedIn.has(pid(p)))});
+   benchSorted(Object.values(map).filter(p=>!inUse.has(pid(p))),saved.order).forEach(p=>{bench+=vgRow(p,voti[pid(p)],null,subbedIn.has(pid(p)))});
  }
  const played=tg&&tg.played,totTxt=played?tg.tot:"\u2013";
  view.innerHTML=`<div class="top"><div class="brand"><svg class="brandic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#F7F3E8"/><circle cx="12" cy="12" r="5.4" fill="#0B0B10"/><circle cx="12" cy="12" r="2.2" fill="#E11D48"/></svg>Voti giornata</div></div>
