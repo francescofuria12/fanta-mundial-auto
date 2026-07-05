@@ -1108,16 +1108,12 @@ function koSlotFlag(slot){const t=koTeam(slot);return t?flag(natIT(t)):"";}
    perde le nazionali via via eliminate senza interventi manuali. */
 function koParticipantsR32(){const s=new Set();KOM.forEach(m=>{if(m.rd!=="r32")return;[m.t1,m.t2].forEach(t=>{if(typeof t==="string")s.add(natIT(t))})});return s;}
 function knownNations(){const s=new Set();SVINC.forEach(p=>s.add(p.nat));Object.keys(ROSTERS_BASE).forEach(t=>(ROSTERS_BASE[t].players||[]).forEach(p=>s.add(p.nat)));return s;}
-let _elimCache={day:null,sig:null,set:null};
 function eliminatedSet(){
-  const day=new Date().toDateString(),res=getResults();
-  let sig="";KOM.forEach(m=>{const r=koRaw(m.n);if(r&&(r.adv||(r.h!=null&&r.a!=null)))sig+=m.n+":"+(r.adv||0)+":"+r.h+"-"+r.a+"/"+(r.pw||0)+"|"});
-  if(_elimCache.set&&_elimCache.day===day&&_elimCache.sig===sig)return _elimCache.set;
   const s=new Set();
   if(Date.now()>=+KO[0].dt){const alive=koParticipantsR32();knownNations().forEach(n=>{if(!alive.has(n))s.add(n)});}
-  else NAZ_ELIM.forEach(n=>s.add(n)); /* prima dei Sedicesimi: solo eliminate note ai gironi */
+  else NAZ_ELIM.forEach(n=>s.add(n));
   KOM.forEach(m=>{const l=koLoser(m.n);if(l)s.add(natIT(l))});
-  _elimCache={day,sig,set:s};return s;}
+  return s;}
 function isElim(nat){return eliminatedSet().has(nat)}
 /* elenco eliminate con la fase di eliminazione (per la vista "Squadre eliminate") */
 function eliminationList(){
@@ -1132,11 +1128,6 @@ function eliminationList(){
     .sort((a,b)=>a.ord-b.ord||a.nat.localeCompare(b.nat,"it"));
 }
 /* fase d'asta che governa il roster del turno in gestione (per la sezione svincoli) */
-function activeMercPhase(){const gid=currentRosterGid();let pick=MERC_ORDER[0];MERC_PHASES.forEach(p=>{if(p[4]<=gid)pick=p[0]});return pick;}
-function mercToggleOutPhase(t,id,phase){const m=getMercato();let tm=m.teams[t];
-  if(!tm){tm={};MERC_ORDER.forEach(ph=>tm[ph]=emptyPhase());m.teams[t]=tm;}
-  if(!tm[phase])tm[phase]=emptyPhase();tm[phase].out=tm[phase].out||[];
-  const i=tm[phase].out.indexOf(id);if(i>=0)tm[phase].out.splice(i,1);else tm[phase].out.push(id);if(m.teams[t])m.teams[t]._ts=Date.now();saveMercato(m)}
 
 
 // GIORNATE del fanta-torneo (dedotte dal calendario)
@@ -2169,18 +2160,6 @@ function renderSvincolati(){
  document.getElementById("bk").onclick=()=>go("home");
  renderSvList();
 }
-function renderSvincola(){
- setNav("home");applyMercato();
- const t=user,R=ROSTERS[t];
- view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
- ${R?`<div class="svwrap fade"><h2 class="svh">Svincola i tuoi giocatori</h2>
-   <div class="svsub" id="svRelSub"></div>
-   <div class="mnote">Svincolo al <b>valore di listino</b>, con effetto <b>dal turno successivo</b>: i turni gi\u00e0 giocati restano invariati. Precedenza obbligatoria agli <b class="elx">eliminati</b>.</div>
-   <div id="svRelease"></div></div>`
-  :`<div class="dash fade"><div class="fmInfo"><div class="ic">\u2702\ufe0f</div><div class="tx">Accedi come una delle squadre per svincolare i tuoi giocatori.</div></div></div>`}`;
- document.getElementById("bk").onclick=()=>go("home");
- if(R)renderSvRelease();
-}
 function renderEliminate(){
  setNav("home");
  const list=eliminationList();
@@ -2285,19 +2264,6 @@ function renderChipassa(){
    if(btn.hasAttribute("disabled"))return;
    const p=btn.dataset.adv.split("_");const _sc=view.scrollTop;koSetAdv(+p[0],+p[1]);renderChipassa();view.scrollTop=_sc;toast("Salvato \u2713");
  });
-}
-function renderSvRelease(){
- const t=user,R=ROSTERS[t],box=document.getElementById("svRelease");if(!box||!R)return;
- const phase=activeMercPhase(),meta=mercPhaseMeta(phase),effGid=meta[4],maxOut=meta[2];
- const outSet=new Set(teamMerc(t,phase).out||[]),RC={P:"r-p",D:"r-d",C:"r-c",A:"r-a"},ord={P:0,D:1,C:2,A:3};
- let arr=rosterEnteringPhase(t,phase).map(pl=>({p:pl,id:pid(pl),elim:isElim(pl.nat)}));
- arr.sort((a,b)=>(b.elim-a.elim)||ord[a.p.role]-ord[b.p.role]||b.p.q-a.p.q);
- let rec=0;arr.forEach(o=>{if(outSet.has(o.id))rec+=(o.p.q||0)});
- const pendingElim=arr.some(o=>o.elim&&!outSet.has(o.id));
- const sub=document.getElementById("svRelSub");
- if(sub)sub.innerHTML=`${R.club} · asta ${meta[1]} · svincoli <b>${outSet.size}/${maxOut}</b> · +${rec} crediti · effetto da <b>${phaseOf(effGid).label}</b>${pendingElim?' · <b class="elx">prima gli eliminati</b>':""}`;
- box.innerHTML=arr.map(o=>{const out=outSet.has(o.id),locked=!o.elim&&!out&&pendingElim,cls=out?"mbtn undo":(locked?"mbtn locked":"mbtn");return `<div class="mrow${out?" rel":""}"><span class="rb ${RC[o.p.role]}">${o.p.role}</span><span class="pn">${dispName(o.p.name)}<small>${fimg(o.p.nat,"flsm")} ${o.p.nat}${o.elim?' \u00b7 <b class="elx">ELIMINATO</b>':""}</small></span><span class="pq">${o.p.q}</span><button class="${cls}" data-id="${o.id}" data-lock="${locked?1:0}">${out?"Annulla":"Svincola"}</button></div>`}).join("");
- box.querySelectorAll(".mbtn").forEach(b=>b.onclick=()=>{if(b.dataset.lock==="1"){toast("Prima svincola i giocatori eliminati");return;}mercToggleOutPhase(t,b.dataset.id,phase);renderSvRelease()});
 }
 function renderSvList(){
  const RC={P:"r-p",D:"r-d",C:"r-c",A:"r-a"};
@@ -2711,81 +2677,57 @@ function ownedPlayers(){const seen={};TEAMS.forEach(t=>{(ROSTERS[t]?ROSTERS[t].p
    Struttura salvata: { phase:"s16", teams:{ <team>:{ s16:{out:[pid],in:[{..,price}]}, ott:{..}, qf:{..} } } }
    Gli svincoli/acquisti di una fase modificano il roster SOLO dal suo effGid in avanti:
    i turni precedenti restano congelati (i giocatori restano di quella squadra fino a lì). */
-const MERC_KEY="fm26_mercato";
-/* [chiave, etichetta, max svincoli, max riprese, effGid = 1o turno in cui ha effetto]
-   Sedicesimi (turno 4) -> vale da Ottavi (5); Ottavi (5) -> Quarti (6); Quarti (6) -> Semifinali (7). */
-const MERC_PHASES=[["s16","Sedicesimi",8,5,5],["ott","Ottavi",12,5,6],["qf","Quarti",8,3,7]];
-const MERC_ORDER=MERC_PHASES.map(p=>p[0]);
-function mercPhaseMeta(ph){return MERC_PHASES.find(x=>x[0]===ph)||MERC_PHASES[0]}
-function mercEffGid(ph){return mercPhaseMeta(ph)[4]}
-function emptyPhase(){return{out:[],in:[]}}
-function getMercato(){
-  let m=store.get(MERC_KEY);
-  if(!m||!m.teams)m={phase:MERC_ORDER[0],teams:{}};
-  if(!m.phase)m.phase=MERC_ORDER[0];
-  for(const t in m.teams){let tm=m.teams[t]||{};
-    if(Array.isArray(tm.out)||Array.isArray(tm.in)){ /* migra vecchio formato piatto nella fase corrente */
-      const legacy={out:tm.out||[],in:tm.in||[]},buckets={};
-      MERC_ORDER.forEach(ph=>buckets[ph]=emptyPhase());buckets[m.phase]=legacy;m.teams[t]=buckets;
-    } else {
-      MERC_ORDER.forEach(ph=>{if(!tm[ph])tm[ph]=emptyPhase();tm[ph].out=tm[ph].out||[];tm[ph].in=tm[ph].in||[]});
-      m.teams[t]=tm;
-    }
-  }
-  return m;
-}
-function teamMerc(t,ph){const m=getMercato(),tm=m.teams[t]||{};return (tm[ph]||emptyPhase())}
-function basePlayerByPid(t,id){return (ROSTERS_BASE[t]?ROSTERS_BASE[t].players:[]).find(p=>pid(p)===id)}
-/* risolve ruolo/nome/nat/q dal roster base o da un acquisto precedente della stessa squadra */
-function mercPlayerByPid(t,id){const b=basePlayerByPid(t,id);if(b)return b;
-  const m=getMercato(),tm=m.teams[t]||{};
-  for(const ph of MERC_ORDER){const hit=((tm[ph]&&tm[ph].in)||[]).find(x=>(x.role+"|"+x.name)===id);
-    if(hit)return{role:hit.role,name:hit.name,nat:hit.nat,q:hit.q};}
-  return null;}
-function baseCredits(t){const R=ROSTERS_BASE[t];return R?(300-R.players.reduce((s,p)=>s+(p.acq||0),0)):0}
-/* crediti recuperati/spesi: cumulativi su tutte le fasi (svincoli al valore di listino) */
-function mercRecovered(t){const m=getMercato(),tm=m.teams[t]||{};let r=0;
-  MERC_ORDER.forEach(ph=>(((tm[ph]&&tm[ph].out)||[])).forEach(id=>{const p=mercPlayerByPid(t,id);if(p)r+=(p.q||0)}));return r}
-function mercSpent(t){const m=getMercato(),tm=m.teams[t]||{};let s=0;
-  MERC_ORDER.forEach(ph=>(((tm[ph]&&tm[ph].in)||[])).forEach(x=>s+=(x.price||0)));return s}
-function mercBudget(t){return baseCredits(t)+mercRecovered(t)-mercSpent(t)}
-/* roster effettivo AL TURNO gid: base + tutte le fasi con effGid<=gid, applicate in ordine */
-function effPlayersAt(t,gid){const m=getMercato(),tm=m.teams[t]||{};
-  let pl=(ROSTERS_BASE[t]?ROSTERS_BASE[t].players:[]).slice();
-  MERC_ORDER.forEach(ph=>{if(mercEffGid(ph)>gid)return;const b=tm[ph]||emptyPhase();
-    const outSet=new Set(b.out||[]);pl=pl.filter(p=>!outSet.has(pid(p)));
-    (b.in||[]).forEach(x=>pl.push({role:x.role,name:x.name,nat:x.nat,q:x.q,acq:x.price}));});
-  return pl;}
-function effPlayers(t){return effPlayersAt(t,9999)}
-/* roster "in ingresso" a una fase (per la lista degli svincolabili): base + fasi precedenti */
-function rosterEnteringPhase(t,ph){return effPlayersAt(t,mercEffGid(ph)-1)}
-/* mappa e roster gid-aware: usati dallo scoring per congelare la storia */
-function rosterMapAt(t,gid){const m={};effPlayersAt(t,gid).forEach(p=>m[pid(p)]=p);return m}
-function ownedPlayersAt(gid){const seen={};TEAMS.forEach(t=>{effPlayersAt(t,gid).forEach(p=>{seen[pid(p)]=p})});return Object.values(seen)}
-/* turno "in gestione" per le viste al presente (roster/formazione): quello che si sta schierando */
-function currentRosterGid(){const s=submissionGiornata();if(s)return s.id;const n=nextGiornata();if(n)return n.id;const c=currentGiornata();return c?c.id:9999;}
-function applyMercato(){const gid=currentRosterGid();Object.keys(ROSTERS).forEach(t=>{
-  const players=effPlayersAt(t,gid);const R=ROSTERS[t];if(!R)return;R.players=players;
-  R.spent=players.reduce((s,p)=>s+(p.acq||0),0);R.value=players.reduce((s,p)=>s+(p.q||0),0);
-  R.n=players.length;R.counts={P:0,D:0,C:0,A:0};players.forEach(p=>{if(R.counts[p.role]!=null)R.counts[p.role]++});
-  R.credits=mercBudget(t);});}
-function freeAgents(){const m=getMercato();const bought=new Set();const released=[];
-  Object.keys(m.teams||{}).forEach(t=>{const tm=m.teams[t]||{};
-    MERC_ORDER.forEach(ph=>{const b=tm[ph]||emptyPhase();
-      (b.in||[]).forEach(x=>bought.add(x.role+"|"+x.name));
-      (b.out||[]).forEach(id=>{const p=mercPlayerByPid(t,id);if(p)released.push({role:p.role,name:p.name,nat:p.nat,q:p.q})})})});
-  const all=SVINC.concat(released);
-  const seen=new Set();const out=[];
-  all.forEach(p=>{const id=p.role+"|"+p.name;if(bought.has(id)||seen.has(id)||isElim(p.nat))return;seen.add(id);out.push(p)});
+/* ============================================================
+   MERCATO - FONTE UNICA (Single Source of Truth)
+   fm26_market = { <team>: { out:[pid...], in:[{role,name,nat,q,price}...], ts } }
+   Rose e crediti sono DERIVATI PURI. ROSTERS e' solo una proiezione
+   ricostruita in un unico punto (applyMercato). Nessuno stato duplicato mutabile,
+   nessuna fase, nessuna dipendenza dal turno: uno svincolo e' atomico.
+   ============================================================ */
+const MARKET_KEY="fm26_market";
+function getMarket(){const m=store.get(MARKET_KEY);return (m&&typeof m==="object")?m:{};}
+function mkTeam(t){const x=getMarket()[t]||{};return {out:Array.isArray(x.out)?x.out.slice():[],in:Array.isArray(x.in)?x.in.slice():[],ts:x.ts||0};}
+function saveMarket(m){store.set(MARKET_KEY,m);applyMercato();}
+function basePlayers(t){return (ROSTERS_BASE[t]?ROSTERS_BASE[t].players:[]);}
+function baseCredits(t){const R=ROSTERS_BASE[t];return R?(300-R.players.reduce((s,p)=>s+(p.acq||0),0)):0;}
+function inAsPlayer(x){return {role:x.role,name:x.name,nat:x.nat,q:x.q,acq:x.price,price:x.price,bought:true};}
+/* registry = tutti i giocatori mai posseduti (base + acquistati): risolve la STORIA */
+function registryOf(t){return basePlayers(t).concat(mkTeam(t).in.map(inAsPlayer));}
+/* roster ATTUALE = registry meno gli svincolati */
+function rosterOf(t){const out=new Set(mkTeam(t).out);return registryOf(t).filter(p=>!out.has(pid(p)));}
+function playerByPid(t,id){return registryOf(t).find(p=>pid(p)===id)||null;}
+function recoveredOf(t){const tm=mkTeam(t),reg={};registryOf(t).forEach(p=>reg[pid(p)]=p);return tm.out.reduce((s,id)=>s+((reg[id]&&reg[id].q)||0),0);}
+function spentOf(t){return mkTeam(t).in.reduce((s,x)=>s+(x.price||0),0);}
+/* crediti = residuo asta iniziale + Σ listino svincolati − Σ prezzo acquisti */
+function creditsOf(t){return baseCredits(t)+recoveredOf(t)-spentOf(t);}
+function releasedOf(t){const reg={};registryOf(t).forEach(p=>reg[pid(p)]=p);return mkTeam(t).out.map(id=>reg[id]).filter(Boolean);}
+function acquiredOf(t){return mkTeam(t).in.map(inAsPlayer);}
+/* PROIEZIONE: UNICO punto che scrive ROSTERS, ricostruito dalla fonte */
+function applyMercato(){TEAMS.forEach(t=>{const R=ROSTERS[t];if(!R)return;const pl=rosterOf(t);
+  R.players=pl;R.n=pl.length;R.spent=pl.reduce((s,p)=>s+(p.acq||0),0);R.value=pl.reduce((s,p)=>s+(p.q||0),0);
+  R.counts={P:0,D:0,C:0,A:0};pl.forEach(p=>{if(R.counts[p.role]!=null)R.counts[p.role]++;});R.credits=creditsOf(t);});}
+/* MUTAZIONI ATOMICHE (leggo fonte -> modifico -> salvo -> proietto) */
+function marketRelease(t,id){const m=getMarket();const x=m[t]||{out:[],in:[]};x.out=Array.isArray(x.out)?x.out:[];x.in=Array.isArray(x.in)?x.in:[];
+  const i=x.out.indexOf(id);if(i>=0)x.out.splice(i,1);else x.out.push(id);x.ts=Date.now();m[t]=x;saveMarket(m);}
+function marketBuy(t,player,price){const m=getMarket();const x=m[t]||{out:[],in:[]};x.out=Array.isArray(x.out)?x.out:[];x.in=Array.isArray(x.in)?x.in:[];
+  x.in.push({role:player.role,name:player.name,nat:player.nat,q:player.q,price:price});x.ts=Date.now();m[t]=x;saveMarket(m);}
+function marketUndoBuy(t,idx){const m=getMarket();const x=m[t];if(!x||!Array.isArray(x.in))return;x.in.splice(idx,1);x.ts=Date.now();m[t]=x;saveMarket(m);}
+/* svincolati disponibili all'asta = listone + rilasciati, meno posseduti, meno nazionali eliminate */
+function freeAgents(){const owned=new Set();TEAMS.forEach(t=>rosterOf(t).forEach(p=>owned.add(pid(p))));
+  const pool=SVINC.slice();TEAMS.forEach(t=>releasedOf(t).forEach(p=>pool.push({role:p.role,name:p.name,nat:p.nat,q:p.q})));
+  const seen=new Set(),out=[];
+  pool.forEach(p=>{const id=p.role+"|"+p.name;if(owned.has(id)||seen.has(id)||isElim(p.nat))return;seen.add(id);out.push(p);});
   return out;}
-function saveMercato(m){store.set(MERC_KEY,m);applyMercato()}
-function curPhaseBucket(m,t){let tm=m.teams[t];if(!tm){tm={};MERC_ORDER.forEach(ph=>tm[ph]=emptyPhase());m.teams[t]=tm;}
-  const ph=m.phase||MERC_ORDER[0];if(!tm[ph])tm[ph]=emptyPhase();tm[ph].out=tm[ph].out||[];tm[ph].in=tm[ph].in||[];return tm[ph];}
-function mercToggleOut(t,id){const m=getMercato();const b=curPhaseBucket(m,t);
-  const i=b.out.indexOf(id);if(i>=0)b.out.splice(i,1);else b.out.push(id);if(m.teams[t])m.teams[t]._ts=Date.now();saveMercato(m)}
-function mercBuy(t,player,price){const m=getMercato();const b=curPhaseBucket(m,t);
-  b.in.push({role:player.role,name:player.name,nat:player.nat,q:player.q,price:price});if(m.teams[t])m.teams[t]._ts=Date.now();saveMercato(m)}
-function mercUndoBuy(t,idx){const m=getMercato();const tm=m.teams[t];if(!tm)return;const b=tm[m.phase||MERC_ORDER[0]];if(!b||!b.in)return;b.in.splice(idx,1);if(m.teams[t])m.teams[t]._ts=Date.now();saveMercato(m)}
+/* --- accessi puliti usati da scoring/voti/formazione: nessuna fase, nessun gid --- */
+function effPlayersAt(t,gid){return rosterOf(t);}
+function effPlayers(t){return rosterOf(t);}
+function rosterMapAt(t,gid){const m={};registryOf(t).forEach(p=>m[pid(p)]=p);return m;}   /* registry: risolve anche gli svincolati per la storia dei punti */
+function ownedPlayersAt(gid){const seen={};TEAMS.forEach(t=>registryOf(t).forEach(p=>{seen[pid(p)]=p;}));return Object.values(seen);}
+/* alias storici (stessa firma, implementazione pulita) */
+function mercBudget(t){return creditsOf(t);}
+function mercRecovered(t){return recoveredOf(t);}
+function mercSpent(t){return spentOf(t);}
+function mercPlayerByPid(t,id){return playerByPid(t,id);}
 function openVoti(gid){votiGid=gid||(nextGiornata()||{id:1}).id;go("voti")}
 function buildVrows(list,container){list.sort((a,b)=>(RORD[a.role]-RORD[b.role])||(b.q-a.q));
  list.forEach(p=>{const id=pid(p),rec=votiDraft[id]=votiDraft[id]||{};const evs=EVALL.concat(p.role==="P"?EVP:[]);
@@ -2916,15 +2858,13 @@ function renderAstina(){setNav("home");
 }
 function renderMercato(){setNav("home");applyMercato();
  const t=user,R=ROSTERS[t],RB=ROSTERS_BASE[t];
- if(!R||!RB){view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand">Mercato</div><span style="width:60px"></span></div><div class="dash fade"><div class="fmInfo"><div class="ic">\U0001F504</div><div class="tx">Accedi come una delle squadre per gestire il mercato.</div></div></div>`;const b=document.getElementById("bk");if(b)b.onclick=()=>go("home");return;}
- const m=getMercato(),phase=m.phase||MERC_ORDER[0],tm=teamMerc(t,phase),ph=mercPhaseMeta(phase);
- const budget=mercBudget(t),nOut=(tm.out||[]).length,nIn=(tm.in||[]).length,TARGET={P:3,D:7,C:7,A:5},SIZE={s16:22,ott:15,qf:10};
+ if(!R||!RB){view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand">Mercato</div><span style="width:60px"></span></div><div class="dash fade"><div class="fmInfo"><div class="ic">\ud83d\udd04</div><div class="tx">Accedi come una squadra per gestire il mercato.</div></div></div>`;const b=document.getElementById("bk");if(b)b.onclick=()=>go("home");return;}
+ const budget=creditsOf(t);
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
  <div class="merc fade">
   <div class="mhead"><div class="mclub">${R.club}</div><div class="mbud"><span class="mb-n">${budget}</span><span class="mb-l">crediti disponibili</span></div></div>
-  <div class="mbk">residuo iniziale ${baseCredits(t)} \u00b7 +${mercRecovered(t)} svincoli \u00b7 \u2212${mercSpent(t)} acquisti</div>
+  <div class="mbk">residuo iniziale ${baseCredits(t)} \u00b7 +${recoveredOf(t)} svincoli \u00b7 \u2212${spentOf(t)} acquisti</div>
   <div class="mcomp" id="mcomp"></div>
-  <div class="mphase" id="mphase"></div>
   <div class="mtabs">
     <button class="mtab${mercTab==="svincola"?" on":""}" data-tab="svincola">Svincola</button>
     <button class="mtab${mercTab==="compra"?" on":""}" data-tab="compra">Compra</button>
@@ -2934,56 +2874,51 @@ function renderMercato(){setNav("home");applyMercato();
   <div id="mbody"></div>
  </div>`;
  const comp=R.counts;
- document.getElementById("mcomp").innerHTML=["P","D","C","A"].map(r=>{const c=comp[r]||0,tg=TARGET[r],cl=c===tg?"ok":(c>tg?"over":"");return `<span class="mc ${cl}">${r} ${c}<i>/${tg}</i></span>`}).join("")+`<span class="mc tot">Tot ${R.n}<i>/${SIZE[phase]||R.n}</i></span>`;
- document.getElementById("mphase").innerHTML=`<div class="mph-row">${MERC_PHASES.map(x=>`<button class="mph${x[0]===phase?" on":""}" data-ph="${x[0]}">${x[1]}<i>\u2212${x[2]}/+${x[3]}</i></button>`).join("")}</div><div class="mph-cnt">Svincoli ${nOut}/${ph[2]} \u00b7 Acquisti ${nIn}/${ph[3]}${phase==="s16"?" \u00b7 vincoli ruolo 3-7-7-5":" \u00b7 ruoli liberi"}</div>`;
+ document.getElementById("mcomp").innerHTML=["P","D","C","A"].map(r=>`<span class="mc">${r} ${comp[r]||0}</span>`).join("")+`<span class="mc tot">Tot ${R.n}</span>`;
  document.getElementById("bk").onclick=()=>go("home");
  document.querySelectorAll(".mtab").forEach(b=>b.onclick=()=>{mercTab=b.dataset.tab;renderMercato()});
- document.querySelectorAll(".mph").forEach(b=>b.onclick=()=>{const mm=getMercato();mm.phase=b.dataset.ph;saveMercato(mm);renderMercato()});
  mercBody();
 }
 function mercBody(){const t=user,body=document.getElementById("mbody");if(!body)return;
- const phase=getMercato().phase||MERC_ORDER[0];
- const RC={P:"r-p",D:"r-d",C:"r-c",A:"r-a"},tm=teamMerc(t,phase),outSet=new Set(tm.out||[]);
+ const RC={P:"r-p",D:"r-d",C:"r-c",A:"r-a"},tm=mkTeam(t),outSet=new Set(tm.out);
  if(mercTab==="svincola"){
    const ord={P:0,D:1,C:2,A:3};
-   let arr=rosterEnteringPhase(t,phase).map(pl=>({p:pl,id:pid(pl),elim:isElim(pl.nat)}));
+   let arr=rosterOf(t).map(pl=>({p:pl,id:pid(pl),elim:isElim(pl.nat)}));
    arr.sort((a,b)=>(b.elim-a.elim)||ord[a.p.role]-ord[b.p.role]||b.p.q-a.p.q);
-   const pendingElim=false; /* svincolo libero: nessun blocco */
-   body.innerHTML=`<div class="mnote">Svincolo al valore di listino, valido dal turno successivo. Consigliato svincolare prima gli <b class="elx">eliminati</b> (in cima).</div>`+arr.map(o=>{const out=outSet.has(o.id),locked=!o.elim&&!out&&pendingElim,cls=out?"mbtn undo":(locked?"mbtn locked":"mbtn");return `<div class="mrow${out?" rel":""}"><span class="rb ${RC[o.p.role]}">${o.p.role}</span><span class="pn">${dispName(o.p.name)}<small>${fimg(o.p.nat,"flsm")} ${o.p.nat}${o.elim?' \u00b7 <b class="elx">ELIMINATO</b>':""}</small></span><span class="pq">${o.p.q}</span><button class="${cls}" data-id="${o.id}" data-lock="${locked?1:0}">${out?"Annulla":"Svincola"}</button></div>`}).join("");
-   body.querySelectorAll(".mbtn").forEach(b=>b.onclick=()=>{if(b.dataset.lock==="1"){toast("Prima svincola i giocatori eliminati");return;}mercToggleOut(t,b.dataset.id);renderMercato()});
+   body.innerHTML=`<div class="mnote">Svincolo al valore di listino. Consigliato svincolare prima gli <b class="elx">eliminati</b> (in cima).</div>`+arr.map(o=>{const rel=outSet.has(o.id);return `<div class="mrow${rel?" rel":""}"><span class="rb ${RC[o.p.role]}">${o.p.role}</span><span class="pn">${dispName(o.p.name)}<small>${fimg(o.p.nat,"flsm")} ${o.p.nat}${o.elim?' \u00b7 <b class="elx">ELIMINATO</b>':''} \u00b7 ${o.p.q} cr</small></span><button class="mbtn${rel?" undo":""}" data-id="${o.id}">${rel?"Annulla":"Svincola"}</button></div>`;}).join("");
+   body.querySelectorAll(".mbtn").forEach(b=>b.onclick=()=>{marketRelease(t,b.dataset.id);renderMercato();});
  } else if(mercTab==="compra"){
    body.innerHTML=`<input id="mSearch" class="svsearch" placeholder="Cerca giocatore o nazione\u2026"><div class="opts" id="mRole" style="margin:10px 0"></div><div class="mnote">Asta a voce, poi inserisci il prezzo finale (min 1).</div><div id="mList"></div>`;
    const roles=[["all","Tutti"],["P","Portieri"],["D","Difensori"],["C","Centrocampisti"],["A","Attaccanti"]],rc=document.getElementById("mRole");
-   roles.forEach(([id,l])=>{const o=document.createElement("button");o.className="opt"+(mercF.role===id?" sel":"");o.textContent=l;o.onclick=()=>{mercF.role=id;[...rc.children].forEach((x,i)=>x.classList.toggle("sel",roles[i][0]===id));mercListBuy()};rc.appendChild(o)});
-   const inp=document.getElementById("mSearch");inp.value=mercF.q;inp.oninput=e=>{mercF.q=e.target.value.toLowerCase();mercListBuy()};
+   roles.forEach(([id,l])=>{const o=document.createElement("button");o.className="opt"+(mercF.role===id?" sel":"");o.textContent=l;o.onclick=()=>{mercF.role=id;[...rc.children].forEach((x,i)=>x.classList.toggle("sel",roles[i][0]===id));mercListBuy();};rc.appendChild(o);});
+   const inp=document.getElementById("mSearch");inp.value=mercF.q;inp.oninput=e=>{mercF.q=e.target.value.toLowerCase();mercListBuy();};
    mercListBuy();
  } else if(mercTab==="lega"){
-   const mm=getMercato();
-   body.innerHTML=`<div class="mnote">Movimenti e crediti di tutta la lega \u00b7 aggiornati in tempo reale.</div>`+TEAMS.map(tt=>{const Rt=ROSTERS[tt];if(!Rt)return "";const tmm=mm.teams[tt]||{};
-     const outs=[],ins=[];MERC_ORDER.forEach(ph=>{(((tmm[ph]&&tmm[ph].out)||[])).forEach(id=>{const pl=mercPlayerByPid(tt,id);if(pl)outs.push(pl)});(((tmm[ph]&&tmm[ph].in)||[])).forEach(x=>ins.push(x))});
+   body.innerHTML=`<div class="mnote">Movimenti e crediti di tutta la lega \u00b7 aggiornati in tempo reale.</div>`+TEAMS.map(tt=>{const Rt=ROSTERS[tt];if(!Rt)return "";
+     const outs=releasedOf(tt),ins=acquiredOf(tt);
      const oH=outs.length?outs.map(pl=>`<span class="lgchip out">${dispName(pl.name)}</span>`).join(""):`<span class="lgnone">nessuno</span>`;
      const iH=ins.length?ins.map(x=>`<span class="lgchip inn">${dispName(x.name)} \u00b7 ${x.price}</span>`).join(""):"";
-     return `<div class="lgteam"><div class="lgh"><span class="lgclub">${Rt.club}</span><span class="lgcr">${mercBudget(tt)}<i>cr</i></span></div><div class="lgln"><b>Svincolati</b> ${oH}</div>${ins.length?`<div class="lgln"><b>Acquistati</b> ${iH}</div>`:""}</div>`;
+     return `<div class="lgteam"><div class="lgh"><span class="lgclub">${Rt.club}</span><span class="lgcr">${creditsOf(tt)}<i>cr</i></span></div><div class="lgln"><b>Svincolati</b> ${oH}</div>${ins.length?`<div class="lgln"><b>Acquistati</b> ${iH}</div>`:""}</div>`;
    }).join("");
  } else {
-   const outRows=(tm.out||[]).map(id=>{const pl=mercPlayerByPid(t,id);if(!pl)return"";return `<div class="mrow"><span class="rb ${RC[pl.role]}">${pl.role}</span><span class="pn">${dispName(pl.name)}<small>svincolato \u00b7 +${pl.q} cr</small></span><button class="mbtn undo" data-uid="${id}">Annulla</button></div>`}).join("");
-   const inRows=(tm.in||[]).map((x,i)=>`<div class="mrow"><span class="rb ${RC[x.role]}">${x.role}</span><span class="pn">${dispName(x.name)}<small>${fimg(x.nat,"flsm")} ${x.nat} \u00b7 \u2212${x.price} cr</small></span><button class="mbtn undo" data-bi="${i}">Annulla</button></div>`).join("");
-   body.innerHTML=`<h4 class="msec">Svincolati (${(tm.out||[]).length})</h4>${outRows||'<div class="mempty">Nessuno svincolo</div>'}<h4 class="msec">Acquistati (${(tm.in||[]).length})</h4>${inRows||'<div class="mempty">Nessun acquisto</div>'}`;
-   body.querySelectorAll("[data-uid]").forEach(b=>b.onclick=()=>{mercToggleOut(t,b.dataset.uid);renderMercato()});
-   body.querySelectorAll("[data-bi]").forEach(b=>b.onclick=()=>{mercUndoBuy(t,+b.dataset.bi);renderMercato()});
+   const outRows=releasedOf(t).map(pl=>`<div class="mrow"><span class="rb ${RC[pl.role]}">${pl.role}</span><span class="pn">${dispName(pl.name)}<small>svincolato \u00b7 +${pl.q} cr</small></span><button class="mbtn undo" data-uid="${pid(pl)}">Annulla</button></div>`).join("");
+   const inRows=acquiredOf(t).map((x,i)=>`<div class="mrow"><span class="rb ${RC[x.role]}">${x.role}</span><span class="pn">${dispName(x.name)}<small>${fimg(x.nat,"flsm")} ${x.nat} \u00b7 \u2212${x.price} cr</small></span><button class="mbtn undo" data-bi="${i}">Annulla</button></div>`).join("");
+   body.innerHTML=`<h4 class="msec">Svincolati (${tm.out.length})</h4>${outRows||'<div class="mempty">Nessuno svincolo</div>'}<h4 class="msec">Acquistati (${tm.in.length})</h4>${inRows||'<div class="mempty">Nessun acquisto</div>'}`;
+   body.querySelectorAll("[data-uid]").forEach(b=>b.onclick=()=>{marketRelease(t,b.dataset.uid);renderMercato();});
+   body.querySelectorAll("[data-bi]").forEach(b=>b.onclick=()=>{marketUndoBuy(t,+b.dataset.bi);renderMercato();});
  }
 }
 function mercListBuy(){const t=user,el=document.getElementById("mList");if(!el)return;
  const RC={P:"r-p",D:"r-d",C:"r-c",A:"r-a"};
  let arr=freeAgents().filter(p=>(mercF.role==="all"||p.role===mercF.role)&&(p.name.toLowerCase().includes(mercF.q)||p.nat.toLowerCase().includes(mercF.q))).sort((a,b)=>b.q-a.q);
- el.innerHTML=arr.slice(0,300).map(p=>`<div class="mrow"><span class="rb ${RC[p.role]}">${p.role}</span><span class="pn">${p.name}<small>${fimg(p.nat,"flsm")} ${p.nat} \u00b7 listino ${p.q}</small></span><button class="mbtn buy" data-r="${p.role}" data-n="${encodeURIComponent(p.name)}" data-na="${encodeURIComponent(p.nat)}" data-q="${p.q}">Compra</button></div>`).join("")+`<div class="season">${arr.length} disponibili${arr.length>300?" \u00b7 primi 300":""}</div>`;
+ el.innerHTML=arr.slice(0,300).map(p=>`<div class="mrow"><span class="rb ${RC[p.role]}">${p.role}</span><span class="pn">${p.name}<small>${fimg(p.nat,"flsm")} ${p.nat} \u00b7 listino ${p.q}</small></span><button class="mbtn buy" data-r="${p.role}" data-n="${encodeURIComponent(p.name)}" data-na="${encodeURIComponent(p.nat)}" data-q="${p.q}">Compra</button></div>`).join("");
  el.querySelectorAll(".mbtn.buy").forEach(b=>b.onclick=()=>{
-   const player={role:b.dataset.r,name:decodeURIComponent(b.dataset.n),nat:decodeURIComponent(b.dataset.na),q:+b.dataset.q},budget=mercBudget(t);
+   const player={role:b.dataset.r,name:decodeURIComponent(b.dataset.n),nat:decodeURIComponent(b.dataset.na),q:+b.dataset.q},budget=creditsOf(t);
    const raw=prompt(`Prezzo finale per ${player.name}? (1\u2013${budget} crediti)`,"1");if(raw==null)return;
    const price=parseInt(raw,10);
    if(!(price>=1)){toast("Prezzo non valido");return;}
    if(price>budget){toast("Crediti insufficienti");return;}
-   mercBuy(t,player,price);toast(player.name+" acquistato");renderMercato();
+   marketBuy(t,player,price);toast(player.name+" acquistato");renderMercato();
  });
 }
 function renderSettings(){setNav("home");
@@ -3083,7 +3018,7 @@ function cloudPathFor(key){
  if(key.indexOf("fm26_hm_")===0)return{sec:"hm",sub:key.slice(8)};
  if(key.indexOf("fm26_t10_")===0)return{sec:"t10",sub:key.slice(9)};
  if(key.indexOf("fm26_pronos_")===0)return{sec:"pronostici",sub:key.slice(12)};
- if(key==="fm26_mercato")return{sec:"mercato",sub:null};
+ if(key==="fm26_market")return{sec:"market",sub:null};
  return null}
 function cloudPush(key,val){if(!cloudReady||_suppress||!leagueRef)return;const p=cloudPathFor(key);if(!p)return;
  try{const payload=p.sub?{[p.sec]:{[p.sub]:val}}:{[p.sec]:val};
@@ -3101,12 +3036,10 @@ function applyCloud(d){_suppress=true;try{
    if(d.t10)for(const k in d.t10)store.set("fm26_t10_"+k,d.t10[k]);
    if(d.live)store.set("fm26_live",d.live);
    if(d.pronostici)for(const t in d.pronostici)store.set("fm26_pronos_"+t,d.pronostici[t]);
-   if(d.mercato){const inc=d.mercato||{teams:{}},cur=store.get("fm26_mercato")||{teams:{}};
-     const merged={phase:inc.phase||cur.phase||MERC_ORDER[0],teams:{}};
-     const allT=new Set([...Object.keys(cur.teams||{}),...Object.keys(inc.teams||{})]);
-     allT.forEach(tt=>{const ct=(cur.teams||{})[tt],it=(inc.teams||{})[tt];
-       merged.teams[tt]=!ct?it:(!it?ct:(((ct._ts||0)>(it._ts||0))?ct:it));});
-     store.set("fm26_mercato",merged);if(typeof applyMercato==="function")applyMercato();}
+   if(d.market){const inc=d.market||{},cur=store.get("fm26_market")||{},merged={};
+     const allT=new Set([...Object.keys(cur),...Object.keys(inc)]);
+     allT.forEach(tt=>{const c=cur[tt],i=inc[tt];merged[tt]=!c?i:(!i?c:(((c.ts||0)>=(i.ts||0))?c:i));});
+     store.set("fm26_market",merged);applyMercato();}
    if(d.members)MEMBERS=d.members;
  }finally{_suppress=false}}
 function refreshView(){const login=document.getElementById("login");
