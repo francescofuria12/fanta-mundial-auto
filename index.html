@@ -2739,10 +2739,20 @@ function freeAgents(){const owned=new Set();TEAMS.forEach(t=>rosterOf(t).forEach
    - Giornata in corso/futura: si usa la rosa ATTUALE (per schierare la prossima). */
 function rosterSnap(t){const s={};rosterOf(t).forEach(p=>s[pid(p)]={role:p.role,name:p.name,nat:p.nat,q:p.q});return s;}
 function lineupPlayers(sub,team,gid){
-  if(gid&&roundConcluded(gid)){
-    if(sub&&sub.snap){const m={};for(const id in sub.snap)m[id]=sub.snap[id];return m;}
-    const m={};registryOf(team).forEach(p=>m[pid(p)]=p);return m;
+  if(gid&&roundConcluded(gid)&&sub){
+    /* SNAPSHOT esplicito (nuove formazioni): fotografia completa della rosa al momento della conferma. */
+    if(sub.snap){const m={};for(const id in sub.snap)m[id]=sub.snap[id];return m;}
+    /* Formazioni salvate prima degli snapshot: uso SOLO i pid realmente presenti in quella formazione
+       (titolari + ordine panchina, entrambi salvati alla conferma), risolti nei dettagli via registry.
+       -> gli ACQUISTI fatti dopo NON compaiono (non erano in quell'ordine);
+       -> gli SVINCOLATI restano (erano in quell'ordine). Mai la rosa attuale. */
+    const reg={};registryOf(team).forEach(p=>reg[pid(p)]=p);
+    const m={},add=id=>{if(reg[id]&&!m[id])m[id]=reg[id];};
+    ["P","D","C","A"].forEach(r=>((sub.lineup&&sub.lineup[r])||[]).forEach(add));
+    (sub.order||[]).forEach(add);
+    return m;
   }
+  /* Giornata in corso/futura -> rosa ATTUALE (per schierare la prossima). */
   const m={};rosterOf(team).forEach(p=>m[pid(p)]=p);return m;
 }
 function ownedPlayersAt(gid){const seen={};TEAMS.forEach(t=>registryOf(t).forEach(p=>{seen[pid(p)]=p;}));return Object.values(seen);}
