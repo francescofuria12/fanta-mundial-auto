@@ -917,6 +917,8 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .pitch.pfree .ptile{width:78px}
 .pitch.pfree .ptile.empty{display:flex;align-items:center;justify-content:center;min-height:64px;border:2px dashed rgba(255,255,255,.25);border-radius:12px;background:rgba(255,255,255,.04)}
 .pitch.pfree .ptile.empty .eplus{font-size:26px;color:rgba(255,255,255,.35);font-weight:800}
+.extBanner{margin:10px 14px;padding:11px 13px;border-radius:12px;background:linear-gradient(135deg,#5a3a00,#7a4d00);border:1px solid #ffb020;color:#ffe6b0;font-size:13px;font-weight:600;line-height:1.35;box-shadow:0 8px 20px -10px rgba(255,176,32,.5)}
+.extBanner b{color:#fff}
 </style>
 </head>
 <body>
@@ -1173,7 +1175,9 @@ function roundEnd(gid){
 }
 function lockTime(gid){const fs=firstMatchStart(gid);return fs==null?null:new Date(fs+LOCK_RULE.lockOffsetMin*60000)}
 function unlockTime(gid){if(gid<=1)return null;const ps=firstMatchStart(gid-1);return ps==null?null:new Date(ps-LOCK_RULE.unlockBeforeEndMin*60000)}
-function isLocked(gid){const lt=lockTime(gid);return lt?Date.now()>=+lt:false}
+/* RIAPERTURA ECCEZIONALE finestra formazione: gid -> scadenza. Ottavi (gid 5) fino a domani. */
+function lineupExtended(gid){if(gid!==5)return 0;const d=firstMatchStart(6);if(!d)return 0;return Date.now()<d?d:0;}
+function isLocked(gid){if(lineupExtended(gid))return false;const lt=lockTime(gid);return lt?Date.now()>=+lt:false}
 function roundConcluded(gid){const re=roundEnd(gid);return re==null?false:Date.now()>=+re}
 function windowOpen(gid){const u=unlockTime(gid);return ((u==null)||Date.now()>=+u)&&!isLocked(gid)}
 function submissionGiornata(){return GIORNATE.find(g=>windowOpen(g.id))||null}
@@ -2091,6 +2095,7 @@ function renderFormazione(){
  const benchHtml=bench.map((p,i)=>`<div class="bnrow"><span class="bnpos">${i+1}</span><button class="bnmain" data-add="${pid(p)}"><span class="pimg ${RBG[p.role]}"><img class="pfl" src="${flag(p.nat)}" alt=""></span><span class="bnmid"><span class="bnname">${dispName(p.name)}</span><span class="bnopp">vs ${oppTag(p.nat,g.id)}${oppWhen(p.nat,g.id)}</span></span><span class="rb r-${p.role.toLowerCase()} bnrole">${p.role}</span></button><span class="bnctrl"><button class="bnbtn" data-up="${pid(p)}"${i===0?" disabled":""}>\u25b2</button><button class="bnbtn" data-down="${pid(p)}"${i===bench.length-1?" disabled":""}>\u25bc</button></span></div>`).join("");
  const mods=MODULES.map(m=>`<button class="modbtn${m===fmState.module?" sel":""}" data-m="${m}">${m}</button>`).join("");
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand">Formazione</div><span style="width:46px"></span></div>
+ ${g&&lineupExtended(g.id)?`<div class="extBanner">\u26a0\ufe0f In via del tutto eccezionale la formazione <b>${g.label}</b> \u00e8 riaperta. Schiera entro <b>${fdt(new Date(lineupExtended(g.id)))}</b>.</div>`:""}
  <div class="fmInfo fade"><div class="ic">\ud83d\udccb</div><div class="tx">${g?`Giornata: <b>${g.label}</b> \u00b7 <b>chiusura ${fdt(lockTime(g.id))}</b>.`:"Torneo concluso."} Schiera <b>${need} titolari</b>${fixed?" nel modulo scelto":""} \u2014 hai inserito <b>${cnt}/11</b>. Tocca uno slot vuoto per scegliere, tocca un titolare per rimandarlo in panchina.</div></div>
  ${fixed?`<div class="fmSelLab">Modulo</div><div class="modrow" id="modRow">${mods}</div>`:`<div class="fmSelLab">Dai Quarti \u00b7 nessun vincolo di modulo \u00b7 scegli ${need} titolari</div>`}
  ${pitch}
@@ -2170,7 +2175,7 @@ function renderRoster(t){
 function renderSvincolati(){
  setNav("home");
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
- <div class="svwrap fade"><h2 class="svh">Listone svincolati</h2><div class="svsub">${SVINC.filter(p=>!isElim(p.nat)).length} giocatori liberi · valore di listino</div>
+ <div class="svwrap fade"><h2 class="svh">Listone svincolati</h2><div class="svsub">${freeAgents().length} giocatori liberi · valore di listino</div>
   <input id="svSearch" class="svsearch" placeholder="Cerca giocatore o nazione…">
   <div class="opts" id="svRole" style="margin:12px 0"></div>
   <div class="opts" id="svSort" style="margin:0 0 12px"></div>
@@ -2874,7 +2879,7 @@ document.getElementById("btnReset").onclick=()=>{draft=Object.assign({number:10,
 
 /* ===== IMPOSTAZIONI ===== */
 function renderAstina(){setNav("home");
- const disp=SVINC.filter(p=>!isElim(p.nat));const byR=r=>disp.filter(p=>p.role===r).length;
+ const disp=freeAgents();const byR=r=>disp.filter(p=>p.role===r).length;
  view.innerHTML=`<div class="top"><button class="back" id="bk">‹ Home</button><div class="brand brandLogo"><img class="hbrand" src="${LOGO2}" alt="Fanta Mundial 26"></div><span style="width:46px"></span></div>
  <div class="doc fade">
   <p class="lead">Astine di riparazione · FantaMondiale 2026.<br>Queste regole integrano il regolamento ufficiale.</p>
