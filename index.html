@@ -2043,9 +2043,9 @@ function fmPhase(){const g=submissionGiornata();return g?phaseOf(g.id):{titolari
 function fmAutofill(){const R=ROSTERS[user];if(!R)return;const ph=fmPhase();
  if(ph.fixed){const req=reqOf(fmState.module);
    ["P","D","C","A"].forEach(r=>{const placed=new Set(fmState.lineup[r]);
-    R.players.filter(p=>p.role===r).sort((a,b)=>b.q-a.q).forEach(p=>{if(fmState.lineup[r].length<req[r]&&!placed.has(pid(p))){fmState.lineup[r].push(pid(p));placed.add(pid(p))}})});
+    R.players.filter(p=>p.role===r&&!isElim(p.nat)).sort((a,b)=>b.q-a.q).forEach(p=>{if(fmState.lineup[r].length<req[r]&&!placed.has(pid(p))){fmState.lineup[r].push(pid(p));placed.add(pid(p))}})});
  }else{const placed=new Set(["P","D","C","A"].flatMap(r=>fmState.lineup[r]));
-   R.players.slice().sort((a,b)=>b.q-a.q).forEach(p=>{if(fmCount()<ph.titolari&&!placed.has(pid(p))){fmState.lineup[p.role].push(pid(p));placed.add(pid(p))}});
+   R.players.filter(p=>!isElim(p.nat)).sort((a,b)=>b.q-a.q).forEach(p=>{if(fmCount()<ph.titolari&&!placed.has(pid(p))){fmState.lineup[p.role].push(pid(p));placed.add(pid(p))}});
  }}
 function fmInit(){const _g=submissionGiornata();const saved=_g?getLineupFor(user,_g.id):store.get(fmKey());
  if(saved&&saved.module&&saved.lineup){fmState={module:saved.module,lineup:{P:saved.lineup.P||[],D:saved.lineup.D||[],C:saved.lineup.C||[],A:saved.lineup.A||[]},order:reconcileOrder(user,saved.order)}}
@@ -2091,7 +2091,7 @@ function renderFormazione(){
    let ft=sel.map(pl=>tileF(pl,g.id)).join("");for(let i=sel.length;i<need;i++)ft+=`<div class="ptile empty"><span class="eplus">+</span></div>`;
    pitch=`<div class="pitchwrap"><div class="pitch pfree">${ft}</div></div>`;}
  const inUse=new Set(["P","D","C","A"].flatMap(r=>fmState.lineup[r]));
- const bench=benchSorted((R?R.players:[]).filter(p=>!inUse.has(pid(p))),fmState.order);
+ const bench=benchSorted((R?R.players:[]).filter(p=>!inUse.has(pid(p))&&!isElim(p.nat)),fmState.order);
  const benchHtml=bench.map((p,i)=>`<div class="bnrow"><span class="bnpos">${i+1}</span><button class="bnmain" data-add="${pid(p)}"><span class="pimg ${RBG[p.role]}"><img class="pfl" src="${flag(p.nat)}" alt=""></span><span class="bnmid"><span class="bnname">${dispName(p.name)}</span><span class="bnopp">vs ${oppTag(p.nat,g.id)}${oppWhen(p.nat,g.id)}</span></span><span class="rb r-${p.role.toLowerCase()} bnrole">${p.role}</span></button><span class="bnctrl"><button class="bnbtn" data-up="${pid(p)}"${i===0?" disabled":""}>\u25b2</button><button class="bnbtn" data-down="${pid(p)}"${i===bench.length-1?" disabled":""}>\u25bc</button></span></div>`).join("");
  const mods=MODULES.map(m=>`<button class="modbtn${m===fmState.module?" sel":""}" data-m="${m}">${m}</button>`).join("");
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand">Formazione</div><span style="width:46px"></span></div>
@@ -2112,7 +2112,7 @@ function renderFormazione(){
  view.querySelectorAll(".bnbtn[data-down]").forEach(b=>b.onclick=()=>fmBenchMove(b.dataset.down,1));
  const conf=document.getElementById("fmConfirm");conf.disabled=cnt!==need||!g||isLocked(g.id);
  conf.onclick=()=>{if(!g||isLocked(g.id)){toast("Finestra chiusa: la giornata \u00e8 iniziata");renderFormazione();return}if(fmCount()!==need){toast("Devi schierare "+need+" titolari");return}
-   store.set(fmKey(),{module:fmState.module,lineup:fmState.lineup,order:fmState.order,ts:Date.now(),snap:rosterSnap(user)});
+   store.set(fmKey(),{module:fmState.module,lineup:fmState.lineup,order:fmState.order,ts:Date.now(),snap:rosterSnap(user),orv:OTTAVI_RESET_V});
    toast("Formazione schierata \u2713");document.getElementById("fmActions").style.display="none";document.getElementById("nav").style.display="flex";fmState=null;setTimeout(()=>go("home"),750)};
  document.getElementById("fmCancel").onclick=fmExit;
 }
@@ -2658,8 +2658,14 @@ function fantaVoto(rec,role){if(!hasVoto(rec))return null;let fv=Number(rec.v)||
    +(rec.rsb||0)*BONUS.rigSb+(rec.og||0)*BONUS.autorete+(rec.esp||0)*BONUS.esp+(rec.amm||0)*BONUS.amm;
  if(role==="P"){fv+=(rec.gs||0)*BONUS.golSub;if((rec.gs||0)===0)fv+=BONUS.cleanSheet}
  return Math.round(fv*100)/100}
+/* RESET FORMAZIONI OTTAVI (gid 5): valide SOLO se ri-schierate con questa versione.
+   Le formazioni salvate prima (senza orv) sono azzerate -> tutti ri-schierano 11.
+   Per un nuovo reset in futuro, aumenta questo numero. */
+const OTTAVI_RESET_V=1;
 function getLineupFor(team,gid){if(!gid)return null;
- const direct=store.get("fm26_lineup_"+team+"_"+gid);if(direct&&direct.lineup)return direct;
+ const direct=store.get("fm26_lineup_"+team+"_"+gid);
+ if(gid===5){ if(direct&&direct.lineup&&direct.orv===OTTAVI_RESET_V)return direct; return null; }
+ if(direct&&direct.lineup)return direct;
  for(let g=gid-1;g>=1;g--){const prev=store.get("fm26_lineup_"+team+"_"+g);if(prev&&prev.lineup)return Object.assign({},prev,{inherited:true,fromGid:g});}
  return null;}
 function teamGiornata(team,gid){const sub=getLineupFor(team,gid);if(!sub||!sub.lineup)return null;
