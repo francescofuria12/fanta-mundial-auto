@@ -925,6 +925,11 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .admbar.admon b{color:#fff}
 .admbtn{padding:6px 11px;border-radius:9px;border:1px solid #ffc21e;background:#ffc21e;color:#2a2200;font-weight:800;font-size:12px;font-family:inherit;cursor:pointer}
 .admbtn.admx{background:transparent;color:#ffe6a8}
+.admrow{display:flex;gap:8px;padding:10px 16px 0}
+.admtop{flex:1;padding:10px 8px;border-radius:11px;font-weight:800;font-size:12.5px;font-family:inherit;cursor:pointer;border:1px solid transparent}
+.admtop.admvoti{flex:0 0 auto;background:#173a2a;border-color:#27C46A;color:#7ef0b0;font-size:11.5px;padding:9px 12px}
+.admtop.admrose{background:#ffc21e;color:#2a2200;border-color:#ffc21e;box-shadow:0 8px 18px -10px rgba(255,194,30,.6)}
+.admtop.admrose:active{transform:scale(.98)}
 </style>
 </head>
 <body>
@@ -1271,7 +1276,7 @@ function fdt(d){return `${pad(d.getDate())}/${pad(d.getMonth()+1)} · ${pad(d.ge
 function dayKey(d){return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`}
 
 /* ===== STATO ===== */
-let user=store.get("fm26_user"),adminMode=false,adminTeam=null,draft=null,cdTimer=null,viewTeam=null,curView="home",cloudReady=false,_suppress=false,leagueRef=null,calTab="tabellone",resRound=1,koTab="r32",chipassaAuth=false,pronTab="mine";
+let user=store.get("fm26_user"),adminMode=false,adminTeam=null,adminAuth=false,draft=null,cdTimer=null,viewTeam=null,curView="home",cloudReady=false,_suppress=false,leagueRef=null,calTab="tabellone",resRound=1,koTab="r32",chipassaAuth=false,pronTab="mine";
 let svF={q:"",role:"all",sort:"q"};
 let mercTab="svincola",mercF={q:"",role:"all"};
 function openRoster(t){viewTeam=t;go("roster")}
@@ -2051,6 +2056,8 @@ function fmBenchMove(id,dir){
  renderFormazione()}
 /* squadra da gestire: admin -> squadra impersonata; altrimenti l\u0027account loggato. Non tocca il login. */
 function effUser(){return (adminMode&&adminTeam)?adminTeam:user;}
+/* gate admin: password una volta per sessione, poi entrambi i pulsanti sbloccati */
+function requireAdmin(cb){if(adminAuth)return cb();const pw=prompt("Password amministratore");if(pw==="MangiGanri"){adminAuth=true;cb();}else if(pw!=null)toast("Password errata");}
 function fmKey(){const g=submissionGiornata();return "fm26_lineup_"+effUser()+"_"+(g?g.id:"x")}
 function rosterMap(t){t=t||effUser();const m={};((ROSTERS[t]||{}).players||[]).forEach(p=>m[pid(p)]=p);return m}
 function fmPhase(){const g=submissionGiornata();return g?phaseOf(g.id):{titolari:11,fixed:true,sameRoleSub:true};}
@@ -2872,15 +2879,14 @@ function renderVotiGiornata(){
  view.innerHTML=`<div class="top"><div class="brand"><svg class="brandic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#F7F3E8"/><circle cx="12" cy="12" r="5.4" fill="#0B0B10"/><circle cx="12" cy="12" r="2.2" fill="#E11D48"/></svg>Voti giornata</div></div>
   <div class="fmSelLab">Turno</div><div class="modrow" id="vgTurni">${turni}</div>
   <div class="fmSelLab">Squadra</div><div class="modrow" id="vgTeams">${teamsB}</div>
-  <div style="padding:10px 16px 0"><button class="rosabtn alt" id="vgAdmin" style="margin-top:0">\ud83d\udcdd Inserisci voti (admin) \u2192</button></div>
+  <div class="admrow"><button class="admtop admvoti" id="vgAdmin">📝 Inserisci voti</button><button class="admtop admrose" id="admRose">🔧 Modifica rose (admin)</button></div>
   ${saved&&saved.lineup?`<div class="vg-mod">${R.club} \u00b7 modulo <b>${saved.module}</b> \u00b7 ${phaseOf(gid).label}${played?"":' \u00b7 <span style="color:var(--yellow)">voti non ancora inseriti</span>'}</div>
    <div class="vg-hdr"><span class="vgh-g">Giocatore</span><span class="vgh-skip"></span><span class="vgh-v">Voto</span><span class="vgh-f">FV</span></div><div>${titolari}</div><div class="vg-sep">Panchina</div><div>${bench}</div><div style="height:78px"></div>`
-   :`<div class="stub fade"><div class="em">\ud83d\udccb</div><h2>Formazione<br>non inserita</h2><p><b>${R.club}</b> non ha schierato per ${phaseOf(gid).label}.</p></div>`}${adminMode?`<div class="admbar admon">👑 Admin attivo · <b>${R.club}</b> <button class="admbtn" id="admEdit">✏️ Modifica formazione</button> <button class="admbtn admx" id="admOff">Esci</button></div>`:`<div class="admbar" id="admBanner">🔧 Area amministratore</div>`}`;
+   :`<div class="stub fade"><div class="em">\ud83d\udccb</div><h2>Formazione<br>non inserita</h2><p><b>${R.club}</b> non ha schierato per ${phaseOf(gid).label}.</p></div>`}${adminMode?`<div class="admbar admon">👑 Admin attivo · <b>${R.club}</b> <button class="admbtn admx" id="admOff">Esci admin</button></div>`:""}`;
  document.querySelectorAll("#vgTurni .modbtn").forEach(b=>b.onclick=()=>{vgGid=+b.dataset.g;renderVotiGiornata()});
  document.querySelectorAll("#vgTeams .modbtn").forEach(b=>b.onclick=()=>{vgTeam=b.dataset.t;renderVotiGiornata()});
- document.getElementById("vgAdmin").onclick=()=>openVoti(gid);
- {const _ab=document.getElementById("admBanner");if(_ab)_ab.onclick=()=>{const pw=prompt("Password amministratore");if(pw==="MangiGanri"){adminMode=true;adminTeam=team;toast("Modalit\u00e0 admin attiva");renderVotiGiornata();}else if(pw!=null)toast("Password errata");};
-  const _ae=document.getElementById("admEdit");if(_ae)_ae.onclick=()=>{adminTeam=team;fmState=null;go("formazione");};
+ document.getElementById("vgAdmin").onclick=()=>requireAdmin(()=>openVoti(gid));
+ {const _ar=document.getElementById("admRose");if(_ar)_ar.onclick=()=>requireAdmin(()=>{adminMode=true;adminTeam=team;fmState=null;go("formazione");});
   const _ao=document.getElementById("admOff");if(_ao)_ao.onclick=()=>{adminMode=false;adminTeam=null;toast("Admin disattivato");renderVotiGiornata();};}
  const vf=document.getElementById("vgFoot");
  if(saved&&saved.lineup){vf.style.display="flex";vf.innerHTML=`<span class="lbl">Totale FantaPunti \u00b7 ${R.club}</span><span class="tot">${totTxt}</span>`}
