@@ -2674,6 +2674,9 @@ const VOTI_FIX={
 function getVoti(gid){const base=store.get(votiKey(gid))||{};const fix=VOTI_FIX[gid];
   const out=Object.assign({},base);
   if(fix&&Object.keys(base).length){for(const k in fix)out[k]=Object.assign({},fix[k]);}
+  /* STRATO ADMIN (definitivo): i voti inseriti dall'admin vivono in fm26_votfix e VINCONO SEMPRE
+     sopra la base (scraper/ricalcolo). Cosi' non cambiano mai a un nuovo import. */
+  const adm=store.get("fm26_votfix_"+gid);if(adm)for(const k in adm)out[k]=Object.assign({},adm[k]);
   return remapProviderVoti(out);}
 function hasVoto(rec){return !!rec&&rec.v!=null&&rec.v!==""}
 function fantaVoto(rec,role){if(!hasVoto(rec))return null;let fv=Number(rec.v)||0;
@@ -2821,7 +2824,7 @@ function buildVrows(list,container){list.sort((a,b)=>(RORD[a.role]-RORD[b.role])
    container.appendChild(row)})}
 function renderVoti(gid){gid=gid||votiGid||(nextGiornata()||{id:1}).id;votiGid=gid;setNav("classifica");
  votiDraft=JSON.parse(JSON.stringify(getVoti(gid)));
- const players=ownedPlayersAt(gid),byNat={};players.forEach(p=>{(byNat[p.nat]=byNat[p.nat]||[]).push(p)});
+ const players=ownedPlayersAt(gid).filter(p=>!isElim(p.nat)||FORCE_AVAILABLE.has(p.name)),byNat={};players.forEach(p=>{(byNat[p.nat]=byNat[p.nat]||[]).push(p)});
  const nats=Object.keys(byNat).sort((a,b)=>a.localeCompare(b,"it"));
  const gsel=GIORNATE.map(g=>`<button class="modbtn${g.id===gid?" sel":""}" data-g="${g.id}">${phaseOf(g.id).label.replace("Gironi \u00b7 ","G")}</button>`).join("");
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Voti</button><div class="brand">Inserisci voti</div><span style="width:64px"></span></div>
@@ -2839,7 +2842,7 @@ function renderVoti(gid){gid=gid||votiGid||(nextGiornata()||{id:1}).id;votiGid=g
    const bd=document.createElement("div");bd.className="natbd";bd.style.display="none";let built=false;
    hd.onclick=()=>{const op=bd.style.display==="none";bd.style.display=op?"block":"none";hd.classList.toggle("open",op);if(op&&!built){buildVrows(byNat[nat],bd);built=true}};
    sec.appendChild(hd);sec.appendChild(bd);nl.appendChild(sec)});
- document.getElementById("saveVoti").onclick=()=>{Object.keys(votiDraft).forEach(k=>{const r=votiDraft[k];if(!hasVoto(r))delete votiDraft[k];else r.lk=1;});store.set(votiKey(gid),votiDraft);toast("Voti salvati \u2713 "+phaseOf(gid).label)};
+ document.getElementById("saveVoti").onclick=()=>{Object.keys(votiDraft).forEach(k=>{const r=votiDraft[k];if(!hasVoto(r))delete votiDraft[k];else r.lk=1;});store.set("fm26_votfix_"+gid,votiDraft);toast("Voti salvati \u2713 "+phaseOf(gid).label)};
 }
 
 /* ===== VOTI GIORNATA (vista) ===== */
@@ -3093,6 +3096,7 @@ function cloudPathFor(key){
  if(key==="fm26_accounts")return{sec:"accounts",sub:null};
  if(key==="fm26_bonus")return{sec:"bonus",sub:null};
  if(key.indexOf("fm26_jersey_")===0)return{sec:"jerseys",sub:key.slice(12)};
+ if(key.indexOf("fm26_votfix_")===0)return{sec:"votfix",sub:key.slice(12)};
  if(key.indexOf("fm26_voti_")===0)return{sec:"voti",sub:key.slice(10)};
  if(key.indexOf("fm26_lineup_")===0)return{sec:"lineups",sub:key.slice(12)};
  if(key==="fm26_results")return{sec:"results",sub:null};
@@ -3123,6 +3127,7 @@ function applyCloud(d){_suppress=true;try{
    if(d.bonus)store.set("fm26_bonus",d.bonus);
    if(d.jerseys)for(const t in d.jerseys)store.set("fm26_jersey_"+t,d.jerseys[t]);
    if(d.lineups)for(const k in d.lineups)store.set("fm26_lineup_"+k,d.lineups[k]);
+   if(d.votfix)for(const g in d.votfix)store.set("fm26_votfix_"+g,d.votfix[g]);
    if(d.voti)for(const g in d.voti){const inc=d.voti[g]||{},cur=store.get("fm26_voti_"+g)||{},mg=Object.assign({},inc);for(const k in cur){if(cur[k]&&cur[k].lk&&!(inc[k]&&inc[k].lk))mg[k]=cur[k];}store.set("fm26_voti_"+g,mg);}
    if(d.results)store.set("fm26_results",d.results);
    if(d.events)store.set("fm26_events",d.events);
