@@ -919,6 +919,12 @@ body[data-view="news"],body[data-view="regolamento"],body[data-view="settings"],
 .pitch.pfree .ptile.empty .eplus{font-size:26px;color:rgba(255,255,255,.35);font-weight:800}
 .extBanner{margin:10px 14px;padding:11px 13px;border-radius:12px;background:linear-gradient(135deg,#5a3a00,#7a4d00);border:1px solid #ffb020;color:#ffe6b0;font-size:13px;font-weight:600;line-height:1.35;box-shadow:0 8px 20px -10px rgba(255,176,32,.5)}
 .extBanner b{color:#fff}
+.admbar{margin:14px 16px 8px;padding:9px 12px;border-radius:11px;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.18);color:#9fb0d8;font-size:12px;font-weight:600;text-align:center;cursor:pointer;transition:background .15s}
+.admbar:hover{background:rgba(255,255,255,.09)}
+.admbar.admon{background:linear-gradient(135deg,#3a2d00,#4d3a00);border:1px solid #ffc21e;color:#ffe6a8;cursor:default;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px}
+.admbar.admon b{color:#fff}
+.admbtn{padding:6px 11px;border-radius:9px;border:1px solid #ffc21e;background:#ffc21e;color:#2a2200;font-weight:800;font-size:12px;font-family:inherit;cursor:pointer}
+.admbtn.admx{background:transparent;color:#ffe6a8}
 </style>
 </head>
 <body>
@@ -1265,7 +1271,7 @@ function fdt(d){return `${pad(d.getDate())}/${pad(d.getMonth()+1)} · ${pad(d.ge
 function dayKey(d){return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`}
 
 /* ===== STATO ===== */
-let user=store.get("fm26_user"),draft=null,cdTimer=null,viewTeam=null,curView="home",cloudReady=false,_suppress=false,leagueRef=null,calTab="tabellone",resRound=1,koTab="r32",chipassaAuth=false,pronTab="mine";
+let user=store.get("fm26_user"),adminMode=false,adminTeam=null,draft=null,cdTimer=null,viewTeam=null,curView="home",cloudReady=false,_suppress=false,leagueRef=null,calTab="tabellone",resRound=1,koTab="r32",chipassaAuth=false,pronTab="mine";
 let svF={q:"",role:"all",sort:"q"};
 let mercTab="svincola",mercF={q:"",role:"all"};
 function openRoster(t){viewTeam=t;go("roster")}
@@ -1993,7 +1999,7 @@ function renderHome(){
  const _hm=document.getElementById("hmPlay");if(_hm)_hm.onclick=()=>go("impiccato");
  const _t10=document.getElementById("t10Play");if(_t10)_t10.onclick=()=>go("top10");
  document.getElementById("editJersey").onclick=e=>{e.preventDefault();e.stopPropagation();openSheet()};
- document.getElementById("banner").onclick=()=>go("formazione");
+ document.getElementById("banner").onclick=()=>{adminTeam=null;go("formazione");};
  document.getElementById("rankBar").onclick=()=>go("classifica");
  ensureFloatPlayer();
  const _hp=document.getElementById("hlPrev");if(_hp)_hp.onclick=()=>{vgTeam=user;vgGid=currentGiornata().id;go("votigiornata")};
@@ -2043,19 +2049,21 @@ function fmBenchMove(id,dir){
  if(ia<0||ib<0)return;
  fmState.order[ia]=benchPids[swap];fmState.order[ib]=id;
  renderFormazione()}
-function fmKey(){const g=submissionGiornata();return "fm26_lineup_"+user+"_"+(g?g.id:"x")}
-function rosterMap(t){t=t||user;const m={};((ROSTERS[t]||{}).players||[]).forEach(p=>m[pid(p)]=p);return m}
+/* squadra da gestire: admin -> squadra impersonata; altrimenti l\u0027account loggato. Non tocca il login. */
+function effUser(){return (adminMode&&adminTeam)?adminTeam:user;}
+function fmKey(){const g=submissionGiornata();return "fm26_lineup_"+effUser()+"_"+(g?g.id:"x")}
+function rosterMap(t){t=t||effUser();const m={};((ROSTERS[t]||{}).players||[]).forEach(p=>m[pid(p)]=p);return m}
 function fmPhase(){const g=submissionGiornata();return g?phaseOf(g.id):{titolari:11,fixed:true,sameRoleSub:true};}
-function fmAutofill(){const R=ROSTERS[user];if(!R)return;const ph=fmPhase();
+function fmAutofill(){const R=ROSTERS[effUser()];if(!R)return;const ph=fmPhase();
  if(ph.fixed){const req=reqOf(fmState.module);
    ["P","D","C","A"].forEach(r=>{const placed=new Set(fmState.lineup[r]);
     R.players.filter(p=>p.role===r&&(!isElim(p.nat)||FORCE_AVAILABLE.has(p.name))).sort((a,b)=>b.q-a.q).forEach(p=>{if(fmState.lineup[r].length<req[r]&&!placed.has(pid(p))){fmState.lineup[r].push(pid(p));placed.add(pid(p))}})});
  }else{const placed=new Set(["P","D","C","A"].flatMap(r=>fmState.lineup[r]));
    R.players.filter(p=>!isElim(p.nat)||FORCE_AVAILABLE.has(p.name)).sort((a,b)=>b.q-a.q).forEach(p=>{if(fmCount()<ph.titolari&&!placed.has(pid(p))){fmState.lineup[p.role].push(pid(p));placed.add(pid(p))}});
  }}
-function fmInit(){const _g=submissionGiornata();const saved=_g?getLineupFor(user,_g.id):store.get(fmKey());
+function fmInit(){const _g=submissionGiornata();const saved=_g?getLineupFor(effUser(),_g.id):store.get(fmKey());
  if(saved&&saved.module&&saved.lineup){fmState={module:saved.module,lineup:{P:saved.lineup.P||[],D:saved.lineup.D||[],C:saved.lineup.C||[],A:saved.lineup.A||[]},order:reconcileOrder(user,saved.order)}}
- else{fmState={module:"3-4-3",lineup:{P:[],D:[],C:[],A:[]},order:defaultOrder(user)};fmAutofill()}}
+ else{fmState={module:"3-4-3",lineup:{P:[],D:[],C:[],A:[]},order:defaultOrder(effUser())};fmAutofill()}}
 function fmCount(){return ["P","D","C","A"].reduce((s,r)=>s+fmState.lineup[r].length,0)}
 function setModule(m){const req=reqOf(m);fmState.module=m;["D","C","A"].forEach(r=>{while(fmState.lineup[r].length>req[r])fmState.lineup[r].pop()});renderFormazione()}
 function fmRemove(role,id){fmState.lineup[role]=fmState.lineup[role].filter(x=>x!==id);renderFormazione()}
@@ -2088,8 +2096,8 @@ function renderFormazione(){
    document.getElementById("bk").onclick=fmExit;
    if(ci)startCountdown(ci.target,{D:"cdLD",H:"cdLH",M:"cdLM",S:"cdLS"});
    return;}
- if(!fmState||fmState.user!==user){fmInit();fmState.user=user}
- const R=ROSTERS[user],g=submissionGiornata(),ph=g?phaseOf(g.id):{titolari:11,fixed:true},need=ph.titolari,fixed=ph.fixed,req=fixed?reqOf(fmState.module):{P:0,D:0,C:0,A:0},map=rosterMap(),cnt=fmCount();
+ if(!fmState||fmState.user!==effUser()){fmInit();fmState.user=effUser()}
+ const R=ROSTERS[effUser()],g=submissionGiornata(),ph=g?phaseOf(g.id):{titolari:11,fixed:true},need=ph.titolari,fixed=ph.fixed,req=fixed?reqOf(fmState.module):{P:0,D:0,C:0,A:0},map=rosterMap(),cnt=fmCount();
  const repHtml=r=>{let t="";fmState.lineup[r].forEach(id=>{if(map[id])t+=tileF(map[id],g.id)});for(let i=fmState.lineup[r].length;i<req[r];i++)t+=emptyTile(r);return `<div class="preparto">${t}</div>`};
  let pitch;
  if(fixed){pitch=`<div class="pitchwrap"><div class="pitch">${repHtml("A")}${repHtml("C")}${repHtml("D")}${repHtml("P")}</div></div>`;}
@@ -2102,6 +2110,7 @@ function renderFormazione(){
  const mods=MODULES.map(m=>`<button class="modbtn${m===fmState.module?" sel":""}" data-m="${m}">${m}</button>`).join("");
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand">Formazione</div><span style="width:46px"></span></div>
  ${g&&lineupExtended(g.id)?`<div class="extBanner">\u26a0\ufe0f In via del tutto eccezionale la formazione <b>${g.label}</b> \u00e8 riaperta. Schiera entro <b>${fdt(new Date(lineupExtended(g.id)))}</b>.</div>`:""}
+ ${effUser()!==user?`<div class="admbar admon" style="margin:8px 14px">👑 Stai modificando come admin: <b>${ROSTERS[effUser()]?ROSTERS[effUser()].club:effUser()}</b></div>`:""}
  <div class="fmInfo fade"><div class="ic">\ud83d\udccb</div><div class="tx">${g?`Giornata: <b>${g.label}</b> \u00b7 <b>chiusura ${fdt(lockTime(g.id))}</b>.`:"Torneo concluso."} Schiera <b>${need} titolari</b>${fixed?" nel modulo scelto":""} \u2014 hai inserito <b>${cnt}/11</b>. Tocca uno slot vuoto per scegliere, tocca un titolare per rimandarlo in panchina.</div></div>
  ${fixed?`<div class="fmSelLab">Modulo</div><div class="modrow" id="modRow">${mods}</div>`:`<div class="fmSelLab">Dai Quarti \u00b7 nessun vincolo di modulo \u00b7 scegli ${need} titolari</div>`}
  ${pitch}
@@ -2118,13 +2127,13 @@ function renderFormazione(){
  view.querySelectorAll(".bnbtn[data-down]").forEach(b=>b.onclick=()=>fmBenchMove(b.dataset.down,1));
  const conf=document.getElementById("fmConfirm");conf.disabled=cnt!==need||!g||isLocked(g.id);
  conf.onclick=()=>{if(!g||isLocked(g.id)){toast("Finestra chiusa: la giornata \u00e8 iniziata");renderFormazione();return}if(fmCount()!==need){toast("Devi schierare "+need+" titolari");return}
-   store.set(fmKey(),{module:fmState.module,lineup:fmState.lineup,order:fmState.order,ts:Date.now(),snap:rosterSnap(user),orv:OTTAVI_RESET_V});
+   store.set(fmKey(),{module:fmState.module,lineup:fmState.lineup,order:fmState.order,ts:Date.now(),snap:rosterSnap(effUser()),orv:OTTAVI_RESET_V});
    toast("Formazione schierata \u2713");document.getElementById("fmActions").style.display="none";document.getElementById("nav").style.display="flex";fmState=null;setTimeout(()=>go("home"),750)};
  document.getElementById("fmCancel").onclick=fmExit;
 }
 
 /* picker giocatore */
-function openPk(role){const R=ROSTERS[user],inUse=new Set(["P","D","C","A"].flatMap(r=>fmState.lineup[r]));
+function openPk(role){const R=ROSTERS[effUser()],inUse=new Set(["P","D","C","A"].flatMap(r=>fmState.lineup[r]));
  const list=(R?R.players:[]).filter(p=>p.role===role&&!inUse.has(pid(p))).sort((a,b)=>b.q-a.q);
  const RC={P:"r-p",D:"r-d",C:"r-c",A:"r-a"};
  const gid=(submissionGiornata()||{id:1}).id;
@@ -2732,9 +2741,10 @@ const MARKET_KEY="fm26_market";
 function getMarket(){const m=store.get(MARKET_KEY);return (m&&typeof m==="object")?m:{};}
 function mkTeam(t){const x=getMarket()[t]||{};return {out:Array.isArray(x.out)?x.out.slice():[],in:Array.isArray(x.in)?x.in.slice():[],ts:x.ts||0};}
 function saveMarket(m){store.set(MARKET_KEY,m);applyMercato();}
-function basePlayers(t){return (ROSTERS_BASE[t]?ROSTERS_BASE[t].players:[]);}
+function applyRole(p){const r=ROLE_OVERRIDE[p.name];return (r&&r!==p.role)?Object.assign({},p,{role:r}):p;}
+function basePlayers(t){return (ROSTERS_BASE[t]?ROSTERS_BASE[t].players:[]).map(applyRole);}
 function baseCredits(t){const R=ROSTERS_BASE[t];return R?(300-R.players.reduce((s,p)=>s+(p.acq||0),0)):0;}
-function inAsPlayer(x){return {role:x.role,name:x.name,nat:x.nat,q:x.q,acq:x.price,price:x.price,bought:true};}
+function inAsPlayer(x){return {role:ROLE_OVERRIDE[x.name]||x.role,name:x.name,nat:x.nat,q:x.q,acq:x.price,price:x.price,bought:true};}
 /* registry = tutti i giocatori mai posseduti (base + acquistati): risolve la STORIA */
 function registryOf(t){return basePlayers(t).concat(mkTeam(t).in.map(inAsPlayer));}
 /* roster ATTUALE = registry meno gli svincolati */
@@ -2865,10 +2875,13 @@ function renderVotiGiornata(){
   <div style="padding:10px 16px 0"><button class="rosabtn alt" id="vgAdmin" style="margin-top:0">\ud83d\udcdd Inserisci voti (admin) \u2192</button></div>
   ${saved&&saved.lineup?`<div class="vg-mod">${R.club} \u00b7 modulo <b>${saved.module}</b> \u00b7 ${phaseOf(gid).label}${played?"":' \u00b7 <span style="color:var(--yellow)">voti non ancora inseriti</span>'}</div>
    <div class="vg-hdr"><span class="vgh-g">Giocatore</span><span class="vgh-skip"></span><span class="vgh-v">Voto</span><span class="vgh-f">FV</span></div><div>${titolari}</div><div class="vg-sep">Panchina</div><div>${bench}</div><div style="height:78px"></div>`
-   :`<div class="stub fade"><div class="em">\ud83d\udccb</div><h2>Formazione<br>non inserita</h2><p><b>${R.club}</b> non ha schierato per ${phaseOf(gid).label}.</p></div>`}`;
+   :`<div class="stub fade"><div class="em">\ud83d\udccb</div><h2>Formazione<br>non inserita</h2><p><b>${R.club}</b> non ha schierato per ${phaseOf(gid).label}.</p></div>`}${adminMode?`<div class="admbar admon">👑 Admin attivo · <b>${R.club}</b> <button class="admbtn" id="admEdit">✏️ Modifica formazione</button> <button class="admbtn admx" id="admOff">Esci</button></div>`:`<div class="admbar" id="admBanner">🔧 Area amministratore</div>`}`;
  document.querySelectorAll("#vgTurni .modbtn").forEach(b=>b.onclick=()=>{vgGid=+b.dataset.g;renderVotiGiornata()});
  document.querySelectorAll("#vgTeams .modbtn").forEach(b=>b.onclick=()=>{vgTeam=b.dataset.t;renderVotiGiornata()});
  document.getElementById("vgAdmin").onclick=()=>openVoti(gid);
+ {const _ab=document.getElementById("admBanner");if(_ab)_ab.onclick=()=>{const pw=prompt("Password amministratore");if(pw==="MangiGanri"){adminMode=true;adminTeam=team;toast("Modalit\u00e0 admin attiva");renderVotiGiornata();}else if(pw!=null)toast("Password errata");};
+  const _ae=document.getElementById("admEdit");if(_ae)_ae.onclick=()=>{adminTeam=team;fmState=null;go("formazione");};
+  const _ao=document.getElementById("admOff");if(_ao)_ao.onclick=()=>{adminMode=false;adminTeam=null;toast("Admin disattivato");renderVotiGiornata();};}
  const vf=document.getElementById("vgFoot");
  if(saved&&saved.lineup){vf.style.display="flex";vf.innerHTML=`<span class="lbl">Totale FantaPunti \u00b7 ${R.club}</span><span class="tot">${totTxt}</span>`}
  else vf.style.display="none";
