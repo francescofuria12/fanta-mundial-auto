@@ -1193,7 +1193,10 @@ function roundEnd(gid){
 function lockTime(gid){const fs=firstMatchStart(gid);return fs==null?null:new Date(fs+LOCK_RULE.lockOffsetMin*60000)}
 function unlockTime(gid){if(gid<=1)return null;const ps=firstMatchStart(gid-1);return ps==null?null:new Date(ps-LOCK_RULE.unlockBeforeEndMin*60000)}
 /* RIAPERTURA ECCEZIONALE finestra formazione: gid -> scadenza. Ottavi (gid 5) fino a domani. */
-function lineupExtended(gid){if(gid!==5)return 0;const d=firstMatchStart(6);if(!d)return 0;return Date.now()<d?d:0;}
+/* Estensione eccezionale finestra formazione. Ottavi conclusi: nessuna estensione attiva.
+   I Quarti (gid 6) restano schierabili naturalmente FINO AL LORO INIZIO. Per riaprire un turno,
+   punta questa funzione a quel gid con scadenza firstMatchStart(gid+1). */
+function lineupExtended(gid){return 0;}
 function isLocked(gid){if(lineupExtended(gid))return false;const lt=lockTime(gid);return lt?Date.now()>=+lt:false}
 function roundConcluded(gid){const re=roundEnd(gid);return re==null?false:Date.now()>=+re}
 function windowOpen(gid){const u=unlockTime(gid);return ((u==null)||Date.now()>=+u)&&!isLocked(gid)}
