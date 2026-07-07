@@ -1193,7 +1193,10 @@ function roundEnd(gid){
 function lockTime(gid){const fs=firstMatchStart(gid);return fs==null?null:new Date(fs+LOCK_RULE.lockOffsetMin*60000)}
 function unlockTime(gid){if(gid<=1)return null;const ps=firstMatchStart(gid-1);return ps==null?null:new Date(ps-LOCK_RULE.unlockBeforeEndMin*60000)}
 /* RIAPERTURA ECCEZIONALE finestra formazione: gid -> scadenza. Ottavi (gid 5) fino a domani. */
-function lineupExtended(gid){if(gid!==5)return 0;const d=firstMatchStart(6);if(!d)return 0;return Date.now()<d?d:0;}
+/* Estensione eccezionale finestra formazione. Ottavi conclusi: nessuna estensione attiva.
+   I Quarti (gid 6) restano schierabili naturalmente FINO AL LORO INIZIO. Per riaprire un turno,
+   punta questa funzione a quel gid con scadenza firstMatchStart(gid+1). */
+function lineupExtended(gid){return 0;}
 function isLocked(gid){if(lineupExtended(gid))return false;const lt=lockTime(gid);return lt?Date.now()>=+lt:false}
 function roundConcluded(gid){const re=roundEnd(gid);return re==null?false:Date.now()>=+re}
 function windowOpen(gid){const u=unlockTime(gid);return ((u==null)||Date.now()>=+u)&&!isLocked(gid)}
@@ -2070,7 +2073,7 @@ function fmAutofill(){const R=ROSTERS[effUser()];if(!R)return;const ph=fmPhase()
  }}
 function fmInit(){const _g=submissionGiornata();const saved=_g?getLineupFor(effUser(),_g.id):store.get(fmKey());
  if(saved&&saved.module&&saved.lineup){fmState={module:saved.module,lineup:{P:saved.lineup.P||[],D:saved.lineup.D||[],C:saved.lineup.C||[],A:saved.lineup.A||[]},order:reconcileOrder(user,saved.order)}}
- else{fmState={module:"3-4-3",lineup:{P:[],D:[],C:[],A:[]},order:defaultOrder(effUser())};fmAutofill()}}
+ else{fmState={module:"3-4-3",lineup:{P:[],D:[],C:[],A:[]},order:defaultOrder(effUser())};if(fmPhase().fixed)fmAutofill();}}
 function fmCount(){return ["P","D","C","A"].reduce((s,r)=>s+fmState.lineup[r].length,0)}
 function setModule(m){const req=reqOf(m);fmState.module=m;["D","C","A"].forEach(r=>{while(fmState.lineup[r].length>req[r])fmState.lineup[r].pop()});renderFormazione()}
 function fmRemove(role,id){fmState.lineup[role]=fmState.lineup[role].filter(x=>x!==id);renderFormazione()}
@@ -2663,6 +2666,7 @@ function votiKey(gid){return "fm26_voti_"+gid}
 /* === CORREZIONI VOTI FORZATE (override sopra i voti inseriti) ===
    { <gid>: { "<RUOLO>|<Nome esatto>": {v:<voto, o null per SV>, g:..,a:..} } }
    Il record indicato SOSTITUISCE quello inserito (azzera eventuali eventi). */
+const VOTI_SEED={5:{"P|Alisson":{v:7,ffv:5},"P|Y. Bounou":{v:7.5,ffv:7.5},"P|M. Crépeau":{v:6,ffv:3},"P|O. Gill":{v:7,ffv:6},"P|M. Maignan":{v:6,ffv:6},"P|Ørjan Nyland":{v:8,ffv:10},"P|J. Pickford":{v:7.5,ffv:5.5},"P|Raúl Rangel":{v:5.5,ffv:2.5},"D|Kristoffer Ajer":{v:4.5,ffv:4.5},"D|Omar Alderete":{v:6.5,ffv:6.5},"D|Júnior Alonso":{v:6,ffv:6},"D|Moïse Bombito":{v:5.5,ffv:5.5},"C|T. Buchanan":{v:6,ffv:6},"D|D. Burn":{v:6,ffv:6},"D|J. Cáceres":{v:6.5,ffv:6.5},"D|José Canale":{v:6,ffv:6},"D|Danilo":{v:5,ffv:5},"D|L. De Fougerolles":{v:4.5,ffv:4},"D|L. Digne":{v:6,ffv:6},"D|I. Diop":{v:6,ffv:6},"D|Douglas Santos":{v:6,ffv:6},"D|Jesús Gallardo":{v:6.5,ffv:6.5},"D|Gustavo Gómez":{v:6,ffv:6},"D|Marc Guéhi":{v:6,ffv:5.5},"D|Achraf Hakimi":{v:6.5,ffv:7},"D|R. Halhal":{v:5.5,ffv:5},"D|T. Heggem":{v:6.5,ffv:6.5},"D|A. Johnston":{v:5.5,ffv:5.5},"D|Ezri Konsa":{v:5,ffv:5},"D|J. Koundé":{v:6,ffv:6},"D|R. Laryea":{v:6,ffv:5.5},"D|Gabriel Magalhães":{v:5,ffv:5},"D|Marquinos":{v:6,ffv:6},"D|N. Mazraoui":{v:5.5,ffv:5.5},"D|César Montes":{v:6,ffv:6},"D|Jarell Quansah":{v:4.5,ffv:3.5},"D|J. Ryerson":{v:6,ffv:6},"D|W. Saliba":{v:6,ffv:6},"D|Jorge Sánchez":{v:5.5,ffv:5},"C|N. Sigur":{v:5.5,ffv:5.5},"D|D. Spence":{v:6,ffv:6},"D|J. Stones":{v:6,ffv:6},"D|Dayot Upamecano":{v:6,ffv:6},"D|Johan Vásquez":{v:6,ffv:5.5},"D|Gustavo Velázquez":{v:6,ffv:6},"D|D. Wolfe":{v:6.5,ffv:6.5},"A|Miguel Almirón":{v:6,ffv:6},"C|Edson Álvarez":{v:6,ffv:6},"C|S. Amrabat":{v:6.5,ffv:6.5},"C|Elliot Anderson":{v:6.5,ffv:6.5},"C|F. Aursnes":{v:6,ffv:6},"C|J. Bellingham":{v:8,ffv:14},"C|P. Berg":{v:5.5,ffv:5.5},"C|S. Berge":{v:6.5,ffv:6.5},"C|Oscar Bobb":{v:6,ffv:6},"C|A. Bouaddi":{v:5.5,ffv:5.5},"C|Casemiro":{v:5,ffv:5},"C|Andrés Cubas":{v:5.5,ffv:5.5},"C|Danilo":{v:6.5,ffv:6.5},"A|Brahim Díaz":{v:7.5,ffv:9.5},"P|Ederson":{v:6,ffv:6},"C|N. El Aynaoui":{v:6,ffv:6},"C|Bilal El Khannouss":{v:5.5,ffv:5},"C|Julio Enciso":{v:6,ffv:6},"C|Stephen Eustaquio":{v:6.5,ffv:6.5},"C|Diego Gómez":{v:5,ffv:5},"C|Bruno Guimarães":{v:5,ffv:2},"C|Manu Koné":{v:6.5,ffv:6},"C|Érik Lira":{v:7,ffv:7},"C|Mauricio":{v:6,ffv:6},"C|Gilberto Mora":{v:4.5,ffv:4.5},"C|Antonio Nusa":{v:5,ffv:5},"D|N. O'Reilly":{v:5.5,ffv:5},"C|M. Ødegaard":{v:6.5,ffv:6.5},"A|M. Olise":{v:5,ffv:4.5},"C|A. Ounahi":{v:8,ffv:13.5},"C|A. Rabiot":{v:6.5,ffv:6.5},"C|D. Rice":{v:6.5,ffv:6},"C|Luis Romo":{v:6,ffv:6},"C|Ismael Saibari":{v:6,ffv:6},"A|A. Schjelderup":{v:7,ffv:9},"A|Jacob Shaffelburg":{v:5.5,ffv:5.5},"C|C. Talbi":{v:6.5,ffv:6.5},"A|Roberto Alvarado":{v:6,ffv:6},"A|Gabriel Ávalos":{v:5.5,ffv:5.5},"A|B. Barcola":{v:5.5,ffv:5},"A|G. Caballero":{v:5,ffv:5},"C|Matheus Cunha":{v:6,ffv:6},"A|J. David":{v:5.5,ffv:5.5},"A|O. Dembélé":{v:5,ffv:5},"A|Désiré Doué":{v:7,ffv:7},"A|Endrick":{v:4.5,ffv:4.5},"A|Santiago Gimenez":{v:5,ffv:5},"A|A. Gordon":{v:7.5,ffv:7.5},"C|Brian Gutiérrez":{v:6.5,ffv:6.5},"A|Erling Haaland":{v:9,ffv:15},"A|Harry Kane":{v:7,ffv:11},"A|C. Larin":{v:5.5,ffv:5},"A|Gabriel Martinelli":{v:6.5,ffv:6.5},"A|Kylian Mbappé":{v:7,ffv:10},"C|Neymar":{v:6.5,ffv:9},"A|T. Oluwaseyi":{v:6,ffv:6},"C|Julián Quiñones":{v:6.5,ffv:9.5},"A|S. Rahimi":{v:7.5,ffv:10.5},"A|Rayan":{v:5,ffv:5},"A|B. Saka":{v:6.5,ffv:7.5},"A|A. Sørloth":{v:5,ffv:5},"A|Vinicius Junior":{v:7,ffv:7}}};/* voti fantapiu3 giornata 5 (Ottavi): base import; ffv=fantavoto FSA Milano usato come punteggio finale */
 const VOTI_FIX={
   2:{
     "D|Ronald Araujo":{v:null},        /* G2: infortunato -> SV (entra dalla panchina, es. Upamecano) */
@@ -2671,12 +2675,15 @@ const VOTI_FIX={
     "D|H. Ito":{v:6.5}                 /* G2: 6,5 (nessun gol) */
   }
 };
-function getVoti(gid){const base=store.get(votiKey(gid))||{};const fix=VOTI_FIX[gid];
+function getVoti(gid){const base=store.get(votiKey(gid))||VOTI_SEED[gid]||{};const fix=VOTI_FIX[gid];
   const out=Object.assign({},base);
   if(fix&&Object.keys(base).length){for(const k in fix)out[k]=Object.assign({},fix[k]);}
+  /* STRATO ADMIN (definitivo): i voti inseriti dall'admin vivono in fm26_votfix e VINCONO SEMPRE
+     sopra la base (scraper/ricalcolo). Cosi' non cambiano mai a un nuovo import. */
+  const adm=store.get("fm26_votfix_"+gid);if(adm)for(const k in adm)out[k]=Object.assign({},adm[k]);
   return remapProviderVoti(out);}
 function hasVoto(rec){return !!rec&&rec.v!=null&&rec.v!==""}
-function fantaVoto(rec,role){if(!hasVoto(rec))return null;let fv=Number(rec.v)||0;
+function fantaVoto(rec,role){if(!hasVoto(rec))return null;if(rec.ffv!=null)return Number(rec.ffv);let fv=Number(rec.v)||0;
  fv+=(rec.g||0)*BONUS.gol+(rec.rs||0)*BONUS.rigSeg+(rec.rp||0)*BONUS.rigPar+(rec.a||0)*BONUS.assist
    +(rec.rsb||0)*BONUS.rigSb+(rec.og||0)*BONUS.autorete+(rec.esp||0)*BONUS.esp+(rec.amm||0)*BONUS.amm;
  if(role==="P"){fv+=(rec.gs||0)*BONUS.golSub;if((rec.gs||0)===0)fv+=BONUS.cleanSheet}
@@ -2688,6 +2695,7 @@ const OTTAVI_RESET_V=1;
 function getLineupFor(team,gid){if(!gid)return null;
  const direct=store.get("fm26_lineup_"+team+"_"+gid);
  if(gid===5){ if(direct&&direct.lineup&&direct.orv===OTTAVI_RESET_V)return direct; return null; }
+ if(gid>=6){ if(direct&&direct.lineup)return direct; return null; }   /* Quarti+: MAI eredita la fase precedente, si parte vuoti */
  if(direct&&direct.lineup)return direct;
  for(let g=gid-1;g>=1;g--){const prev=store.get("fm26_lineup_"+team+"_"+g);if(prev&&prev.lineup)return Object.assign({},prev,{inherited:true,fromGid:g});}
  return null;}
@@ -2821,7 +2829,7 @@ function buildVrows(list,container){list.sort((a,b)=>(RORD[a.role]-RORD[b.role])
    container.appendChild(row)})}
 function renderVoti(gid){gid=gid||votiGid||(nextGiornata()||{id:1}).id;votiGid=gid;setNav("classifica");
  votiDraft=JSON.parse(JSON.stringify(getVoti(gid)));
- const players=ownedPlayersAt(gid),byNat={};players.forEach(p=>{(byNat[p.nat]=byNat[p.nat]||[]).push(p)});
+ const players=ownedPlayersAt(gid).filter(p=>!isElim(p.nat)||FORCE_AVAILABLE.has(p.name)),byNat={};players.forEach(p=>{(byNat[p.nat]=byNat[p.nat]||[]).push(p)});
  const nats=Object.keys(byNat).sort((a,b)=>a.localeCompare(b,"it"));
  const gsel=GIORNATE.map(g=>`<button class="modbtn${g.id===gid?" sel":""}" data-g="${g.id}">${phaseOf(g.id).label.replace("Gironi \u00b7 ","G")}</button>`).join("");
  view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Voti</button><div class="brand">Inserisci voti</div><span style="width:64px"></span></div>
@@ -2839,7 +2847,7 @@ function renderVoti(gid){gid=gid||votiGid||(nextGiornata()||{id:1}).id;votiGid=g
    const bd=document.createElement("div");bd.className="natbd";bd.style.display="none";let built=false;
    hd.onclick=()=>{const op=bd.style.display==="none";bd.style.display=op?"block":"none";hd.classList.toggle("open",op);if(op&&!built){buildVrows(byNat[nat],bd);built=true}};
    sec.appendChild(hd);sec.appendChild(bd);nl.appendChild(sec)});
- document.getElementById("saveVoti").onclick=()=>{Object.keys(votiDraft).forEach(k=>{const r=votiDraft[k];if(!hasVoto(r))delete votiDraft[k];else r.lk=1;});store.set(votiKey(gid),votiDraft);toast("Voti salvati \u2713 "+phaseOf(gid).label)};
+ document.getElementById("saveVoti").onclick=()=>{Object.keys(votiDraft).forEach(k=>{const r=votiDraft[k];if(!hasVoto(r))delete votiDraft[k];else r.lk=1;});store.set("fm26_votfix_"+gid,votiDraft);toast("Voti salvati \u2713 "+phaseOf(gid).label)};
 }
 
 /* ===== VOTI GIORNATA (vista) ===== */
@@ -3093,6 +3101,7 @@ function cloudPathFor(key){
  if(key==="fm26_accounts")return{sec:"accounts",sub:null};
  if(key==="fm26_bonus")return{sec:"bonus",sub:null};
  if(key.indexOf("fm26_jersey_")===0)return{sec:"jerseys",sub:key.slice(12)};
+ if(key.indexOf("fm26_votfix_")===0)return{sec:"votfix",sub:key.slice(12)};
  if(key.indexOf("fm26_voti_")===0)return{sec:"voti",sub:key.slice(10)};
  if(key.indexOf("fm26_lineup_")===0)return{sec:"lineups",sub:key.slice(12)};
  if(key==="fm26_results")return{sec:"results",sub:null};
@@ -3123,6 +3132,7 @@ function applyCloud(d){_suppress=true;try{
    if(d.bonus)store.set("fm26_bonus",d.bonus);
    if(d.jerseys)for(const t in d.jerseys)store.set("fm26_jersey_"+t,d.jerseys[t]);
    if(d.lineups)for(const k in d.lineups)store.set("fm26_lineup_"+k,d.lineups[k]);
+   if(d.votfix)for(const g in d.votfix)store.set("fm26_votfix_"+g,d.votfix[g]);
    if(d.voti)for(const g in d.voti){const inc=d.voti[g]||{},cur=store.get("fm26_voti_"+g)||{},mg=Object.assign({},inc);for(const k in cur){if(cur[k]&&cur[k].lk&&!(inc[k]&&inc[k].lk))mg[k]=cur[k];}store.set("fm26_voti_"+g,mg);}
    if(d.results)store.set("fm26_results",d.results);
    if(d.events)store.set("fm26_events",d.events);
