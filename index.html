@@ -2247,9 +2247,9 @@ function renderSvincolati(){
  const roles=[["all","Tutti"],["P","Portieri"],["D","Difensori"],["C","Centrocampisti"],["A","Attaccanti"]];
  const rc=document.getElementById("svRole");
  roles.forEach(([id,l])=>{const o=document.createElement("button");o.className="opt"+(svF.role===id?" sel":"");o.textContent=l;o.onclick=()=>{svF.role=id;[...rc.children].forEach((x,i)=>x.classList.toggle("sel",roles[i][0]===id));renderSvList()};rc.appendChild(o)});
- const sorts=[["q","Valore"],["nat","Squadra"]];
+ const sorts=[["role","Ruolo"],["q","Valore \u2193"],["qa","Valore \u2191"],["nat","Nazione"]];
  const sc=document.getElementById("svSort");
- sorts.forEach(([id,l])=>{const o=document.createElement("button");o.className="opt"+(svF.sort===id?" sel":"");o.textContent="\u2193 "+l;o.onclick=()=>{svF.sort=id;[...sc.children].forEach((x,i)=>x.classList.toggle("sel",sorts[i][0]===id));renderSvList()};sc.appendChild(o)});
+ sorts.forEach(([id,l])=>{const o=document.createElement("button");o.className="opt"+(svF.sort===id?" sel":"");o.textContent=l;o.onclick=()=>{svF.sort=id;[...sc.children].forEach((x,i)=>x.classList.toggle("sel",sorts[i][0]===id));renderSvList()};sc.appendChild(o)});
  const inp=document.getElementById("svSearch");inp.value=svF.q;inp.oninput=e=>{svF.q=e.target.value.toLowerCase();renderSvList()};
  document.getElementById("bk").onclick=()=>go("home");
  renderSvList();
@@ -2362,8 +2362,11 @@ function renderChipassa(){
 }
 function renderSvList(){
  const RC={P:"r-p",D:"r-d",C:"r-c",A:"r-a"};
- let arr=SVINC.filter(p=>!isElim(p.nat)&&(svF.role==="all"||p.role===svF.role)&&(p.name.toLowerCase().includes(svF.q)||p.nat.toLowerCase().includes(svF.q)));
- if(svF.sort==="nat")arr.sort((a,b)=>a.nat.localeCompare(b.nat,"it")||b.q-a.q||a.name.localeCompare(b.name,"it"));
+ let arr=freeAgents().filter(p=>(svF.role==="all"||p.role===svF.role)&&(p.name.toLowerCase().includes(svF.q)||p.nat.toLowerCase().includes(svF.q)));
+ const RO={P:0,D:1,C:2,A:3};
+ if(svF.sort==="role")arr.sort((a,b)=>RO[a.role]-RO[b.role]||b.q-a.q||a.nat.localeCompare(b.nat,"it"));
+ else if(svF.sort==="qa")arr.sort((a,b)=>a.q-b.q||a.nat.localeCompare(b.nat,"it"));
+ else if(svF.sort==="nat")arr.sort((a,b)=>a.nat.localeCompare(b.nat,"it")||b.q-a.q||a.name.localeCompare(b.name,"it"));
  else arr.sort((a,b)=>b.q-a.q||a.nat.localeCompare(b.nat,"it"));
  const html=arr.slice(0,400).map(p=>`<div class="prow"><span class="rb ${RC[p.role]}">${p.role}</span><span class="pn">${p.name}<small>${fimg(p.nat,"flsm")} ${p.nat}</small></span><span class="pq">${p.q}</span></div>`).join("");
  document.getElementById("svList").innerHTML=html+(arr.length>400?`<div class="season">Primi 400 di ${arr.length} · affina la ricerca</div>`:`<div class="season">${arr.length} giocatori</div>`);
@@ -2792,6 +2795,7 @@ function ownedPlayers(){const seen={};TEAMS.forEach(t=>{(ROSTERS[t]?ROSTERS[t].p
    nessuna fase, nessuna dipendenza dal turno: uno svincolo e' atomico.
    ============================================================ */
 const MARKET_KEY="fm26_market";
+const MARKET_PHASE=2;/* fase mercato corrente (2=dopo Ottavi). La tab Lega mostra solo i movimenti di questa fase; i precedenti restano applicati alle rose ma non elencati. Aumenta dopo ogni turno KO. */
 function getMarket(){const m=store.get(MARKET_KEY);return (m&&typeof m==="object")?m:{};}
 function mkTeam(t){const x=getMarket()[t]||{};return {out:Array.isArray(x.out)?x.out.slice():[],in:Array.isArray(x.in)?x.in.slice():[],ts:x.ts||0};}
 function saveMarket(m){store.set(MARKET_KEY,m);applyMercato();}
@@ -2810,15 +2814,17 @@ function spentOf(t){return mkTeam(t).in.reduce((s,x)=>s+(x.price||0),0);}
 function creditsOf(t){return baseCredits(t)+recoveredOf(t)-spentOf(t);}
 function releasedOf(t){const reg={};registryOf(t).forEach(p=>reg[pid(p)]=p);return mkTeam(t).out.map(id=>reg[id]).filter(Boolean);}
 function acquiredOf(t){return mkTeam(t).in.map(inAsPlayer);}
+function acquiredOfPhase(t){return mkTeam(t).in.filter(x=>x.ph===MARKET_PHASE).map(inAsPlayer);}
+function releasedOfPhase(t){const oph=(getMarket()[t]||{}).outPh||{};return releasedOf(t).filter(p=>oph[pid(p)]===MARKET_PHASE);}
 /* PROIEZIONE: UNICO punto che scrive ROSTERS, ricostruito dalla fonte */
 function applyMercato(){TEAMS.forEach(t=>{const R=ROSTERS[t];if(!R)return;const pl=rosterOf(t);
   R.players=pl;R.n=pl.length;R.spent=pl.reduce((s,p)=>s+(p.acq||0),0);R.value=pl.reduce((s,p)=>s+(p.q||0),0);
   R.counts={P:0,D:0,C:0,A:0};pl.forEach(p=>{if(R.counts[p.role]!=null)R.counts[p.role]++;});R.credits=creditsOf(t);});}
 /* MUTAZIONI ATOMICHE (leggo fonte -> modifico -> salvo -> proietto) */
 function marketRelease(t,id){const m=getMarket();const x=m[t]||{out:[],in:[]};x.out=Array.isArray(x.out)?x.out:[];x.in=Array.isArray(x.in)?x.in:[];
-  const i=x.out.indexOf(id);if(i>=0)x.out.splice(i,1);else x.out.push(id);x.ts=Date.now();m[t]=x;saveMarket(m);}
+  const i=x.out.indexOf(id);x.outPh=x.outPh||{};if(i>=0){x.out.splice(i,1);delete x.outPh[id];}else{x.out.push(id);x.outPh[id]=MARKET_PHASE;}x.ts=Date.now();m[t]=x;saveMarket(m);}
 function marketBuy(t,player,price){const m=getMarket();const x=m[t]||{out:[],in:[]};x.out=Array.isArray(x.out)?x.out:[];x.in=Array.isArray(x.in)?x.in:[];
-  x.in.push({role:player.role,name:player.name,nat:player.nat,q:player.q,price:price});x.ts=Date.now();m[t]=x;saveMarket(m);}
+  x.in.push({role:player.role,name:player.name,nat:player.nat,q:player.q,price:price,ph:MARKET_PHASE});x.ts=Date.now();m[t]=x;saveMarket(m);}
 function marketUndoBuy(t,idx){const m=getMarket();const x=m[t];if(!x||!Array.isArray(x.in))return;x.in.splice(idx,1);x.ts=Date.now();m[t]=x;saveMarket(m);}
 /* svincolati disponibili all'asta = listone + rilasciati, meno posseduti, meno nazionali eliminate */
 function freeAgents(){const owned=new Set();TEAMS.forEach(t=>rosterOf(t).forEach(p=>owned.add(pid(p))));
@@ -3025,7 +3031,7 @@ function mercBody(){const t=user,body=document.getElementById("mbody");if(!body)
    mercListBuy();
  } else if(mercTab==="lega"){
    body.innerHTML=`<div class="mnote">Movimenti e crediti di tutta la lega \u00b7 aggiornati in tempo reale.</div>`+TEAMS.map(tt=>{const Rt=ROSTERS[tt];if(!Rt)return "";
-     const outs=releasedOf(tt),ins=acquiredOf(tt);
+     const outs=releasedOfPhase(tt),ins=acquiredOfPhase(tt);
      const oH=outs.length?outs.map(pl=>`<span class="lgchip out">${dispName(pl.name)}</span>`).join(""):`<span class="lgnone">nessuno</span>`;
      const iH=ins.length?ins.map(x=>`<span class="lgchip inn">${dispName(x.name)} \u00b7 ${x.price}</span>`).join(""):"";
      return `<div class="lgteam"><div class="lgh"><span class="lgclub">${Rt.club}</span><span class="lgcr">${creditsOf(tt)}<i>cr</i></span></div><div class="lgln"><b>Svincolati</b> ${oH}</div>${ins.length?`<div class="lgln"><b>Acquistati</b> ${iH}</div>`:""}</div>`;
