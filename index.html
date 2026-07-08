@@ -2835,12 +2835,18 @@ function freeAgents(){const owned=new Set();TEAMS.forEach(t=>rosterOf(t).forEach
 /* --- accessi puliti usati da scoring/voti/formazione: nessuna fase, nessun gid --- */
 /* ===== STORICO IMMUTABILE =====
    La formazione salva una FOTOGRAFIA (snapshot) della rosa nel momento del salvataggio.
-   - Giornata CONCLUSA: si legge SOLO lo snapshot (o il registry come fallback per le formazioni
-     salvate prima di questo sistema). Mai la rosa attuale -> svincoli/acquisti non toccano il passato.
-   - Giornata in corso/futura: si usa la rosa ATTUALE (per schierare la prossima). */
+   L'immutabilita' scatta al BLOCCO della giornata (isLocked = turno iniziato), non alla sua
+   conclusione: dal momento in cui il turno parte, la formazione e la panchina di quella giornata
+   sono congelate per sempre e nessuna operazione futura (svincolo, acquisto, cambio ruolo,
+   modifica rosa) puo' piu' alterarle.
+   - Giornata BLOCCATA (o conclusa): si legge SOLO lo snapshot (o il registry come fallback per le
+     formazioni salvate prima di questo sistema). Mai la rosa attuale -> svincoli/acquisti fatti in
+     vista dei turni successivi non toccano il passato.
+   - Giornata ancora schierabile (finestra aperta) / futura: si usa la rosa ATTUALE, cosi' la
+     prossima formazione riflette gli acquisti e gli svincoli piu' recenti. */
 function rosterSnap(t){const s={};rosterOf(t).forEach(p=>s[pid(p)]={role:p.role,name:p.name,nat:p.nat,q:p.q});return s;}
 function lineupPlayers(sub,team,gid){
-  if(gid&&roundConcluded(gid)&&sub){
+  if(gid&&isLocked(gid)&&sub){
     /* SNAPSHOT esplicito (nuove formazioni): fotografia completa della rosa al momento della conferma. */
     if(sub.snap){const m={};for(const id in sub.snap)m[id]=sub.snap[id];return m;}
     /* Formazioni salvate prima degli snapshot: uso SOLO i pid realmente presenti in quella formazione
@@ -2853,7 +2859,7 @@ function lineupPlayers(sub,team,gid){
     (sub.order||[]).forEach(add);
     return m;
   }
-  /* Giornata in corso/futura -> rosa ATTUALE (per schierare la prossima). */
+  /* Giornata ancora schierabile/futura -> rosa ATTUALE (per schierare la prossima). */
   const m={};rosterOf(team).forEach(p=>m[pid(p)]=p);return m;
 }
 function ownedPlayersAt(gid){const seen={};TEAMS.forEach(t=>registryOf(t).forEach(p=>{seen[pid(p)]=p;}));return Object.values(seen);}
