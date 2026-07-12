@@ -971,6 +971,22 @@ button:active,.tap:active{transform:scale(.97);opacity:.88}
 }
 .admtop.admcalc{background:#1a2e4a;border-color:#4a90ff;color:#9fc6ff}
 .admtop.admcalc.on{background:#173a2a;border-color:#27C46A;color:#7ef0b0}
+.astaBox{margin:14px;padding:16px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.astaBox.arow{display:flex;gap:10px}
+.aturn{font-size:15px;font-weight:700;margin-bottom:6px}
+.atimer{font-size:40px;font-weight:900;text-align:center;color:#ffc21e;margin:6px 0}
+.asub{font-size:13px;color:#9fb0d8;line-height:1.4}
+.acard{display:flex;align-items:center;gap:12px;padding:10px 0}
+.acard .an{font-size:20px;font-weight:800}.acard .an small{display:block;font-size:12px;color:#9fb0d8;font-weight:500}
+.abid{text-align:center;font-size:16px;margin:6px 0}.abudget{text-align:center;font-size:12.5px;color:#9fb0d8;margin-bottom:10px}
+.abtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.abtn{flex:1;min-width:90px;padding:14px 10px;border-radius:12px;border:1px solid #4a90ff;background:#1a2e4a;color:#cfe0ff;font-weight:800;font-size:14px;font-family:inherit;cursor:pointer}
+.abtn.max{background:#ffc21e;border-color:#ffc21e;color:#2a2200}
+.aplist{margin-top:10px;max-height:52vh;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.apick{text-align:left;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#fff;font-family:inherit;font-size:14px;cursor:pointer}
+.apick small{color:#9fb0d8}
+.btnSm{flex:1;padding:11px;border-radius:11px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#cbd6ee;font-weight:700;font-family:inherit;cursor:pointer}
+.btnSm.danger{border-color:#ff5c5c;color:#ff9d9d}
 </style>
 </head>
 <body>
@@ -1438,7 +1454,7 @@ function rotateBg(){let i;do{i=Math.floor(Math.random()*BGS.length)}while(i===_l
 function go(v){curView=v;document.body.dataset.view=v;document.body.dataset.team=user||"";rotateBg();if(typeof applyMercato==="function")applyMercato();if(cdTimer){clearInterval(cdTimer);cdTimer=null}setNav(["home","squadre","calendario","votigiornata","classifica"].includes(v)?v:"home");view.scrollTop=0;document.getElementById("nav").style.display="flex";document.getElementById("fmActions").style.display="none";var _vf=document.getElementById("vgFoot");if(_vf&&v!=="votigiornata")_vf.style.display="none";
  if(v==="home")renderHome();else if(v==="cruciverba")renderCruciverba();else if(v==="impiccato")renderImpiccato();else if(v==="top10")renderTop10();else if(v==="squadre")renderSquadre();else if(v==="calendario")renderCalendario();
  else if(v==="classifica")renderClassifica();else if(v==="formazione")renderFormazione();
- else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="eliminate")renderEliminate();else if(v==="chipassa")renderChipassa();else if(v==="pronostici")renderPronostici();else if(v==="mercato")renderMercato();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
+ else if(v==="roster")renderRoster(viewTeam);else if(v==="svincolati")renderSvincolati();else if(v==="eliminate")renderEliminate();else if(v==="chipassa")renderChipassa();else if(v==="pronostici")renderPronostici();else if(v==="mercato")renderMercato();else if(v==="asta")renderAsta();else if(v==="info")renderInfografiche(viewTeam);else if(v==="formview")renderFormView(viewTeam);else if(v==="voti")renderVoti(votiGid);else if(v==="votigiornata")renderVotiGiornata();else if(v==="settings")renderSettings();else if(v==="regolamento")renderRegolamento();else if(v==="porceddu")renderPorceddu();else if(v==="risultati")renderRisultati();else if(v==="news")renderNews()}
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>go(b.dataset.v));
 
 /* ===== HOME ===== */
@@ -2010,6 +2026,7 @@ function renderHome(){
  <div class="drawer-ov" id="drawerOv"></div>
  <aside class="drawer" id="drawer"><div class="drawer-h">Menù</div>
    <button class="drawer-item" data-go="mercato" style="--mc:#27C46A"><span>🔄</span>Mercato</button>
+   <button class="drawer-item" data-go="asta" style="--mc:#ffc21e"><span>🔨</span>Asta live</button>
    <button class="drawer-item" data-go="svincolati" style="--mc:#16D6D6"><span>🆓</span>Svincolati</button>
    <button class="drawer-item" data-go="chipassa" style="--mc:#1A52F5"><span>➡️</span>Chi passa</button>
    <button class="drawer-item" data-go="pronostici" style="--mc:#E11C8E"><span>🔮</span>Pronostici</button>
@@ -3006,6 +3023,62 @@ function renderAstina(){setNav("home");
  document.getElementById("goReg").onclick=()=>go("regolamento");
  document.getElementById("goSv").onclick=()=>go("svincolati");
 }
+/* ===== ASTA IN TEMPO REALE ===== */
+const AUCT_PICK_SEC=25, AUCT_BID_SEC=15;
+function auctGet(){return store.get("fm26_auction");}
+function auctSet(a){store.set("fm26_auction",a);}
+function auctBuysReq(){return (MARKET_LIMITS[MARKET_PHASE]||{in:3}).in;}
+function auctBought(t){return (((getMarket()[t]||{}).in)||[]).filter(function(x){return x.ph===MARKET_PHASE;}).length;}
+function auctMaxBid(t){var reserve=Math.max(0,auctBuysReq()-auctBought(t)-1);return Math.max(1,creditsOf(t)-reserve);}
+function auctTurnTeam(a){return a.order[a.turn];}
+function auctIsHost(){return adminAuth;}   /* host = chi ha inserito la password admin (guida timer/aggiudicazioni) */
+function auctClub(t){return ROSTERS[t]?ROSTERS[t].club:t;}
+function auctStart(){auctSet({live:true,order:TEAMS.slice(),turn:0,ph:"pick",player:null,bid:0,bidder:null,endTime:Date.now()+AUCT_PICK_SEC*1000});}
+function auctStop(){auctSet({live:false});}
+function auctAdvance(a){a.turn=(a.turn+1)%a.order.length;a.ph="pick";a.player=null;a.bid=0;a.bidder=null;a.endTime=Date.now()+AUCT_PICK_SEC*1000;}
+function auctPick(pl){var a=auctGet();if(!a||!a.live||a.ph!=="pick")return;if(auctTurnTeam(a)!==effUser()&&!auctIsHost()){toast("Non e' il tuo turno");return;}a.player=pl;a.ph="bid";a.bid=1;a.bidder=auctTurnTeam(a);a.endTime=Date.now()+AUCT_BID_SEC*1000;auctSet(a);renderAsta();}
+function auctBid(t,amt){var a=auctGet();if(!a||!a.live||a.ph!=="bid")return;if(auctBought(t)>=auctBuysReq()){toast("Hai gia' comprato "+auctBuysReq()+" giocatori");return;}if(t===a.bidder){toast("Sei gia' in testa");return;}if(amt<a.bid+1){toast("Rilancio minimo +1");return;}var mx=auctMaxBid(t);if(amt>mx){toast("Oltre il tuo massimo ("+mx+" crediti)");return;}a.bid=amt;a.bidder=t;a.endTime=Date.now()+AUCT_BID_SEC*1000;auctSet(a);renderAsta();}
+function auctFinalize(){var a=auctGet();if(!a||!a.live||Date.now()<a.endTime)return;
+  if(a.ph==="bid"&&a.bidder&&a.player){marketBuy(a.bidder,a.player,a.bid);toast(a.player.name+" -> "+auctClub(a.bidder)+" per "+a.bid);}
+  auctAdvance(a);auctSet(a);}
+function renderAsta(){setNav("home");var a=auctGet();var body="";
+  if(!a||!a.live){
+    body='<div class="astaBox"><h2 class="svh">Asta live</h2><p class="asub">Turno d\'asta '+MARKET_PHASE+' - chi ha il turno chiama un giocatore (25s), si parte da 1 credito, rilanci minimo +1, asta 15s.</p>'+(auctIsHost()?'<button class="abtn max" id="aStart">Avvia asta</button>':'<p class="asub">L\'asta non e\' ancora attiva.</p>')+'</div>';
+  } else {
+    var turnT=auctTurnTeam(a),me=effUser(),rem=Math.max(0,Math.ceil((a.endTime-Date.now())/1000));
+    if(a.ph==="pick"){
+      body='<div class="astaBox"><div class="aturn">Turno di <b>'+auctClub(turnT)+'</b> - sceglie chi mettere all\'asta</div><div class="atimer">'+rem+'s</div>';
+      if(turnT===me||auctIsHost()) body+='<input id="aSearch" class="svsearch" placeholder="Cerca giocatore da chiamare..."><div class="aplist" id="aPickList"></div>';
+      else body+='<div class="asub">'+auctClub(turnT)+' sta scegliendo...</div>';
+      body+='</div>';
+    } else {
+      var p=a.player,mx=auctMaxBid(me),bought=auctBought(me),canBid=bought<auctBuysReq()&&me!==a.bidder;
+      body='<div class="astaBox"><div class="acard"><span class="rb r-'+p.role.toLowerCase()+'">'+p.role+'</span><div class="an">'+p.name+'<small>'+p.nat+' - '+p.q+'</small></div></div>'
+        +'<div class="abid">Offerta <b>'+a.bid+'</b> - '+auctClub(a.bidder)+'</div><div class="atimer">'+rem+'s</div>'
+        +'<div class="abudget">Il tuo massimo: <b>'+mx+'</b> crediti - comprati '+bought+'/'+auctBuysReq()+'</div>';
+      if(canBid&&a.bid+1<=mx){body+='<div class="abtns"><button class="abtn" data-amt="'+(a.bid+1)+'">+1 = '+(a.bid+1)+'</button>'+((a.bid+5<=mx)?'<button class="abtn" data-amt="'+(a.bid+5)+'">+5 = '+(a.bid+5)+'</button>':'')+'<button class="abtn max" data-amt="'+mx+'">MAX = '+mx+'</button></div>';}
+      else if(me===a.bidder)body+='<div class="asub">Sei in testa</div>';
+      else body+='<div class="asub">Non puoi rilanciare</div>';
+      body+='</div>';
+    }
+    if(auctIsHost())body+='<div class="astaBox arow"><button class="btnSm" id="aSkip">Salta turno</button><button class="btnSm danger" id="aStop">Termina asta</button></div>';
+  }
+  view.innerHTML='<div class="top"><button class="back" id="bk">Home</button><div class="brand">Asta live</div><span style="width:46px"></span></div>'+body;
+  document.getElementById("bk").onclick=function(){go("home");};
+  var st=document.getElementById("aStart");if(st)st.onclick=function(){requireAdmin(function(){auctStart();renderAsta();});};
+  var sk=document.getElementById("aSkip");if(sk)sk.onclick=function(){var a=auctGet();if(a&&a.live){auctAdvance(a);auctSet(a);renderAsta();}};
+  var sp=document.getElementById("aStop");if(sp)sp.onclick=function(){if(confirm("Terminare l'asta?")){auctStop();renderAsta();}};
+  if(a&&a.live&&a.ph==="pick"&&(auctTurnTeam(a)===effUser()||auctIsHost())){
+    var draw=function(){var q=(document.getElementById("aSearch").value||"").toLowerCase();
+      var fa=freeAgents().filter(function(pp){return pp.name.toLowerCase().indexOf(q)>=0||pp.nat.toLowerCase().indexOf(q)>=0;}).slice(0,60);
+      document.getElementById("aPickList").innerHTML=fa.map(function(pp){return '<button class="apick" data-r="'+pp.role+'" data-n="'+encodeURIComponent(pp.name)+'" data-na="'+encodeURIComponent(pp.nat)+'" data-q="'+pp.q+'"><span class="rb r-'+pp.role.toLowerCase()+'">'+pp.role+'</span> '+pp.name+' <small>'+pp.nat+' - '+pp.q+'</small></button>';}).join("");
+      document.querySelectorAll(".apick").forEach(function(b){b.onclick=function(){auctPick({role:b.dataset.r,name:decodeURIComponent(b.dataset.n),nat:decodeURIComponent(b.dataset.na),q:+b.dataset.q});};});};
+    document.getElementById("aSearch").oninput=draw;draw();
+  }
+  document.querySelectorAll(".abtn[data-amt]").forEach(function(b){b.onclick=function(){auctBid(effUser(),+b.dataset.amt);};});
+}
+setInterval(function(){var a=auctGet();if(!a||!a.live)return;if(auctIsHost()&&Date.now()>=a.endTime){auctFinalize();if(curView==="asta")renderAsta();return;}if(curView==="asta"){var t=document.querySelector(".atimer");if(t)t.textContent=Math.max(0,Math.ceil((a.endTime-Date.now())/1000))+"s";}},1000);
+
 function renderMercato(){setNav("home");applyMercato();
  const t=user,R=ROSTERS[t],RB=ROSTERS_BASE[t];
  if(!R||!RB){view.innerHTML=`<div class="top"><button class="back" id="bk">\u2039 Home</button><div class="brand">Mercato</div><span style="width:60px"></span></div><div class="dash fade"><div class="fmInfo"><div class="ic">\ud83d\udd04</div><div class="tx">Accedi come una squadra per gestire il mercato.</div></div></div>`;const b=document.getElementById("bk");if(b)b.onclick=()=>go("home");return;}
@@ -3165,6 +3238,7 @@ function cloudPathFor(key){
  if(key.indexOf("fm26_lineup_")===0)return{sec:"lineups",sub:key.slice(12)};
  if(key==="fm26_results")return{sec:"results",sub:null};
  if(key==="fm26_calc")return{sec:"calc",sub:null};
+ if(key==="fm26_auction")return{sec:"auction",sub:null};
  if(key==="fm26_events")return{sec:"events",sub:null};
  if(key.indexOf("fm26_cw_")===0)return{sec:"cw",sub:key.slice(8)};
  if(key.indexOf("fm26_hm_")===0)return{sec:"hm",sub:key.slice(8)};
@@ -3177,7 +3251,7 @@ function cloudPush(key,val){if(!cloudReady||_suppress||!leagueRef)return;const p
    if(p.sub){
      /* sezione con sotto-chiave (voti_G, lineup_K, jersey_T...): merge sul sotto-elemento */
      leagueRef.set({[p.sec]:{[p.sub]:val}},{merge:true}).catch(e=>console.warn("cloud push",e));
-   }else if(p.sec==="results"||p.sec==="calc"){
+   }else if(p.sec==="results"||p.sec==="calc"||p.sec==="auction"){
      /* RESULTS: le chiavi sono numeri-partita e servono le CANCELLAZIONI (azzera tabellone, ritocca).
         update = REPLACE del campo -> le chiavi rimosse spariscono davvero dal cloud.
         (set merge:true fonderebbe la mappa e non le rimuoverebbe mai: era IL bug del calendario.) */
@@ -3196,6 +3270,7 @@ function applyCloud(d){_suppress=true;try{
    if(d.voti)for(const g in d.voti){const inc=d.voti[g]||{},cur=store.get("fm26_voti_"+g)||{},mg=Object.assign({},inc);for(const k in cur){if(cur[k]&&cur[k].lk&&!(inc[k]&&inc[k].lk))mg[k]=cur[k];}store.set("fm26_voti_"+g,mg);}
    if(d.results)store.set("fm26_results",d.results);
    if(d.calc)store.set("fm26_calc",d.calc);
+   if(d.auction!==undefined)store.set("fm26_auction",d.auction);
    if(d.events)store.set("fm26_events",d.events);
    if(d.cw)for(const k in d.cw)store.set("fm26_cw_"+k,d.cw[k]);
    if(d.hm)for(const k in d.hm)store.set("fm26_hm_"+k,d.hm[k]);
