@@ -2800,7 +2800,9 @@ function ownedPlayers(){const seen={};TEAMS.forEach(t=>{(ROSTERS[t]?ROSTERS[t].p
    nessuna fase, nessuna dipendenza dal turno: uno svincolo e' atomico.
    ============================================================ */
 const MARKET_KEY="fm26_market";
-const MARKET_PHASE=2;/* fase mercato corrente (2=dopo Ottavi). La tab Lega mostra solo i movimenti di questa fase; i precedenti restano applicati alle rose ma non elencati. Aumenta dopo ogni turno KO. */
+const MARKET_PHASE=3;
+const MARKET_LIMITS={1:{out:8,in:5},2:{out:12,in:5},3:{out:8,in:3}};/* max svincoli/acquisti per squadra a turno: dopo Sedicesimi -8/+5, dopo Ottavi -12/+5, dopo Quarti -8/+3 */
+/* fase mercato corrente (3=dopo Quarti). La tab Lega mostra solo i movimenti di questa fase; i precedenti restano applicati alle rose ma non elencati. Aumenta dopo ogni turno KO. */
 function getMarket(){const m=store.get(MARKET_KEY);return (m&&typeof m==="object")?m:{};}
 function mkTeam(t){const x=getMarket()[t]||{};return {out:Array.isArray(x.out)?x.out.slice():[],in:Array.isArray(x.in)?x.in.slice():[],ts:x.ts||0};}
 function saveMarket(m){store.set(MARKET_KEY,m);applyMercato();}
@@ -2827,9 +2829,9 @@ function applyMercato(){TEAMS.forEach(t=>{const R=ROSTERS[t];if(!R)return;const 
   R.counts={P:0,D:0,C:0,A:0};pl.forEach(p=>{if(R.counts[p.role]!=null)R.counts[p.role]++;});R.credits=creditsOf(t);});}
 /* MUTAZIONI ATOMICHE (leggo fonte -> modifico -> salvo -> proietto) */
 function marketRelease(t,id){const m=getMarket();const x=m[t]||{out:[],in:[]};x.out=Array.isArray(x.out)?x.out:[];x.in=Array.isArray(x.in)?x.in:[];
-  const i=x.out.indexOf(id);x.outPh=x.outPh||{};if(i>=0){x.out.splice(i,1);delete x.outPh[id];}else{x.out.push(id);x.outPh[id]=MARKET_PHASE;}x.ts=Date.now();m[t]=x;saveMarket(m);}
+  const i=x.out.indexOf(id);x.outPh=x.outPh||{};if(i>=0){x.out.splice(i,1);delete x.outPh[id];}else{const lim=MARKET_LIMITS[MARKET_PHASE];const cur=Object.keys(x.outPh).filter(k=>x.outPh[k]===MARKET_PHASE).length;if(lim&&cur>=lim.out){toast("Max "+lim.out+" svincoli in questo turno di asta");return;}x.out.push(id);x.outPh[id]=MARKET_PHASE;}x.ts=Date.now();m[t]=x;saveMarket(m);}
 function marketBuy(t,player,price){const m=getMarket();const x=m[t]||{out:[],in:[]};x.out=Array.isArray(x.out)?x.out:[];x.in=Array.isArray(x.in)?x.in:[];
-  x.in.push({role:player.role,name:player.name,nat:player.nat,q:player.q,price:price,ph:MARKET_PHASE});x.ts=Date.now();m[t]=x;saveMarket(m);}
+  const lim=MARKET_LIMITS[MARKET_PHASE];if(lim&&x.in.filter(y=>y.ph===MARKET_PHASE).length>=lim.in){toast("Max "+lim.in+" acquisti in questo turno di asta");return;}x.in.push({role:player.role,name:player.name,nat:player.nat,q:player.q,price:price,ph:MARKET_PHASE});x.ts=Date.now();m[t]=x;saveMarket(m);}
 function marketUndoBuy(t,idx){const m=getMarket();const x=m[t];if(!x||!Array.isArray(x.in))return;x.in.splice(idx,1);x.ts=Date.now();m[t]=x;saveMarket(m);}
 /* svincolati disponibili all'asta = listone + rilasciati, meno posseduti, meno nazionali eliminate */
 function freeAgents(){const owned=new Set();TEAMS.forEach(t=>rosterOf(t).forEach(p=>owned.add(pid(p))));
