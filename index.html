@@ -2719,7 +2719,7 @@ const VOTI_FIX={
     "D|H. Ito":{v:6.5}                 /* G2: 6,5 (nessun gol) */
   }
 };
-function getVoti(gid){const base=store.get(votiKey(gid))||VOTI_SEED[gid]||{};const fix=VOTI_FIX[gid];
+function getVoti(gid){const base=Object.assign({},store.get(votiKey(gid))||{},VOTI_SEED[gid]||{});const fix=VOTI_FIX[gid];
   const out=Object.assign({},base);
   if(fix&&Object.keys(base).length){for(const k in fix)out[k]=Object.assign({},fix[k]);}
   /* STRATO ADMIN (definitivo): i voti inseriti dall'admin vivono in fm26_votfix e VINCONO SEMPRE
