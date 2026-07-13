@@ -972,6 +972,7 @@ button:active,.tap:active{transform:scale(.97);opacity:.88}
 .admtop.admcalc{background:#1a2e4a;border-color:#4a90ff;color:#9fc6ff}
 .admtop.admcalc.on{background:#173a2a;border-color:#27C46A;color:#7ef0b0}
 .astaBox{margin:14px;padding:16px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.auctionIntro{padding:20px 16px 110px}.auctionIntro h1{margin:8px 0 6px;font-size:30px}.auctionIntro p{color:var(--muted);margin:0 0 18px}.auctionTeamGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px}.auctionTeam{min-height:82px;border:1px solid rgba(255,255,255,.14);border-radius:18px;background:rgba(255,255,255,.07);color:inherit;font:inherit;font-weight:800;padding:10px;cursor:pointer}.auctionTeam:hover{border-color:var(--yellow);background:rgba(255,194,30,.13)}.auctionWrap{padding:0 14px 110px}.auctionHero{padding:14px 2px 10px}.auctionHero h2{margin:0;font-size:24px}.auctionMeta{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px;margin-top:6px}.auctionSection{margin:18px 0 8px;font-size:17px}.auctionGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.auctionCard{border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:13px;background:rgba(255,255,255,.065)}.auctionCard h3{margin:0 0 5px;font-size:17px}.auctionCard small{color:var(--muted)}.auctionLine{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:10px}.auctionPrice{font-size:19px;font-weight:850;color:var(--yellow)}.auctionTimer{font-weight:800;color:#fff}.auctionHistory{color:var(--muted);font-size:12px;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.auctionAction{margin-top:12px;width:100%;border:0;border-radius:12px;padding:11px;background:var(--yellow);font:inherit;font-weight:850;color:#312600;cursor:pointer}.auctionAction:disabled{opacity:.5;cursor:not-allowed}.auctionNotice{padding:13px;border-radius:14px;background:rgba(255,194,30,.12);color:#ffe294;margin:12px 0}.auctionTeamChip{border:0;border-radius:999px;background:rgba(255,255,255,.11);color:inherit;padding:7px 10px;font:inherit;cursor:pointer}
 .astaBox.arow{display:flex;gap:10px}
 .aturn{font-size:15px;font-weight:700;margin-bottom:6px}
 .atimer{font-size:40px;font-weight:900;text-align:center;color:#ffc21e;margin:6px 0}
@@ -3027,85 +3028,32 @@ function renderAstina(){setNav("home");
  document.getElementById("goReg").onclick=()=>go("regolamento");
  document.getElementById("goSv").onclick=()=>go("svincolati");
 }
-/* ===== ASTA IN TEMPO REALE ===== */
-/* ===== ASTA LIVE (macchina a stati PRD) - collegata ai dati app (freeAgents/creditsOf/marketBuy) ===== */
-const AUCT_ORDER=["Djo Kane","Stebo","Pede","Gembo","Berna","Stegaz","Spino","Pie","Fra"];/* ordine turni rigido; Fra=Cordata SPA */
-const AUCT_SEL_SEC=30,AUCT_CD_SEC=5,AUCT_BID_SEC=18,AUCT_MAX_NAT=3;
-function auctGet(){return store.get("fm26_auction");}
-function auctSet(a){store.set("fm26_auction",a);}
-function auctBuysReq(){return (MARKET_LIMITS[MARKET_PHASE]||{in:3}).in;}
-function auctBought(t){return (((getMarket()[t]||{}).in)||[]).filter(function(x){return x.ph===MARKET_PHASE;}).length;}
-function auctSlots(t){return Math.max(0,auctBuysReq()-auctBought(t));}
-function auctMaxBid(t){return Math.max(1,creditsOf(t)-Math.max(0,auctSlots(t)-1));}
-function auctNatCount(t,nat){return rosterOf(t).filter(function(p){return p.nat===nat;}).length;}
-function auctClub(t){return ROSTERS[t]?ROSTERS[t].club:t;}
-function auctIsHost(){return adminAuth;}
-function auctDriver(){return user==="Djo Kane";}
-function auctTurnTeam(a){return a.order[a.turn];}
-function auctCanBid(t,amt,nat){if(auctBought(t)>=auctBuysReq())return "Hai gia comprato "+auctBuysReq()+" giocatori";if(nat&&auctNatCount(t,nat)>=AUCT_MAX_NAT)return "Max "+AUCT_MAX_NAT+" della stessa nazione";if(amt>auctMaxBid(t))return "Oltre il tuo massimo ("+auctMaxBid(t)+" crediti)";return null;}
-function auctStart(){var ord=AUCT_ORDER.filter(function(t){return TEAMS.indexOf(t)>=0;});auctSet({live:true,order:ord,turn:0,fase:"attesa",player:null,bid:0,bidder:null,endTime:0});}
-function auctStop(){auctSet({live:false});}
-function auctAvvia(a){a.fase="selezione";a.endTime=Date.now()+AUCT_SEL_SEC*1000;auctSet(a);}
-function auctSkip(a){a.turn=(a.turn+1)%a.order.length;a.fase="attesa";a.player=null;a.bid=0;a.bidder=null;a.endTime=0;auctSet(a);}
-function auctPick(pl){var a=auctGet();if(!a||!a.live||a.fase!=="selezione")return;if(auctTurnTeam(a)!==effUser()&&!auctIsHost()){toast("Non e il tuo turno");return;}a.player=pl;a.fase="countdown";a.endTime=Date.now()+AUCT_CD_SEC*1000;auctSet(a);renderAsta();}
-function auctToActive(a){a.fase="attiva";a.bid=1;a.bidder=auctTurnTeam(a);a.endTime=Date.now()+AUCT_BID_SEC*1000;auctSet(a);}
-function auctBid(t,amt){var a=auctGet();if(!a||!a.live||a.fase!=="attiva")return;if(t===a.bidder){toast("Sei gia in testa");return;}if(amt<a.bid+1){toast("Rilancio minimo +1");return;}var err=auctCanBid(t,amt,a.player?a.player.nat:null);if(err){toast(err);return;}a.bid=amt;a.bidder=t;a.endTime=Date.now()+AUCT_BID_SEC*1000;auctSet(a);renderAsta();}
-function auctAssign(a){if(a.fase==="attiva"&&a.bidder&&a.player){marketBuy(a.bidder,a.player,a.bid);toast(a.player.name+" -> "+auctClub(a.bidder)+" per "+a.bid);}a.turn=(a.turn+1)%a.order.length;a.fase="attesa";a.player=null;a.bid=0;a.bidder=null;a.endTime=0;auctSet(a);}
-function renderAsta(){setNav("home");var a=auctGet();var me=effUser(),body="";
-  if(!a||!a.live){
-    body='<div class="astaBox"><h2 class="svh">Asta live</h2><p class="asub">Ordine turni: Djo Kane, Stebo, Pede, Gembo, Berna, Stegaz, Spino, Pie, Cordata. Scelta 30s, avvio 5s, battuta 18s (si azzera a ogni rilancio). Rilancio min +1. Max '+((MARKET_LIMITS[MARKET_PHASE]||{in:3}).in)+' acquisti, max 3 per nazione.</p>'+(auctIsHost()?'<button class="astartBtn" id="aStart">Avvia asta</button>':'<p class="asub">In attesa che l\'admin avvii l\'asta.</p>')+'</div>';
-  } else {
-    var turnT=auctTurnTeam(a),rem=Math.max(0,Math.ceil((a.endTime-Date.now())/1000)),next=a.order[(a.turn+1)%a.order.length];
-    if(a.fase==="attesa"){
-      body='<div class="astaBox"><div class="aturn'+(turnT===me?" mine":"")+'">Turno di <b>'+auctClub(turnT)+'</b></div><div class="asub">Prossimo: '+auctClub(next)+'</div>';
-      if(turnT===me||auctIsHost())body+='<button class="astartBtn" id="aAvvia">Avvia il turno</button>';
-      else body+='<div class="asub">In attesa che '+auctClub(turnT)+' avvii il turno...</div>';
-      body+='</div>';
-    } else if(a.fase==="selezione"){
-      body='<div class="astaBox"><div class="aturn'+(turnT===me?" mine":"")+'">Turno di <b>'+auctClub(turnT)+'</b> - sceglie il giocatore</div><div class="atimer">'+rem+'s</div>';
-      if(turnT===me||auctIsHost())body+='<input id="aSearch" class="svsearch" placeholder="Cerca giocatore da chiamare..."><div class="aplist" id="aPickList"></div><button class="btnSm danger" id="aSkip2">Salta turno</button>';
-      else body+='<div class="asub">'+auctClub(turnT)+' sta scegliendo...</div>';
-      body+='</div>';
-    } else if(a.fase==="countdown"){
-      var pc=a.player;
-      body='<div class="astaBox"><div class="acard"><span class="rb r-'+pc.role.toLowerCase()+'">'+pc.role+'</span><div class="an">'+pc.name+'<small>'+pc.nat+' - '+pc.q+'</small></div></div><div class="atimer big">'+rem+'</div><div class="asub">Preparatevi a rilanciare!</div></div>';
-    } else {
-      var p=a.player,mx=auctMaxBid(me),bought=auctBought(me),natc=auctNatCount(me,p.nat),canBid=me!==a.bidder&&bought<auctBuysReq()&&natc<AUCT_MAX_NAT;
-      body='<div class="astaBox"><div class="acard"><span class="rb r-'+p.role.toLowerCase()+'">'+p.role+'</span><div class="an">'+p.name+'<small>'+p.nat+' - '+p.q+'</small></div></div>'
-        +'<div class="abid">Offerta <b>'+a.bid+'</b> - '+auctClub(a.bidder)+'</div><div class="atimer">'+rem+'s</div>'
-        +'<div class="abudget">Tuo max: <b>'+mx+'</b> - comprati '+bought+'/'+auctBuysReq()+' - '+p.nat+' '+natc+'/'+AUCT_MAX_NAT+'</div>';
-      if(canBid){var bt="";[1,3,5,10].forEach(function(inc){var amt=a.bid+inc;if(amt<=mx)bt+='<button class="abtn" data-amt="'+amt+'">+'+inc+' = '+amt+'</button>';});body+='<div class="abtns">'+(bt||'<span class="asub">Fondi insufficienti</span>')+'</div>';}
-      else if(me===a.bidder)body+='<div class="asub">Sei in testa</div>';
-      else body+='<div class="asub">Non puoi rilanciare</div>';
-      body+='</div>';
-    }
-    if(auctIsHost())body+='<div class="astaBox arow"><button class="btnSm" id="aSkip">Salta turno</button><button class="btnSm danger" id="aStop">Termina asta</button></div>';
-  }
-  view.innerHTML='<div class="top"><button class="back" id="bk">Home</button><div class="brand">Asta live</div><span style="width:46px"></span></div>'+body;
-  document.getElementById("bk").onclick=function(){go("home");};
-  var st=document.getElementById("aStart");if(st)st.onclick=function(){requireAdmin(function(){auctStart();renderAsta();});};
-  var av=document.getElementById("aAvvia");if(av)av.onclick=function(){var a2=auctGet();if(a2&&a2.live&&a2.fase==="attesa"){auctAvvia(a2);renderAsta();}};
-  var sk=document.getElementById("aSkip");if(sk)sk.onclick=function(){var a2=auctGet();if(a2&&a2.live){auctSkip(a2);renderAsta();}};
-  var sk2=document.getElementById("aSkip2");if(sk2)sk2.onclick=function(){var a2=auctGet();if(a2&&a2.live){auctSkip(a2);renderAsta();}};
-  var sp=document.getElementById("aStop");if(sp)sp.onclick=function(){if(confirm("Terminare l\'asta?")){auctStop();renderAsta();}};
-  if(a&&a.live&&a.fase==="selezione"&&(auctTurnTeam(a)===effUser()||auctIsHost())){
-    var draw=function(){var q=(document.getElementById("aSearch").value||"").toLowerCase();
-      var fa=freeAgents().filter(function(pp){return pp.name.toLowerCase().indexOf(q)>=0||pp.nat.toLowerCase().indexOf(q)>=0;}).slice(0,60);
-      document.getElementById("aPickList").innerHTML=fa.map(function(pp){return '<button class="apick" data-r="'+pp.role+'" data-n="'+encodeURIComponent(pp.name)+'" data-na="'+encodeURIComponent(pp.nat)+'" data-q="'+pp.q+'"><span class="rb r-'+pp.role.toLowerCase()+'">'+pp.role+'</span> '+pp.name+' <small>'+pp.nat+' - '+pp.q+'</small></button>';}).join("");
-      document.querySelectorAll(".apick").forEach(function(b){b.onclick=function(){auctPick({role:b.dataset.r,name:decodeURIComponent(b.dataset.n),nat:decodeURIComponent(b.dataset.na),q:+b.dataset.q});};});};
-    var si=document.getElementById("aSearch");if(si){si.oninput=draw;draw();}
-  }
-  document.querySelectorAll(".abtn[data-amt]").forEach(function(b){b.onclick=function(){auctBid(effUser(),+b.dataset.amt);};});
+/* ===== ASTA ASINCRONA · Firestore è la fonte condivisa ===== */
+const ASYNC_AUCTION_KEY="fm26_auction",ASYNC_BID_MS=5*60*60*1000;
+/* Francia-Spagna è la prima semifinale del tabellone: chiusura un'ora prima. */
+const ASYNC_AUCTION_END=+KOM.find(m=>m.n===101).dt-60*60*1000;
+let auctionTeam=null,auctionTick=null,auctionPrevious=null;
+function auctionNotify(title,body){if("Notification" in window&&Notification.permission==="granted")new Notification(title,{body,icon:"icons/icon-192.png"});}
+function auctionWatch(next){const before=auctionPrevious||{items:{}};Object.values((next&&next.items)||{}).forEach(item=>{const old=(before.items||{})[item.id];if(!item||!auctionTeam)return;if(old&&old.bestBidder===auctionTeam&&item.bestBidder!==auctionTeam&&item.status==="open")auctionNotify("Offerta superata",`${item.player.name}: ora guida ${auctionTeamName(item.bestBidder)} con ${item.bestBid} cr.`);if(old&&old.status==="open"&&item.status==="assigned")auctionNotify(item.bestBidder===auctionTeam?"Asta vinta":"Asta conclusa",`${item.player.name} ${item.bestBidder===auctionTeam?"entra nella tua rosa":"è stato assegnato a "+auctionTeamName(item.bestBidder)}.`);});auctionPrevious=JSON.parse(JSON.stringify(next||{items:{}}));}
+function auctionGet(){const a=store.get(ASYNC_AUCTION_KEY);return a&&a.version===2?a:{version:2,deadline:ASYNC_AUCTION_END,items:{}}}
+function auctionClosed(a){return Date.now()>=((a&&a.deadline)||ASYNC_AUCTION_END)}
+function auctionItems(a){return Object.values((a&&a.items)||{}).filter(x=>x&&x.status==="open")}
+function auctionId(p){return encodeURIComponent(pid(p));}
+function auctionFmt(ms){ms=Math.max(0,ms);const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return h?`${h}h ${m}m`:`${m}m ${s}s`}
+function auctionTeamName(t){return (ROSTERS[t]||{}).club||t}
+function auctionAvailable(a){const active=new Set(auctionItems(a).map(x=>x.id));return freeAgents().filter(p=>!active.has(auctionId(p)))}
+async function auctionTransaction(change){
+ if(!leagueRef||!firebase.firestore){throw new Error("Connessione all'asta non disponibile");}
+ return firebase.firestore().runTransaction(async tx=>{const snap=await tx.get(leagueRef),data=snap.data()||{};const a=data.auction&&data.auction.version===2?data.auction:{version:2,deadline:ASYNC_AUCTION_END,items:{}};const market=data.market||{};const result=change(a,market,Date.now());if(!result)return;tx.set(leagueRef,{auction:a,market:market},{merge:true});return result;});
 }
-setInterval(function(){var a=auctGet();if(!a||!a.live)return;
-  if(auctDriver()&&a.endTime&&Date.now()>=a.endTime){
-    if(a.fase==="selezione")auctSkip(a);
-    else if(a.fase==="countdown")auctToActive(a);
-    else if(a.fase==="attiva")auctAssign(a);
-    if(curView==="asta")renderAsta();return;
-  }
-  if(curView==="asta"){var el=document.querySelector(".atimer");if(el&&a.endTime)el.textContent=Math.max(0,Math.ceil((a.endTime-Date.now())/1000))+(a.fase==="countdown"?"":"s");}
-},1000);
+function auctionCanBid(team,amount,player,market){const x=market[team]||{},ins=(x.in||[]).filter(v=>v.ph===MARKET_PHASE);const outs=x.out||[];const base=baseCredits(team);const recovered=outs.reduce((s,id)=>{const p=basePlayers(team).concat((x.in||[]).map(inAsPlayer)).find(q=>pid(q)===id);return s+((p&&p.q)||0)},0);const spent=(x.in||[]).reduce((s,v)=>s+(v.price||0),0);const maxBuys=(MARKET_LIMITS[MARKET_PHASE]||{in:3}).in;if(ins.length>=maxBuys)return "Hai già raggiunto il limite acquisti";if(amount>base+recovered-spent)return "Crediti insufficienti";if(amount<1||!Number.isInteger(amount))return "Offerta non valida";return null}
+async function auctionBid(player,amount){
+ const team=auctionTeam;if(!team){toast("Scegli prima una squadra");return;}try{await auctionTransaction((a,market,now)=>{if(now>=a.deadline)throw new Error("L'asta è chiusa");const id=auctionId(player);let item=a.items[id];if(!item){if(amount<1)throw new Error("Offerta minima: 1");const err=auctionCanBid(team,amount,player,market);if(err)throw new Error(err);item=a.items[id]={id,player:{role:player.role,name:player.name,nat:player.nat,q:player.q},status:"open",bestBid:amount,bestBidder:team,endsAt:Math.min(now+ASYNC_BID_MS,a.deadline),bids:[],createdAt:now};}else{if(item.status!=="open"||now>=item.endsAt)throw new Error("Questa asta è terminata");if(team===item.bestBidder)throw new Error("Sei già in testa");if(amount<=item.bestBid)throw new Error("Il rilancio deve superare l'offerta corrente");const err=auctionCanBid(team,amount,item.player,market);if(err)throw new Error(err);item.bestBid=amount;item.bestBidder=team;item.endsAt=Math.min(now+ASYNC_BID_MS,a.deadline);}item.bids=(item.bids||[]).concat([{team,amount,at:now}]).slice(-12);return true;});toast("Offerta registrata ✓");}catch(e){toast(e.message||"Offerta non registrata");}}
+function auctionSettleLocal(){auctionTransaction((a,market,now)=>{let changed=false;Object.values(a.items||{}).forEach(item=>{if(!item||item.status!=="open"||now<Math.min(item.endsAt,a.deadline))return;const t=item.bestBidder,x=market[t]||{out:[],in:[]};x.in=Array.isArray(x.in)?x.in:[];if(!x.in.some(v=>pid(v)===pid(item.player))){x.in.push({role:item.player.role,name:item.player.name,nat:item.player.nat,q:item.player.q,price:item.bestBid,ph:MARKET_PHASE});x.ts=now;market[t]=x;}item.status="assigned";item.assignedAt=now;changed=true;});return changed;}).catch(()=>{});}
+function auctionCard(item,open){const p=item.player,me=auctionTeam,leading=me===item.bestBidder,remaining=Math.min(item.endsAt||0,ASYNC_AUCTION_END)-Date.now(),history=(item.bids||[]).slice(-3).reverse().map(b=>`${auctionTeamName(b.team)} ${b.amount}`).join(" · ");return `<article class="auctionCard"><h3><span class="rb r-${p.role.toLowerCase()}">${p.role}</span> ${dispName(p.name)}</h3><small>${fimg(p.nat,"flsm")} ${p.nat} · listino ${p.q} cr</small>${open?`<div class="auctionLine"><span>In testa: <b>${auctionTeamName(item.bestBidder)}</b></span><span class="auctionPrice">${item.bestBid} cr</span></div><div class="auctionLine"><span class="auctionTimer" data-auction-end="${Math.min(item.endsAt,ASYNC_AUCTION_END)}">${auctionFmt(remaining)}</span><span>${leading?"Sei in testa":""}</span></div><div class="auctionHistory">${history||"Prima offerta"}</div><button class="auctionAction" data-bid="${item.id}" ${auctionClosed(auctionGet())?"disabled":""}>Rilancia</button>`:`<div class="auctionLine"><span>Prezzo iniziale</span><span class="auctionPrice">${p.q} cr</span></div><button class="auctionAction" data-offer="${auctionId(p)}">Fai un'offerta</button>`}</article>`}
+function renderAsta(){setNav("home");const a=auctionGet();if(!auctionTeam){const teams=TEAMS.filter(t=>ROSTERS[t]).map(t=>`<button class="auctionTeam" data-auction-team="${t}">${auctionTeamName(t)}</button>`).join("");view.innerHTML=`<div class="top"><button class="back" id="bk">Home</button><div class="brand">Asta live</div><span style="width:46px"></span></div><main class="auctionIntro fade"><h1>Entra in Asta</h1><p>Scegli la squadra per cui vuoi fare le offerte.</p><div class="auctionTeamGrid">${teams}</div></main>`;document.getElementById("bk").onclick=()=>go("home");view.querySelectorAll("[data-auction-team]").forEach(b=>b.onclick=()=>{auctionTeam=b.dataset.auctionTeam;renderAsta()});return;}
+ const inProgress=auctionItems(a).sort((x,y)=>x.endsAt-y.endsAt),available=auctionAvailable(a),closed=auctionClosed(a),deadline=auctionFmt(a.deadline-Date.now()),notify=typeof Notification!=="undefined"&&Notification.permission!=="granted";view.innerHTML=`<div class="top"><button class="back" id="bk">Home</button><div class="brand">Asta live</div><button class="auctionTeamChip" id="auctionTeam">${auctionTeamName(auctionTeam)}</button></div><main class="auctionWrap fade"><div class="auctionHero"><h2>Asta asincrona</h2><div class="auctionMeta"><span>Offerte a nome di <b>${auctionTeamName(auctionTeam)}</b></span><span>${closed?"Asta chiusa":"Chiusura evento: "+deadline}</span></div>${notify?'<button class="auctionTeamChip" id="auctionNotify" style="margin-top:10px">Attiva notifiche</button>':''}</div>${closed?'<div class="auctionNotice">L’evento è chiuso: le aste ancora aperte vengono assegnate all’ultimo offerente.</div>':''}<h3 class="auctionSection">Giocatori disponibili <small>(${available.length})</small></h3><div class="auctionGrid">${available.map(p=>auctionCard({player:p},false)).join("")||'<div class="auctionNotice">Nessun giocatore disponibile.</div>'}</div><h3 class="auctionSection">Aste in corso <small>(${inProgress.length})</small></h3><div class="auctionGrid">${inProgress.map(x=>auctionCard(x,true)).join("")||'<div class="auctionNotice">Nessuna asta attiva.</div>'}</div></main>`;document.getElementById("bk").onclick=()=>go("home");document.getElementById("auctionTeam").onclick=()=>{auctionTeam=null;renderAsta()};const nb=document.getElementById("auctionNotify");if(nb)nb.onclick=()=>Notification.requestPermission().then(()=>renderAsta());view.querySelectorAll("[data-offer]").forEach(b=>b.onclick=()=>{const p=available.find(x=>auctionId(x)===b.dataset.offer),raw=prompt(`Prima offerta per ${p.name} (minimo 1 credito)`,`1`);if(raw!=null)auctionBid(p,Number(raw));});view.querySelectorAll("[data-bid]").forEach(b=>b.onclick=()=>{const item=inProgress.find(x=>x.id===b.dataset.bid),raw=prompt(`Rilancio per ${item.player.name} (minimo ${item.bestBid+1})`,String(item.bestBid+1));if(raw!=null)auctionBid(item.player,Number(raw));});}
+setInterval(()=>{auctionSettleLocal();if(curView==="asta"){document.querySelectorAll("[data-auction-end]").forEach(el=>el.textContent=auctionFmt(+el.dataset.auctionEnd-Date.now()));}},1000);
 
 function renderMercato(){setNav("home");applyMercato();
  const t=user,R=ROSTERS[t],RB=ROSTERS_BASE[t];
@@ -3298,7 +3246,7 @@ function applyCloud(d){_suppress=true;try{
    if(d.voti)for(const g in d.voti){const inc=d.voti[g]||{},cur=store.get("fm26_voti_"+g)||{},mg=Object.assign({},inc);for(const k in cur){if(cur[k]&&cur[k].lk&&!(inc[k]&&inc[k].lk))mg[k]=cur[k];}store.set("fm26_voti_"+g,mg);}
    if(d.results)store.set("fm26_results",d.results);
    if(d.calc)store.set("fm26_calc",d.calc);
-   if(d.auction!==undefined)store.set("fm26_auction",d.auction);
+   if(d.auction!==undefined){store.set("fm26_auction",d.auction);if(typeof auctionWatch==="function")auctionWatch(d.auction);}
    if(d.events)store.set("fm26_events",d.events);
    if(d.cw)for(const k in d.cw)store.set("fm26_cw_"+k,d.cw[k]);
    if(d.hm)for(const k in d.hm)store.set("fm26_hm_"+k,d.hm[k]);
