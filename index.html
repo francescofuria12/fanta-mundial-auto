@@ -3209,6 +3209,26 @@ function renderPorceddu(){setNav("home");
 /* ===== CLOUD (Firebase Firestore) ===== */
 const FB_CONFIG={apiKey:"AIzaSyCf_9WAKLJc7sSTf_68keS1V8zl3vNGxRU",authDomain:"fanta-mundial-26-11511.firebaseapp.com",projectId:"fanta-mundial-26-11511",storageBucket:"fanta-mundial-26-11511.firebasestorage.app",messagingSenderId:"47893634175",appId:"1:47893634175:web:8979fd1e441ece5a0f734a"};
 const LEAGUE_ID="fanta-mundial-26-auto";
+function _enc(v){return JSON.stringify(v);}
+function _dec(v){if(typeof v!=="string")return v;try{return JSON.parse(v);}catch(e){return v;}}
+let _migrated=false;
+async function cloudMigrateStringify(){try{
+  if(!leagueRef)return;
+  const snap=await leagueRef.get();const d=snap.data()||{};
+  if(d._sfix)return;
+  const subSecs=["jerseys","votfix","voti","lineups","cw","hm","t10","pronostici"];
+  const out={_sfix:1};
+  for(const sec in d){
+    if(sec==="_sfix")continue;
+    if(sec==="auction"||sec==="members"){out[sec]=d[sec];continue;}
+    const v=d[sec];
+    if(v&&typeof v==="object"&&!Array.isArray(v)&&subSecs.indexOf(sec)>=0){
+      const m={};for(const k in v)m[k]=(typeof v[k]==="string"?v[k]:JSON.stringify(v[k]));out[sec]=m;
+    }else{ out[sec]=(typeof v==="string"?v:JSON.stringify(v)); }
+  }
+  await leagueRef.set(out);
+  console.log("index fix: documento migrato a stringhe");
+}catch(e){console.warn("migrate",e);}}
 function cloudPathFor(key){
  if(key==="fm26_accounts")return{sec:"accounts",sub:null};
  if(key==="fm26_bonus")return{sec:"bonus",sub:null};
@@ -3229,35 +3249,36 @@ function cloudPathFor(key){
 function cloudPush(key,val){if(!cloudReady||_suppress||!leagueRef)return;const p=cloudPathFor(key);if(!p)return;
  try{
    if(p.sub){
-     /* sezione con sotto-chiave (voti_G, lineup_K, jersey_T...): merge sul sotto-elemento */
-     leagueRef.set({[p.sec]:{[p.sub]:val}},{merge:true}).catch(e=>console.warn("cloud push",e));
-   }else if(p.sec==="results"||p.sec==="calc"||p.sec==="auction"){
+     /* sotto-chiave: valore come STRINGA JSON (Firestore non indicizza le stringhe lunghe) -> evita "too many index entries" */
+     leagueRef.set({[p.sec]:{[p.sub]:_enc(val)}},{merge:true}).catch(e=>console.warn("cloud push",e));
+   }else if(p.sec==="auction"){
+     leagueRef.update({[p.sec]:val}).catch(()=>leagueRef.set({[p.sec]:val},{merge:true}).catch(e=>console.warn("cloud push",e)));
+   }else if(p.sec==="results"||p.sec==="calc"){
      /* RESULTS: le chiavi sono numeri-partita e servono le CANCELLAZIONI (azzera tabellone, ritocca).
         update = REPLACE del campo -> le chiavi rimosse spariscono davvero dal cloud.
         (set merge:true fonderebbe la mappa e non le rimuoverebbe mai: era IL bug del calendario.) */
-     leagueRef.update({[p.sec]:val}).catch(()=>leagueRef.set({[p.sec]:val},{merge:true}).catch(e=>console.warn("cloud push",e)));
+     leagueRef.update({[p.sec]:_enc(val)}).catch(()=>leagueRef.set({[p.sec]:_enc(val)},{merge:true}).catch(e=>console.warn("cloud push",e)));
    }else{
-     /* altre mappe intere: merge (comportamento invariato) */
-     leagueRef.set({[p.sec]:val},{merge:true}).catch(e=>console.warn("cloud push",e));
+     leagueRef.set({[p.sec]:_enc(val)},{merge:true}).catch(e=>console.warn("cloud push",e));
    }
  }catch(e){console.warn("cloud push",e)}}
 function applyCloud(d){_suppress=true;try{
-   if(d.accounts)store.set("fm26_accounts",d.accounts);
-   if(d.bonus)store.set("fm26_bonus",d.bonus);
-   if(d.jerseys)for(const t in d.jerseys)store.set("fm26_jersey_"+t,d.jerseys[t]);
-   if(d.lineups)for(const k in d.lineups)store.set("fm26_lineup_"+k,d.lineups[k]);
-   if(d.votfix)for(const g in d.votfix)store.set("fm26_votfix_"+g,d.votfix[g]);
-   if(d.voti)for(const g in d.voti){const inc=d.voti[g]||{},cur=store.get("fm26_voti_"+g)||{},mg=Object.assign({},inc);for(const k in cur){if(cur[k]&&cur[k].lk&&!(inc[k]&&inc[k].lk))mg[k]=cur[k];}store.set("fm26_voti_"+g,mg);}
-   if(d.results)store.set("fm26_results",d.results);
-   if(d.calc)store.set("fm26_calc",d.calc);
+   if(d.accounts!==undefined)store.set("fm26_accounts",_dec(d.accounts));
+   if(d.bonus!==undefined)store.set("fm26_bonus",_dec(d.bonus));
+   if(d.jerseys)for(const t in d.jerseys)store.set("fm26_jersey_"+t,_dec(d.jerseys[t]));
+   if(d.lineups)for(const k in d.lineups)store.set("fm26_lineup_"+k,_dec(d.lineups[k]));
+   if(d.votfix)for(const g in d.votfix)store.set("fm26_votfix_"+g,_dec(d.votfix[g]));
+   if(d.voti)for(const g in d.voti){const inc=_dec(d.voti[g])||{},cur=store.get("fm26_voti_"+g)||{},mg=Object.assign({},inc);for(const k in cur){if(cur[k]&&cur[k].lk&&!(inc[k]&&inc[k].lk))mg[k]=cur[k];}store.set("fm26_voti_"+g,mg);}
+   if(d.results!==undefined)store.set("fm26_results",_dec(d.results));
+   if(d.calc!==undefined)store.set("fm26_calc",_dec(d.calc));
    if(d.auction!==undefined){store.set("fm26_auction",d.auction);if(typeof auctionWatch==="function")auctionWatch(d.auction);}
-   if(d.events)store.set("fm26_events",d.events);
-   if(d.cw)for(const k in d.cw)store.set("fm26_cw_"+k,d.cw[k]);
-   if(d.hm)for(const k in d.hm)store.set("fm26_hm_"+k,d.hm[k]);
-   if(d.t10)for(const k in d.t10)store.set("fm26_t10_"+k,d.t10[k]);
-   if(d.live)store.set("fm26_live",d.live);
-   if(d.pronostici)for(const t in d.pronostici)store.set("fm26_pronos_"+t,d.pronostici[t]);
-   if(d.market){const inc=d.market||{},cur=store.get("fm26_market")||{},merged={};
+   if(d.events!==undefined)store.set("fm26_events",_dec(d.events));
+   if(d.cw)for(const k in d.cw)store.set("fm26_cw_"+k,_dec(d.cw[k]));
+   if(d.hm)for(const k in d.hm)store.set("fm26_hm_"+k,_dec(d.hm[k]));
+   if(d.t10)for(const k in d.t10)store.set("fm26_t10_"+k,_dec(d.t10[k]));
+   if(d.live!==undefined)store.set("fm26_live",_dec(d.live));
+   if(d.pronostici)for(const t in d.pronostici)store.set("fm26_pronos_"+t,_dec(d.pronostici[t]));
+   if(d.market){const inc=_dec(d.market)||{},cur=store.get("fm26_market")||{},merged={};
      const allT=new Set([...Object.keys(cur),...Object.keys(inc)]);
      allT.forEach(tt=>{const c=cur[tt],i=inc[tt];merged[tt]=!c?i:(!i?c:(((c.ts||0)>=(i.ts||0))?c:i));});
      store.set("fm26_market",merged);applyMercato();}
@@ -3274,7 +3295,7 @@ function refreshView(){const login=document.getElementById("login");
    firebase.initializeApp(FB_CONFIG);
    leagueRef=firebase.firestore().collection("leagues").doc(LEAGUE_ID);
    cloudReady=true;
-   leagueRef.onSnapshot(doc=>{const d=doc.data()||{};applyCloud(d);koResetOnce();refreshView()},
+   leagueRef.onSnapshot(doc=>{const d=doc.data()||{};applyCloud(d);koResetOnce();refreshView();if(!_migrated&&!d._sfix){_migrated=true;cloudMigrateStringify();}},
      err=>console.warn("cloud snapshot",err));
    if(firebase.auth)firebase.auth().onAuthStateChanged(fb=>routeAuth(fb));
  }catch(e){console.warn("cloud init failed",e);cloudReady=false}})();
