@@ -1334,7 +1334,8 @@ function eliminatedSet(){
   const s=new Set();
   if(Date.now()>=+KO[0].dt){const alive=koParticipantsR32();knownNations().forEach(n=>{if(!alive.has(n))s.add(n)});}
   else NAZ_ELIM.forEach(n=>s.add(n));
-  KOM.forEach(m=>{const l=koLoser(m.n);if(l)s.add(natIT(l))});
+  /* Le perdenti delle semifinali NON sono eliminate: giocano la finale 3o/4o posto. */
+  KOM.forEach(m=>{if(m.rd==="sf")return;const l=koLoser(m.n);if(l)s.add(natIT(l))});
   return s;}
 function isElim(nat){return eliminatedSet().has(nat)}
 /* elenco eliminate con la fase di eliminazione (per la vista "Squadre eliminate") */
@@ -2857,7 +2858,7 @@ const BONUS={gol:3,rigSeg:3,rigPar:3,assist:1,cleanSheet:1,rigSb:-3,autorete:-2,
 function phaseOf(gid){if(gid<=5)return{titolari:11,fixed:true,sameRoleSub:true,label:gid<=3?"Gironi · "+gid+"ª":(gid===4?"Sedicesimi":"Ottavi")};
  if(gid===6)return{titolari:7,fixed:false,sameRoleSub:false,label:"Quarti"};
  if(gid===7)return{titolari:4,fixed:false,sameRoleSub:false,label:"Semifinali"};
- return{titolari:2,fixed:false,sameRoleSub:false,label:"Finale"}}
+ return{titolari:4,fixed:false,sameRoleSub:false,label:"Finale"}}   /* Finale + finalina 3o/4o: 4 titolari */
 function votiKey(gid){return "fm26_voti_"+gid}
 /* === CORREZIONI VOTI FORZATE (override sopra i voti inseriti) ===
    { <gid>: { "<RUOLO>|<Nome esatto>": {v:<voto, o null per SV>, g:..,a:..} } }
@@ -3296,7 +3297,8 @@ function renderRegolamento(){setNav("home");
    <li><b>Vincoli di ruolo:</b> l'asta <b>dopo i Sedicesimi</b> \u00e8 l'unica con vincoli di ruolo (rose di <b>22</b>: 3 P \u00b7 7 D \u00b7 7 C \u00b7 5 A). Dalle aste successive <b>decadono</b> i vincoli di ruolo e di modulo.</li></ul>
    <h2>3 \u00b7 Formazioni, moduli e sostituzioni</h2>
    <ul><li><b>Gironi, Sedicesimi, Ottavi</b> \u2014 11 titolari \u00b7 moduli: 3-4-3, 3-5-2, 4-3-3, 4-4-2, 4-5-1, 5-3-2, 5-4-1.</li>
-   <li><b>Quarti</b> 7 titolari \u00b7 <b>Semifinali</b> 4 \u00b7 <b>Finale</b> 2: qualsiasi modulo.</li></ul>
+   <li><b>Quarti</b> 7 titolari \u00b7 <b>Semifinali</b> 4 \u00b7 <b>Finale</b> 4: qualsiasi modulo.</li>
+   <li>Nell\u0027ultimo turno valgono i voti sia della <b>Finale</b> sia della <b>finale 3\u00ba/4\u00ba posto</b>: le perdenti delle semifinali <b>non</b> sono eliminate.</li></ul>
    <p>La formazione \u00e8 modificabile tra un turno e l'altro. Termine ultimo e improrogabile: <b>1 minuto prima</b> del fischio d'inizio della prima partita del turno.</p>
    <p><b>Subentri:</b> in caso di Senza Voto (SV) entra il primo panchinaro utile seguendo l'ordine impostato \u2014 <b>stesso ruolo fino agli Ottavi</b>, qualsiasi ruolo dai Quarti. Se non ci sono sostituti validi, il giocatore prende 0 d'ufficio.</p>
    <h2>4 \u00b7 Punteggio</h2>
