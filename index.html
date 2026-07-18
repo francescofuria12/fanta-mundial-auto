@@ -176,7 +176,7 @@ button:active,.tap:active{transform:scale(.97);opacity:.88}
 .authhint{color:var(--text-3);font-size:11.5px;margin-top:14px;line-height:1.55;position:relative;z-index:2}
 
 /* ============ Vista + top bar ============ */
-.view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px)}
+.view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);transform:translateZ(0);backface-visibility:hidden}
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:max(18px,env(safe-area-inset-top)) var(--gutter) 8px;position:relative}
 .top::after{content:none}
 .top .brand{display:flex;align-items:center;gap:8px;font-weight:var(--w-med);font-size:15px;letter-spacing:-.01em}
@@ -399,6 +399,8 @@ button:active,.tap:active{transform:scale(.97);opacity:.88}
 
 /* ============ Transizione viste ============ */
 .fade{animation:fade .44s var(--ease-out) both}
+/* Mentre la pagina scorre, i blocchi interni sono gia' fermi: niente doppia animazione */
+.view.v-enter-r .fade,.view.v-enter-l .fade,.view-snap .fade{animation:none!important}
 @keyframes fade{from{opacity:0;transform:translateY(16px) scale(.992)}to{opacity:1;transform:none}}
 
 /* ============ Rose / squadre ============ */
@@ -1202,10 +1204,20 @@ span[class^="fmi-"]{display:inline-block;width:1.15em;height:1.15em;vertical-ali
 .view::-webkit-scrollbar{display:none}
 
 /* transizione direzionale tra le sezioni della barra in basso */
-@keyframes vSlideR{from{transform:translate3d(26px,0,0);opacity:0}to{transform:none;opacity:1}}
-@keyframes vSlideL{from{transform:translate3d(-26px,0,0);opacity:0}to{transform:none;opacity:1}}
-.view.v-r{animation:vSlideR .3s var(--ease-out) both}
-.view.v-l{animation:vSlideL .3s var(--ease-out) both}
+@keyframes vEnterR{from{transform:translate3d(30px,0,0);opacity:.6}to{transform:none;opacity:1}}
+@keyframes vEnterL{from{transform:translate3d(-30px,0,0);opacity:.6}to{transform:none;opacity:1}}
+@keyframes snapOutL{from{transform:none;opacity:1}to{transform:translate3d(-32px,0,0);opacity:0}}
+@keyframes snapOutR{from{transform:none;opacity:1}to{transform:translate3d(32px,0,0);opacity:0}}
+/* Nuova pagina: entra gia' pronta, solo transform+opacity (GPU) */
+.view.v-enter-r{animation:vEnterR .34s var(--ease-out) both}
+.view.v-enter-l{animation:vEnterL .34s var(--ease-out) both}
+/* Snapshot della vecchia pagina: scorre via sopra, poi viene rimossa */
+.view-snap{position:absolute;inset:0;z-index:39;overflow:hidden;pointer-events:none;
+  will-change:transform,opacity;transform:translateZ(0);
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);
+  background:var(--canvas)}
+.snap-out-l{animation:snapOutL .34s var(--ease-out) both}
+.snap-out-r{animation:snapOutR .34s var(--ease-out) both}
 .view.v-r>*,.view.v-l>*{animation:none!important}   /* evita doppia animazione sui figli */
 
 /* liste a comparsa scaglionata */
@@ -1733,10 +1745,39 @@ const NAV_ORDER=["home","squadre","calendario","votigiornata","classifica"];
 let _prevView=null;
 /* Applica lo scorrimento nella direzione giusta (solo tra le 5 sezioni della barra). */
 function viewAnim(v){
-  const a=NAV_ORDER.indexOf(_prevView),b=NAV_ORDER.indexOf(v);
-  view.classList.remove("v-l","v-r");
-  if(a>=0&&b>=0&&a!==b){void view.offsetWidth;view.classList.add(b>a?"v-r":"v-l");}
-  _prevView=v;
+ const a=NAV_ORDER.indexOf(_prevView),b=NAV_ORDER.indexOf(v);
+ _prevView=v;
+ /* Anima solo tra le sezioni della barra; le altre restano istantanee. */
+ if(!(a>=0&&b>=0&&a!==b))return;
+ if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+ const dir=b>a?1:-1;                 /* 1 = avanti (nuova entra da destra) */
+ fmSnapSlide(dir);
+}
+/* Cattura la pagina attuale come immagine statica e la fa scorrere via:
+   la nuova pagina viene renderizzata SOTTO ed e' gia' pronta quando lo strato sparisce. */
+let _snapBusy=false;
+function fmSnapSlide(dir){
+ try{
+  const host=document.querySelector(".app")||view.parentElement;
+  if(!host)return;
+  const old=document.getElementById("viewSnap");if(old)old.remove();
+  const snap=view.cloneNode(true);      /* copia esatta: stesso testo, stesse immagini, zero re-fetch */
+  snap.id="viewSnap";
+  snap.className="view view-snap";
+  snap.removeAttribute("style");
+  snap.scrollTop=view.scrollTop;
+  host.appendChild(snap);
+  _snapBusy=true;
+  /* la nuova pagina (renderizzata subito dopo da go()) entra da sotto */
+  view.classList.remove("v-enter-l","v-enter-r");void view.offsetWidth;
+  view.classList.add(dir>0?"v-enter-r":"v-enter-l");
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{
+    snap.classList.add(dir>0?"snap-out-l":"snap-out-r");
+  });});
+  const done=()=>{snap.remove();view.classList.remove("v-enter-l","v-enter-r");_snapBusy=false;};
+  snap.addEventListener("animationend",done,{once:true});
+  setTimeout(done,420);   /* fallback di sicurezza */
+ }catch(e){}
 }
 view.addEventListener("animationend",e=>{if(e.target===view)view.classList.remove("v-l","v-r");});
 (function swipeNav(){
