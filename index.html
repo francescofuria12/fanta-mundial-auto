@@ -1390,6 +1390,7 @@ const KO=[
  {key:"qf",label:"Quarti",dt:shiftTZ("2026-07-09T15:00")},
  {key:"sf",label:"Semifinali",dt:shiftTZ("2026-07-14T14:00")},
  {key:"final",label:"Finale",dt:shiftTZ("2026-07-19T14:00")}];
+const THIRD_PLACE_DT=shiftTZ("2026-07-18T16:00");   /* Finale 3o/4o posto: si gioca il giorno prima */
 /* ===== TABELLONE · fase a eliminazione diretta (incroci dal tabellone ufficiale) ===== */
 const KOM=[
  {n:73,rd:"r32",t1:"South Africa",t2:"Canada",dt:shiftTZ("2026-06-28T14:00"),city:"Inglewood",stad:"SoFi Stadium"},
@@ -1490,7 +1491,7 @@ const GIORNATE=[
  {id:5,label:"Ottavi",dt:KO[1].dt},
  {id:6,label:"Quarti",dt:KO[2].dt},
  {id:7,label:"Semifinali",dt:KO[3].dt},
- {id:8,label:"Finale",dt:KO[4].dt}];
+ {id:8,label:"Finale",dt:THIRD_PLACE_DT}];   /* blocco 1 min prima del 3o/4o posto, che precede la finale */
 function nextGiornata(){const now=new Date();return GIORNATE.find(g=>g.dt>now)||null;}
 /* giornata "corrente": l'ultima il cui turno e' gia' iniziato; prima dell'inizio del torneo = la 1a */
 function currentGiornata(){const now=new Date();let cur=GIORNATE[0];GIORNATE.forEach(g=>{if(g.dt<=now)cur=g});return cur;}
