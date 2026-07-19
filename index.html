@@ -3272,7 +3272,28 @@ function getVoti(gid){const base=Object.assign({},store.get(votiKey(gid))||{},VO
   return remapProviderVoti(out);}
 /* Voti fissati a mano che valgono per tutti, superando anche eventuali voti admin gia' sincronizzati. */
 const VOTI_FORCE={
-  5:{ "P|Camilo Vargas":{v:7,ffv:7} }   /* Ottavi: Camilo Vargas (P, Colombia) 7 - schierato da Cordata SPA */
+  5:{ "P|Camilo Vargas":{v:7,ffv:7} },   /* Ottavi: Camilo Vargas (P, Colombia) 7 - schierato da Cordata SPA */
+  8:{   /* Finalina 3o/4o posto Inghilterra-Francia */
+    "A|B. Saka":{v:8,ffv:17},
+    "A|D\u00e9sir\u00e9 Dou\u00e9":{v:4.5,ffv:4.5},
+    "A|Kylian Mbapp\u00e9":{v:8,ffv:15},
+    "A|M. Olise":{v:7.5,ffv:9.5},
+    "A|M. Rashford":{v:7,ffv:8},
+    "A|O. Demb\u00e9l\u00e9":{v:7,ffv:10},
+    "C|A. Rabiot":{v:4.5,ffv:4.5},
+    "C|D. Rice":{v:6.5,ffv:10.5},
+    "C|E. Eze":{v:7,ffv:8},
+    "C|Elliot Anderson":{v:6,ffv:6},
+    "C|J. Bellingham":{v:7,ffv:10},
+    "C|Rayan Cherki":{v:5,ffv:5},
+    "D|Dayot Upamecano":{v:6.5,ffv:7.5},
+    "D|Ezri Konsa":{v:6,ffv:9},
+    "D|J. Kound\u00e9":{v:null},
+    "D|Marc Gu\u00e9hi":{v:5,ffv:5},
+    "D|Reece James":{v:null},
+    "D|Theo Hern\u00e1ndez":{v:4,ffv:4},
+    "P|M. Maignan":{v:5.5,ffv:-0.5}
+  }
 };
 function hasVoto(rec){return !!rec&&rec.v!=null&&rec.v!==""}
 function fantaVoto(rec,role){if(!hasVoto(rec))return null;if(rec.ffv!=null)return Number(rec.ffv);let fv=Number(rec.v)||0;
